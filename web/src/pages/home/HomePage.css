@@ -236,7 +236,7 @@
 .hm-featured-card__stage-toggle:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
-  border-radius: var(--radius-xs);
+  border-radius: var(--ref-radius-xs);
 }
 .hm-featured-card__stage-chevron {
   transition: transform 0.15s ease;
@@ -450,13 +450,6 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--space-stack-md);
-}
-.hm-how__demo {
-  font-size: 14px;
-  font-weight: 600;
-  color: #4B3FA8;
-  text-decoration: none;
-  white-space: nowrap;
 }
 .hm-steps {
   display: grid;
@@ -886,21 +879,6 @@
     font-size: 28px;
     font-weight: var(--ref-font-weight-extrabold);
     line-height: var(--ref-font-leading-snug);
-  }
-  .hm-how__demo {
-    border: 1.5px solid var(--border-focus);
-    color: var(--text-action);
-    background: transparent;
-    padding: 7px 17px 8px 13px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 14px;
-    text-decoration: none;
-    white-space: nowrap;
-    height: 38px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
   }
   .hm-steps {
     grid-template-columns: repeat(4, 1fr);

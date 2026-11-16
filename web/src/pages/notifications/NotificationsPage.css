@@ -159,7 +159,7 @@
 
 .nt-page__preferences-card > p,
 .nt-page__reminders-card > p {
-  margin: var(--space-inline-xs) 0 var(--space-stack-sm);
+  margin: var(--ref-space-xs) 0 var(--space-stack-sm);
   font: var(--type-caption);
   line-height: 1.45;
 }
@@ -224,7 +224,7 @@
   flex-direction: column;
   gap: var(--space-inline-sm);
   padding: var(--ref-space-lg);
-  border-radius: 18px;
+  border-radius: var(--ref-radius-2xl);
   background: var(--bg-band);
   color: var(--text-inverse);
 }

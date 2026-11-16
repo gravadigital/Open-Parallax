@@ -283,8 +283,6 @@ export const es = {
     featured: {
       label: 'Evento destacado',
       status: 'Inscripción abierta',
-      sampleName: 'Distributed Telescope Time Allocation 2026',
-      sampleDescription: 'Asignación anual de tiempo de telescopio',
       closesIn: plural({ one: 'Cierra en {count} día', other: 'Cierra en {count} días' }),
       closesToday: 'Cierra hoy',
       capacity: 'de {max} lugares ocupados',

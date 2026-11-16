@@ -49,16 +49,20 @@ describe('HomePage', () => {
 
     const featured = screen.getByRole('region', { name: 'Evento destacado' });
     expect(within(featured).getByText('Concurso de afiches')).toBeInTheDocument();
-    expect(within(featured).getByText('Inscripción abierta · Cierra en 3 días')).toBeInTheDocument();
+    expect(within(featured).getByText('Inscripción abierta')).toBeInTheDocument();
+    expect(within(featured).getByText('Cierra en 3 días')).toBeInTheDocument();
     expect(within(featured).getByText('Participación').closest('[aria-current="step"]')).not.toBeNull();
-    expect(within(featured).getByText('12 de 20 lugares ocupados')).toBeInTheDocument();
+    expect(featured.querySelector('.hm-featured-card__capacity')).toHaveTextContent('12 de 20 lugares ocupados');
     expect(within(featured).getByRole('link', { name: 'Participar' })).toHaveAttribute('href', '/events/e-1');
 
     const how = document.getElementById('como-funciona') as HTMLElement;
     expect(within(how).getByRole('heading', { level: 2, name: 'Cuatro etapas, siempre visibles' })).toBeInTheDocument();
-    expect(within(how).getAllByRole('listitem')).toHaveLength(4);
-    expect(within(how).getByText('01 · Creación')).toBeInTheDocument();
-    expect(within(how).getByText('04 · Resultados')).toBeInTheDocument();
+    const steps = within(how).getAllByRole('listitem');
+    expect(steps).toHaveLength(4);
+    expect(within(steps[0]).getByText('01')).toBeInTheDocument();
+    expect(within(steps[0]).getByText('Creación')).toBeInTheDocument();
+    expect(within(steps[3]).getByText('04')).toBeInTheDocument();
+    expect(within(steps[3]).getByText('Resultados')).toBeInTheDocument();
 
     expect(screen.getByRole('heading', { level: 2, name: 'Abiertos ahora' })).toBeInTheDocument();
     const cards = screen.getAllByRole('link', { name: 'Ver y participar' });
@@ -83,7 +87,9 @@ describe('HomePage', () => {
     listEvents.mockResolvedValue(page([listItem({ participation_estimated_end_date: '2026-10-07' })]));
     const { unmount } = renderWithProviders(<HomePage />, { auth: guest });
     await settle();
-    expect(screen.getByText('Inscripción abierta · Cierra hoy')).toBeInTheDocument();
+    const today = screen.getByRole('region', { name: 'Evento destacado' });
+    expect(within(today).getByText('Inscripción abierta')).toBeInTheDocument();
+    expect(within(today).getByText('Cierra hoy')).toBeInTheDocument();
     unmount();
 
     listEvents.mockResolvedValue(page([listItem({ participation_estimated_end_date: null })]));

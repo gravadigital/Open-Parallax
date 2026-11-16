@@ -283,8 +283,6 @@ export const en: Catalog = {
     featured: {
       label: 'Featured event',
       status: 'Registration open',
-      sampleName: 'Distributed Telescope Time Allocation 2026',
-      sampleDescription: 'Annual telescope time allocation',
       closesIn: plural({ one: 'Closes in {count} day', other: 'Closes in {count} days' }),
       closesToday: 'Closes today',
       capacity: 'of {max} spots taken',

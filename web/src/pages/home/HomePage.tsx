@@ -8,6 +8,7 @@ import { ChevronDownIcon } from '../../components/ui/icons/Icons';
 import StageTimeline from '../../components/events/stage-timeline/StageTimeline';
 import { useAuth } from '../../context/AuthContext';
 import { useT } from '../../i18n';
+import { daysUntilClose } from '../../domain/dates';
 import { openEvents } from '../../domain/events';
 import { loginPathFor } from '../../domain/redirect';
 import { STAGE_ORDER, stageIndex, stageNameKey, stageStatus } from '../../domain/stages';
@@ -61,6 +62,7 @@ const HomePage: React.FC = () => {
   }, [location.hash]);
 
   const open = React.useMemo(() => openEvents(state.items), [state.items]);
+  const featured = open[0];
   const list = open.slice(0, FEATURED_LIMIT);
   const createPath = user ? '/events/create' : loginPathFor('/events/create');
 
@@ -69,7 +71,16 @@ const HomePage: React.FC = () => {
     {} as Record<EventStage, string>
   );
 
+  const closesText = (event: EventListItem): string | null => {
+    const date = event.participation_estimated_end_date;
+    if (!date) return null;
+    const days = daysUntilClose(date);
+    if (days < 0) return null;
+    return days === 0 ? t('home.featured.closesToday') : t('home.featured.closesIn', { count: days });
+  };
+
   const loading = state.status === 'loading';
+  const featuredCloses = featured ? closesText(featured) : null;
 
   return (
     <div className="hm-page">
@@ -91,18 +102,27 @@ const HomePage: React.FC = () => {
           </div>
         </div>
 
+        {loading && (
+          <div className="hm-hero__featured" aria-hidden="true">
+            <Card variant="raised">
+              <span className="hm-skeleton hm-skeleton--pill" />
+              <span className="hm-skeleton hm-skeleton--title" />
+              <span className="hm-skeleton" />
+            </Card>
+          </div>
+        )}
+
+        {state.status === 'ready' && featured && (
         <section className="hm-hero__featured" aria-label={t('home.featured.label')}>
           <article className={`hm-featured-card${stagesOpen ? ' hm-featured-card--stages-open' : ''}`}>
             <div className="hm-featured-card__top">
               <StatusPill tone="success" icon="dot" size="sm">
                 {t('home.featured.status')}
               </StatusPill>
-              <span className="hm-featured-card__closes">
-                {t('home.featured.closesIn', { count: 6 })}
-              </span>
+              {featuredCloses && <span className="hm-featured-card__closes">{featuredCloses}</span>}
             </div>
-            <h3 className="hm-featured__name">{t('home.featured.sampleName')}</h3>
-            <p className="hm-featured__description">{t('home.featured.sampleDescription')}</p>
+            <h3 className="hm-featured__name">{featured.name}</h3>
+            {featured.description && <p className="hm-featured__description">{featured.description}</p>}
             <div className="hm-featured-card__stepper">
               <div className="hm-featured-card__stage-head">
                 <span className="hm-featured-card__stage-of">
@@ -177,10 +197,17 @@ const HomePage: React.FC = () => {
             </div>
             <div className="hm-featured-card__footer">
               <span className="hm-featured-card__capacity">
-                <b>{13}</b> {t('home.featured.capacity', { max: 20 })}
+                {featured.max_participants === null ? (
+                  t('events.table.registered', { count: featured.participants_count })
+                ) : (
+                  <>
+                    <b>{featured.participants_count}</b>{' '}
+                    {t('home.featured.capacity', { max: featured.max_participants })}
+                  </>
+                )}
               </span>
               <Link
-                to="/events?stage=participation"
+                to={`/events/${featured.id}`}
                 className="ui-button ui-button--md ui-button--primary hm-featured-card__cta"
               >
                 {t('home.featured.participate')}
@@ -188,6 +215,7 @@ const HomePage: React.FC = () => {
             </div>
           </article>
         </section>
+        )}
       </section>
 
       <div className="hm-divider" aria-hidden="true" />
@@ -200,7 +228,6 @@ const HomePage: React.FC = () => {
               {t('home.how.title')}
             </h2>
           </div>
-          <Link to="/" className="hm-how__demo">{t('home.how.demo')}</Link>
         </div>
         <ol className="hm-steps">
           {STEP_KEYS.map((key, index) => (

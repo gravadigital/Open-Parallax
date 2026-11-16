@@ -310,7 +310,7 @@ describe('EventsListPage', () => {
     expect(media).toMatch(/\.evl-pending__list\s*\{[^}]*repeat\(2, 1fr\)/);
     expect(media).toMatch(/\.evl-header\s*\{[^}]*9fr 3fr/);
     expect(media).toMatch(/\.evl-banner[^{]*\{[^}]*9fr 3fr/);
-    expect(css).toMatch(/\.evl-banner\.ui-card\s*\{[^}]*background:\s*var\(--bg-action-primary\)/);
+    expect(css).toMatch(/\.evl-banner\.ui-card\s*\{[^}]*background:\s*var\(--bg-accent\)/);
     expect(base).toMatch(/\.evl-results \.ui-data-table tbody\s*\{[^}]*display:\s*grid/);
     expect(base).toMatch(/\.evl-results \.ui-data-table__row\s*\{[^}]*border-radius:/);
     expect(mobile).toMatch(/\.evl-results\s*\{[^}]*margin-inline:/);

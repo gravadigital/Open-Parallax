@@ -4,12 +4,13 @@ import Card from '../../components/ui/card/Card';
 import Callout from '../../components/ui/callout/Callout';
 import EmptyState from '../../components/ui/empty-state/EmptyState';
 import StatusPill from '../../components/ui/status-pill/StatusPill';
+import { ChevronDownIcon } from '../../components/ui/icons/Icons';
 import StageTimeline from '../../components/events/stage-timeline/StageTimeline';
 import { useAuth } from '../../context/AuthContext';
 import { useT } from '../../i18n';
 import { openEvents } from '../../domain/events';
 import { loginPathFor } from '../../domain/redirect';
-import { STAGE_ORDER, stageNameKey } from '../../domain/stages';
+import { STAGE_ORDER, stageIndex, stageNameKey, stageStatus } from '../../domain/stages';
 import { EventService } from '../../services/api';
 import type { EventListItem, EventStage } from '../../types';
 import '../../components/ui/visually-hidden.css';
@@ -27,6 +28,7 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [state, setState] = React.useState<LoadState>({ status: 'loading', items: [] });
+  const [stagesOpen, setStagesOpen] = React.useState(false);
   const howTitleRef = React.useRef<HTMLHeadingElement>(null);
   const howSectionRef = React.useRef<HTMLElement>(null);
   const howTitleId = React.useId();
@@ -90,7 +92,7 @@ const HomePage: React.FC = () => {
         </div>
 
         <section className="hm-hero__featured" aria-label={t('home.featured.label')}>
-          <article className="hm-featured-card">
+          <article className={`hm-featured-card${stagesOpen ? ' hm-featured-card--stages-open' : ''}`}>
             <div className="hm-featured-card__top">
               <StatusPill tone="success" icon="dot" size="sm">
                 {t('home.featured.status')}
@@ -101,18 +103,81 @@ const HomePage: React.FC = () => {
             </div>
             <h3 className="hm-featured__name">{t('home.featured.sampleName')}</h3>
             <p className="hm-featured__description">{t('home.featured.sampleDescription')}</p>
-            <StageTimeline
-              variant="compact"
-              current="participation"
-              stageLabels={stageLabels}
-              nowLabel={t('events.timeline.now')}
-              completedLabel={t('events.timeline.completed')}
-              pendingLabel={t('events.timeline.pending')}
-              stepOfLabel={t('events.timeline.stepOf', { number: 2 })}
-            />
+            <div className="hm-featured-card__stepper">
+              <div className="hm-featured-card__stage-head">
+                <span className="hm-featured-card__stage-of">
+                  {t('events.timeline.stepOf', { number: 2 })}
+                </span>
+                <button
+                  type="button"
+                  className="hm-featured-card__stage-toggle"
+                  aria-expanded={stagesOpen}
+                  onClick={() => setStagesOpen((open) => !open)}
+                >
+                  {stagesOpen ? t('home.featured.hideStages') : t('home.featured.viewStages')}
+                  <ChevronDownIcon
+                    className={`hm-featured-card__stage-chevron${
+                      stagesOpen ? ' hm-featured-card__stage-chevron--open' : ''
+                    }`}
+                  />
+                </button>
+              </div>
+              <StageTimeline
+                variant="compact"
+                current="participation"
+                stageLabels={stageLabels}
+                nowLabel={t('events.timeline.now')}
+                completedLabel={t('events.timeline.completed')}
+                pendingLabel={t('events.timeline.pending')}
+                stepOfLabel={t('events.timeline.stepOf', { number: 2 })}
+              />
+              <p className="hm-featured-card__after">
+                {t('home.featured.after')}: {stageLabels.voting}
+              </p>
+              {stagesOpen && (
+                <ol className="hm-featured-card__stages">
+                  {STAGE_ORDER.map((stage, index) => {
+                    const status = stageStatus(stage, 'participation');
+                    const stateKey =
+                      status === 'completed'
+                        ? 'stageDone'
+                        : status === 'current'
+                          ? 'stageNow'
+                          : 'stageNext';
+                    return (
+                      <li
+                        key={stage}
+                        className={`hm-featured-card__stage-row hm-featured-card__stage-row--${status}${
+                          index === STAGE_ORDER.length - 1
+                            ? ' hm-featured-card__stage-row--last'
+                            : ''
+                        }`}
+                      >
+                        <span className="hm-featured-card__stage-rail" aria-hidden="true">
+                          <span className="hm-featured-card__stage-dot">
+                            {status === 'completed' ? '✓' : stageIndex(stage) + 1}
+                          </span>
+                          <span className="hm-featured-card__stage-line" />
+                        </span>
+                        <span className="hm-featured-card__stage-body">
+                          <span className="hm-featured-card__stage-name-row">
+                            <span className="hm-featured-card__stage-name">
+                              {stageLabels[stage]}
+                            </span>
+                            <span className="hm-featured-card__stage-state">
+                              {t(`home.featured.${stateKey}` as const)}
+                            </span>
+                          </span>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </div>
             <div className="hm-featured-card__footer">
               <span className="hm-featured-card__capacity">
-                {t('home.featured.capacity', { count: 13, max: 20 })}
+                <b>{13}</b> {t('home.featured.capacity', { max: 20 })}
               </span>
               <Link
                 to="/events?stage=participation"
@@ -149,10 +214,12 @@ const HomePage: React.FC = () => {
       </section>
 
       <section className="hm-open" aria-busy={loading || undefined}>
-        <h2 className="hm-section-title hm-open__title">{t('home.open.title')}</h2>
-        <Link to="/events" className="hm-open__all">
-          {t('home.open.seeAll')}
-        </Link>
+        <div className="hm-open__header">
+          <h2 className="hm-section-title hm-open__title">{t('home.open.title')}</h2>
+          <Link to="/events" className="hm-open__all">
+            {t('home.open.seeAll')}
+          </Link>
+        </div>
         <div className="hm-open__body">
           {loading && (
             <>

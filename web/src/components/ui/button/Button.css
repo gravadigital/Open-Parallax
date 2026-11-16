@@ -110,3 +110,12 @@
     min-height: 44px;
   }
 }
+
+/* Los botones que son links (`<a>`) heredan el subrayado por defecto del
+   navegador en pantallas pequeñas. Alcance por decisión explícita: solo
+   ≤1023px; desktop ≥1024 queda exactamente como estaba. */
+@media (max-width: 1023px) {
+  a.ui-button {
+    text-decoration: none;
+  }
+}

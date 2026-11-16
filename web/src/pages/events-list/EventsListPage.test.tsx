@@ -297,8 +297,12 @@ describe('EventsListPage', () => {
 
   it('TS-52: CSS mobile-first', () => {
     const css = fs.readFileSync(path.join(__dirname, 'EventsListPage.css'), 'utf8');
+    const mobileAt = css.indexOf('@media (max-width: 767px)');
     const at = css.indexOf('@media (min-width: 768px)');
+    expect(mobileAt).toBeGreaterThan(-1);
+    expect(mobileAt).toBeLessThan(at);
     const base = css.slice(0, at);
+    const mobile = css.slice(mobileAt, at);
     const media = css.slice(at);
     expect(base).toMatch(/\.evl-toolbar\s*\{[^}]*flex-direction:\s*column/);
     expect(base).toMatch(/\.evl-pending__list\s*\{[^}]*grid-template-columns:\s*1fr/);
@@ -309,8 +313,23 @@ describe('EventsListPage', () => {
     expect(css).toMatch(/\.evl-banner\.ui-card\s*\{[^}]*background:\s*var\(--bg-action-primary\)/);
     expect(base).toMatch(/\.evl-results \.ui-data-table tbody\s*\{[^}]*display:\s*grid/);
     expect(base).toMatch(/\.evl-results \.ui-data-table__row\s*\{[^}]*border-radius:/);
+    expect(mobile).toMatch(/\.evl-results\s*\{[^}]*margin-inline:/);
+    expect(mobile).toMatch(/\.evl-results \.ui-data-table__row\s*\{[^}]*padding:\s*var\(--ref-space-sm\)/);
     expect(media).toMatch(/\.evl-results \.ui-data-table tbody\s*\{[^}]*display:\s*table-row-group/);
-    expect(css).not.toMatch(/@media[^{]*max-width/);
     expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b|rgba\(/);
+  });
+
+  it('mobile result cards use available width without changing desktop', () => {
+    const css = fs.readFileSync(path.join(__dirname, 'EventsListPage.css'), 'utf8');
+    const mobileAt = css.indexOf('@media (max-width: 767px)');
+    const desktopAt = css.indexOf('@media (min-width: 768px)');
+    const mobile = css.slice(mobileAt, desktopAt);
+    const desktop = css.slice(desktopAt);
+    expect(mobileAt).toBeGreaterThan(-1);
+    expect(desktopAt).toBeGreaterThan(mobileAt);
+    expect(mobile).toMatch(/\.evl-results\s*\{[^}]*margin-inline:/);
+    expect(mobile).toMatch(/\.evl-results \.ui-data-table__row\s*\{[^}]*padding:\s*var\(--ref-space-sm\)/);
+    expect(desktop).not.toMatch(/\.evl-results\s*\{[^}]*margin-inline:/);
+    expect(desktop).not.toMatch(/\.evl-results \.ui-data-table__row\s*\{[^}]*padding:\s*var\(--ref-space-sm\)/);
   });
 });

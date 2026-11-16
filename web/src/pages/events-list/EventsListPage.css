@@ -441,6 +441,15 @@
   background: var(--bg-accent);
 }
 
+@media (max-width: 767px) {
+  .evl-results {
+    margin-inline: calc(-1 * (var(--layout-page-gutter) - var(--ref-space-sm)));
+  }
+  .evl-results .ui-data-table__row {
+    padding: var(--ref-space-sm);
+  }
+}
+
 /* ==========================================================================
    Desktop (≥768px)
    ========================================================================== */
@@ -899,5 +908,119 @@
     grid-row: auto;
     justify-self: auto;
     padding: 5px 13px;
+  }
+}
+
+/* ==========================================================================
+   Tablet (768–1023px)
+   La cabecera 9fr/3fr cortaba el CTA "+ Crear evento", los filtros pisaban la
+   buscadora y la tabla de 5 columnas (necesita ~860px) se solapaba: en este
+   rango se mantiene el diseño apilado de tarjetas de mobile. ≥1024 intacto.
+   ========================================================================== */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .evl-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .evl-banner.ui-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .evl-filters {
+    min-width: 0;
+  }
+
+  .evl-filters .ui-filter-tabs {
+    overflow-x: auto;
+  }
+
+  /* Tabla → tarjetas apiladas (mismo diseño que en mobile). */
+  .evl-results .ui-data-table {
+    display: block;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .evl-results .ui-data-table tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  .evl-results .ui-data-table__head {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .evl-results .ui-data-table__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    height: auto;
+    padding: 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: 16px;
+  }
+
+  .evl-results .ui-data-table__row:hover {
+    background: var(--bg-surface);
+  }
+
+  .evl-results .ui-data-table__cell {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+  }
+
+  .evl-results .ui-data-table__cell--action {
+    padding-right: 0;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .evl-results .ev-events-table__event {
+    gap: var(--space-stack-sm);
+    padding-right: 0;
+  }
+
+  .evl-results .ui-status-pill {
+    min-height: 0;
+    padding: 3px 9px;
+    font-size: 12px;
+  }
+
+  .evl-results .ui-progress-bar {
+    gap: 5px;
+    padding-right: 0;
+  }
+
+  .evl-results .ui-progress-bar__label {
+    font-size: 13px;
+  }
+
+  .evl-results .ui-progress-bar__track--sm {
+    height: 5px;
+  }
+
+  .evl-results .ui-data-table__cell--action .ui-button {
+    min-height: 44px;
+    height: 44px;
+    margin-top: 0;
+    padding: 0 14px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .evl-results .ui-data-table__cell--action .ui-button--secondary {
+    background: var(--button-secondary-bg);
+    color: var(--button-secondary-fg);
+    border-color: var(--button-secondary-border);
   }
 }

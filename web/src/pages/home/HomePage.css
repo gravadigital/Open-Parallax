@@ -10,9 +10,16 @@
   align-self: center;
 }
 .hm-page > .hm-how,
-.hm-page > .hm-open,
-.hm-page > .hm-banner {
+.hm-page > .hm-open {
   width: 100%;
+  max-width: none;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+.hm-page > .hm-banner {
+  /* Mobile: el banner va a 16px de cada lado (su margin); con width 100% desbordaba
+     16px y movía la página al desplazar. Desktop re-declara width 100%. */
+  width: auto;
   max-width: none;
   align-self: stretch;
   box-sizing: border-box;
@@ -20,6 +27,8 @@
 .hm-eyebrow {
   margin: 0;
   font: var(--type-eyebrow);
+  /* Mobile: la línea "evaluación entre pares · votación distribuida" entra en una sola línea. */
+  font-size: 9px;
   letter-spacing: var(--type-tracking-wide);
   text-transform: uppercase;
   color: var(--text-signal);
@@ -41,7 +50,9 @@
   gap: var(--space-stack-lg);
   background: var(--bg-band);
   color: var(--text-inverse);
-  padding: 28px var(--layout-page-gutter) 32px;
+  /* Mobile: margen de 16px para que la tarjeta destacada quepa en una línea;
+     desktop re-declara el gutter en el bloque min-width 768px. */
+  padding: 28px 16px 32px;
 }
 .hm-hero__copy {
   display: flex;
@@ -141,6 +152,10 @@
   font: var(--type-body);
   color: var(--text-secondary);
 }
+.hm-featured__description {
+  /* Mobile: la descripción del evento destacado va a 14px (desktop restaura 15px). */
+  font-size: 14px;
+}
 
 .hm-featured-card__footer {
   display: flex;
@@ -168,18 +183,239 @@
 }
 .hm-featured-card .ev-stage-timeline__list--compact {
   flex-wrap: nowrap;
-  gap: var(--ref-space-xs);
+  align-items: center;
+  gap: 4px;
 }
 .hm-featured-card .ev-stage-timeline__list--compact .ev-stage-timeline__title {
   justify-content: center;
 }
-.hm-featured-card .ev-stage-timeline__list--compact .ev-stage-timeline__name {
-  font-size: 10px;
-  line-height: var(--ref-font-leading-snug);
-  white-space: nowrap;
-}
 .hm-featured-card .ev-stage-timeline__list--compact .ev-stage-timeline__name-check {
   display: none;
+}
+
+/* ===== Tarjeta destacada — stepper de etapas (mobile) ===== */
+.hm-featured-card__stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--ref-color-gray-200);
+  border-radius: 16px;
+  background: var(--ref-color-white);
+  box-shadow: none;
+}
+.hm-featured-card__stage-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-inline-sm);
+}
+.hm-featured-card__stage-of {
+  font-family: var(--ref-font-family-mono);
+  font-size: 11px;
+  font-weight: var(--ref-font-weight-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ref-color-violet-700);
+}
+.hm-featured-card__stage-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 6px 0 6px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ref-color-violet-700);
+  font-size: 13px;
+  font-weight: var(--ref-font-weight-semibold);
+  cursor: pointer;
+}
+.hm-featured-card__stage-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-xs);
+}
+.hm-featured-card__stage-chevron {
+  transition: transform 0.15s ease;
+}
+.hm-featured-card__stage-chevron--open {
+  transform: rotate(180deg);
+}
+.hm-featured-card__after {
+  margin: 0;
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}
+
+/* Chips de etapa: rectángulos de 34px con el número dentro; sin línea conectora. */
+.hm-featured-card .ev-stage-timeline__item {
+  flex: 0 0 40px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 8px;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  background: var(--ref-color-white);
+}
+.hm-featured-card .ev-stage-timeline__line {
+  display: none;
+}
+.hm-featured-card .ev-stage-timeline__marker {
+  position: static;
+  transform: none;
+  width: auto;
+  height: auto;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  box-sizing: border-box;
+  color: inherit;
+}
+.hm-featured-card .ev-stage-timeline__list--compact .ev-stage-timeline__name {
+  font-size: 13px;
+  color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hm-featured-card .ev-stage-timeline__item--completed {
+  background: var(--ref-color-green-600);
+  color: var(--ref-color-white);
+}
+.hm-featured-card .ev-stage-timeline__item--current {
+  flex: 1 1 auto;
+  background: var(--ref-color-violet-500);
+  color: var(--ref-color-white);
+}
+.hm-featured-card .ev-stage-timeline__item--pending {
+  border: 1.5px dashed var(--ref-color-violet-300);
+  background: var(--ref-color-white);
+  color: var(--ref-color-gray-400);
+}
+.hm-featured-card .ev-stage-timeline__item--completed .ev-stage-timeline__name,
+.hm-featured-card .ev-stage-timeline__item--pending .ev-stage-timeline__name {
+  display: none;
+}
+
+/* Lista vertical de etapas visible al tocar "Ver etapas". */
+.hm-featured-card__stages {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 4px 0 0;
+  border-top: 1px solid var(--ref-color-gray-150);
+  list-style: none;
+}
+.hm-featured-card__stage-row {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 12px;
+}
+.hm-featured-card__stage-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.hm-featured-card__stage-dot {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-top: 10px;
+  border: 1.5px solid var(--ref-color-violet-300);
+  border-radius: 50%;
+  background: var(--ref-color-white);
+  color: var(--ref-color-gray-400);
+  font-size: 11px;
+  font-weight: var(--ref-font-weight-extrabold);
+  line-height: 1;
+  box-sizing: border-box;
+}
+.hm-featured-card__stage-row--completed .hm-featured-card__stage-dot {
+  border: 0;
+  background: var(--ref-color-green-600);
+  color: var(--ref-color-white);
+}
+.hm-featured-card__stage-row--current .hm-featured-card__stage-dot {
+  border: 0;
+  background: var(--ref-color-violet-500);
+  color: var(--ref-color-white);
+  box-shadow: 0 0 0 4px var(--ref-color-violet-100);
+}
+.hm-featured-card__stage-line {
+  flex: 1 1 0%;
+  width: 2px;
+  min-height: 8px;
+  background: var(--ref-color-gray-150);
+}
+.hm-featured-card__stage-row--completed .hm-featured-card__stage-line {
+  background: var(--ref-color-green-600);
+}
+.hm-featured-card__stage-row--last .hm-featured-card__stage-line {
+  background: transparent;
+}
+.hm-featured-card__stage-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 0 12px;
+  min-width: 0;
+}
+.hm-featured-card__stage-name-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.hm-featured-card__stage-name {
+  font-size: 15px;
+  font-weight: var(--ref-font-weight-semibold);
+  color: var(--ref-color-gray-600);
+}
+.hm-featured-card__stage-row--completed .hm-featured-card__stage-name {
+  color: var(--ref-color-green-600);
+}
+.hm-featured-card__stage-row--current .hm-featured-card__stage-name {
+  font-weight: var(--ref-font-weight-extrabold);
+  color: var(--ref-color-ink-900);
+}
+.hm-featured-card__stage-state {
+  font-family: var(--ref-font-family-mono);
+  font-size: 10px;
+  font-weight: var(--ref-font-weight-semibold);
+  letter-spacing: 0.08em;
+  color: var(--ref-color-gray-400);
+}
+.hm-featured-card__stage-row--completed .hm-featured-card__stage-state {
+  color: var(--ref-color-green-600);
+}
+.hm-featured-card__stage-row--current .hm-featured-card__stage-state {
+  color: var(--ref-color-violet-700);
+}
+
+/* Footer de la tarjeta: sin divisor; cifra en negrita; CTA de 44px. */
+.hm-featured-card__footer {
+  border-top: 0;
+  padding-top: 0;
+}
+.hm-featured-card__capacity {
+  font-size: 14px;
+  color: var(--ref-color-gray-700);
+}
+.hm-featured-card__cta {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 0 15px;
+  background: var(--ref-color-violet-500);
+  color: var(--ref-color-white);
+  text-decoration: none;
 }
 
 /* Línea divisoria sutil entre secciones sobre fondo oscuro */
@@ -212,7 +448,7 @@
 .hm-how__header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: var(--space-stack-md);
 }
 .hm-how__demo {
@@ -269,8 +505,14 @@
   padding: 0 16px 32px;
   color: var(--text-primary);
 }
+.hm-open__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-inline-md);
+}
 .hm-open__title {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: var(--ref-font-leading-snug);
@@ -286,9 +528,8 @@
   align-items: center;
   justify-content: center;
   min-height: 44px;
-  min-width: 175px;
-  padding: 0 var(--space-inline-md);
-  border: 1.5px solid var(--border-focus);
+  padding: 0;
+  border: 0;
   border-radius: var(--radius-control);
   font: var(--type-ui);
   color: var(--text-action);
@@ -336,7 +577,7 @@
   min-height: 72px;
 }
 .hm-open__card .hm-card__name {
-  font-size: var(--ref-font-size-xl);
+  font-size: 16px;
 }
 .hm-open__item .hm-card__description {
   font: var(--ref-font-weight-regular) var(--ref-font-size-sm)/var(--ref-font-leading-normal) var(--ref-font-family-base);
@@ -347,14 +588,15 @@
   -webkit-line-clamp: 2;
 }
 .hm-open__item .hm-open__card-cta {
-  align-self: flex-start;
+  align-self: stretch;
+  width: 100%;
   margin-top: auto;
   padding: 0 var(--ref-space-ms);
-  border: 1.5px solid #4B3FA8;
+  border: 1.5px solid #6E5BF2;
   background: transparent;
   color: #4B3FA8;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
   height: 44px;
   border-radius: 10px;
   text-decoration: none;
@@ -392,7 +634,7 @@
   background: #6E5BF2;
   color: var(--text-inverse);
   border-radius: 18px;
-  padding: 24px 20px 24px 32px;
+  padding: 24px 20px;
   margin: 0 16px 32px;
 }
 .hm-banner__cta {
@@ -502,6 +744,134 @@
     border-radius: 0;
   }
 
+  /* Desktop: la tarjeta destacada conserva su diseño original (sin stepper,
+     sin "Después" y con la línea de etapas con etiquetas debajo). */
+  .hm-eyebrow {
+    font-size: var(--ref-font-size-2xs);
+  }
+  .hm-featured-card__stepper {
+    display: contents;
+  }
+  .hm-featured-card__stage-head,
+  .hm-featured-card__after {
+    display: none;
+  }
+  .hm-featured-card__stages {
+    display: none;
+  }
+  .hm-featured__description {
+    font-size: var(--ref-font-size-md);
+  }
+  .hm-featured-card__footer {
+    border-top: 1px solid var(--border-default);
+    padding-top: var(--space-stack-md);
+  }
+  .hm-featured-card__cta {
+    font: var(--type-ui);
+    padding: 0 18px;
+    background: var(--button-primary-bg);
+    color: var(--button-primary-fg);
+    text-decoration: underline;
+  }
+  .hm-featured-card .ev-stage-timeline__list--compact {
+    align-items: stretch;
+    gap: var(--ref-space-xs);
+  }
+  .hm-featured-card .ev-stage-timeline__item {
+    flex: 1;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 10px;
+    height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-primary);
+  }
+  .hm-featured-card .ev-stage-timeline__item--completed {
+    background: transparent;
+    color: var(--text-primary);
+  }
+  .hm-featured-card .ev-stage-timeline__item--current {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-primary);
+  }
+  .hm-featured-card .ev-stage-timeline__item--pending {
+    border: 0;
+    background: transparent;
+    color: var(--text-primary);
+  }
+  .hm-featured-card .ev-stage-timeline__line {
+    display: block;
+  }
+  .hm-featured-card .ev-stage-timeline__track {
+    width: auto;
+    height: 30px;
+  }
+  .hm-featured-card .ev-stage-timeline__title {
+    justify-content: center;
+  }
+  .hm-featured-card .ev-stage-timeline__marker {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 26px;
+    height: 26px;
+    border: 2px solid var(--ref-color-violet-300);
+    border-radius: var(--radius-pill);
+    background: var(--ref-color-white);
+    box-shadow: none;
+    box-sizing: border-box;
+    color: var(--ref-color-violet-300);
+  }
+  .hm-featured-card .ev-stage-timeline__item--completed .ev-stage-timeline__marker {
+    width: 22px;
+    height: 22px;
+    border: 3px solid var(--ref-color-white);
+    border-radius: var(--radius-pill);
+    background: var(--ref-color-green-600);
+    box-sizing: content-box;
+    color: var(--ref-color-white);
+  }
+  .hm-featured-card .ev-stage-timeline__item--current .ev-stage-timeline__marker {
+    width: 24px;
+    height: 24px;
+    border: 0;
+    background: var(--ref-color-violet-500);
+    box-shadow: var(--ref-color-violet-100) 0 0 0 5px;
+    color: var(--ref-color-white);
+  }
+  .hm-featured-card .ev-stage-timeline__list--compact .ev-stage-timeline__name {
+    font-size: 10px;
+    overflow: visible;
+    text-overflow: clip;
+  }
+  .hm-featured-card .ev-stage-timeline__item--completed .ev-stage-timeline__name {
+    color: var(--ref-color-green-600);
+  }
+  .hm-featured-card .ev-stage-timeline__item--current .ev-stage-timeline__name {
+    color: var(--ref-color-violet-700);
+  }
+  .hm-featured-card .ev-stage-timeline__item--pending .ev-stage-timeline__name {
+    color: var(--text-primary);
+  }
+  .hm-featured-card .ev-stage-timeline__item--completed .ev-stage-timeline__name,
+  .hm-featured-card .ev-stage-timeline__item--pending .ev-stage-timeline__name {
+    display: inline;
+  }
+  .hm-featured-card__capacity {
+    font: var(--type-caption);
+    color: var(--text-secondary);
+  }
+  .hm-featured-card__capacity b {
+    /* Desktop: la cifra va sin negrita (como antes); mobile la muestra en bold. */
+    font-weight: inherit;
+  }
+
   .hm-how {
     padding: 96px var(--layout-page-gutter);
     gap: 40px;
@@ -563,6 +933,9 @@
     padding: 96px var(--layout-page-gutter);
     gap: 32px;
   }
+  .hm-open__header {
+    display: contents;
+  }
   .hm-open__title {
     font-size: 28px;
     font-weight: var(--ref-font-weight-extrabold);
@@ -599,8 +972,12 @@
     gap: 16px;
     box-shadow: 0 4px 11px 0 #173E2C36;
   }
+  .hm-open__card .hm-card__name {
+    font-size: var(--ref-font-size-xl);
+  }
   .hm-open__item .hm-open__card-cta {
     align-self: flex-start;
+    width: auto;
     border: 1.5px solid #6E5BF2;
     color: #4B3FA8;
     font-weight: 600;
@@ -642,5 +1019,37 @@
     border: none;
     text-decoration: none;
     height: auto;
+  }
+}
+
+/* ===== Tablet (768–1023px) =====
+   En este rango el hero de 2 columnas con título de 60px expulsaba la tarjeta
+   destacada a ~74px de ancho (StatusPill vertical, contenido cortado) y
+   "Cómo participar" desbordaba con4 columnas fijas. Mobile-first: los
+   ajustes van en min-width:768 y un bloque min-width:1024 restaura los
+   valores desktop exactos (≥1024 sin cambios). */
+@media (min-width: 768px) {
+  .hm-hero {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 40px;
+  }
+  .hm-hero__title {
+    font-size: 44px;
+  }
+  .hm-steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .hm-hero {
+    grid-template-columns: 1.1fr 1fr;
+    gap: 72px;
+  }
+  .hm-hero__title {
+    font-size: 60px;
+  }
+  .hm-steps {
+    grid-template-columns: repeat(4, 1fr);
   }
 }

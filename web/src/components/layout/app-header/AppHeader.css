@@ -1,11 +1,12 @@
 .ly-header {
+  position: relative;
   background: var(--bg-band);
   color: var(--text-inverse);
 }
 .ly-header__inner {
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   column-gap: var(--space-inline-sm);
   row-gap: var(--ref-space-xs);
@@ -45,12 +46,15 @@
   color: var(--text-inverse);
 }
 
-/* Mobile (base): los enlaces viven en el menú desplegable. */
+/* Mobile (base): los enlaces, la cuenta y el idioma viven en el menú desplegable. */
 .ly-header__links {
   display: none;
 }
 .ly-header__menu-toggle {
   display: inline-flex;
+  grid-column: 4;
+  grid-row: 1;
+  justify-self: end;
 }
 
 .ly-header__actions {
@@ -68,6 +72,12 @@
   grid-row: 1;
   justify-self: end;
 }
+.ly-header__auth-link--login.ui-button {
+  /* Mobile: botón blanco como en el diseño; en desktop (min-width 900px) se re-declara. */
+  background: var(--ref-color-white);
+  color: var(--ref-color-ink-900);
+  border-color: var(--ref-color-white);
+}
 .ly-header__auth-link--register {
   display: none;
 }
@@ -77,6 +87,7 @@
   justify-self: end;
 }
 .ly-header__actions > .ly-language-select {
+  display: none;
   grid-column: 2;
   grid-row: 1;
   justify-self: end;
@@ -99,6 +110,88 @@
   grid-column: 2;
   grid-row: 1;
   justify-self: end;
+}
+
+/* La barra mobile muestra solo el avatar del usuario; el nombre y el chevrón quedan
+   para el panel desplegable y para desktop. */
+.ly-header__actions .ly-user-menu__name {
+  display: none;
+}
+.ly-header__actions .ly-user-menu__chevron {
+  display: none;
+}
+
+/* Menú desplegable mobile: ancho completo, debajo de la barra. */
+.ly-header__mobile-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  z-index: var(--z-popover);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-stack-md);
+  padding: var(--space-padding-compact) var(--layout-page-gutter) var(--space-padding-default);
+  background: var(--bg-band);
+  border-top: 1px solid var(--border-inverse);
+  box-shadow: var(--menu-shadow);
+}
+.ly-header__mobile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ref-space-xs);
+}
+.ly-header__mobile-link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-inline-md);
+  border-radius: var(--radius-control);
+  color: var(--text-inverse);
+  font: var(--type-ui);
+  text-decoration: none;
+}
+.ly-header__mobile-link--current,
+.ly-header__mobile-link:hover,
+.ly-header__mobile-link:focus-visible {
+  background: var(--bg-inverse-subtle);
+  outline: none;
+}
+.ly-header__mobile-divider {
+  height: 1px;
+  background: var(--border-inverse);
+}
+.ly-header__mobile-account .ui-menu,
+.ly-header__mobile-account .ly-user-menu__trigger.ui-button {
+  width: 100%;
+}
+.ly-header__mobile-account .ly-user-menu__name {
+  max-width: none;
+}
+.ly-header__mobile-account .ly-user-menu__trigger.ui-button {
+  justify-content: flex-start;
+  min-height: 44px;
+  padding: 0 var(--space-inline-md);
+}
+.ly-header__mobile-auth {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-inline-sm);
+}
+.ly-header__mobile-auth .ui-button {
+  justify-content: center;
+  text-decoration: none;
+}
+.ly-header__mobile-language {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-inline-sm);
+  color: var(--text-inverse-muted);
+  font: var(--type-caption);
+}
+.ly-header__mobile-language .ly-language-select {
+  margin-left: 0;
 }
 
 @media (min-width: 900px) {
@@ -195,7 +288,19 @@
     font-weight: var(--ref-font-weight-bold);
   }
   .ly-header__actions > .ly-language-select {
+    display: inline-flex;
     margin-left: var(--ref-space-xs);
+  }
+  /* Desktop conserva la barra completa: el panel mobile no se muestra y el usuario
+     vuelve a mostrar nombre y chevrón junto al avatar. */
+  .ly-header__mobile-menu {
+    display: none;
+  }
+  .ly-header__actions .ly-user-menu__name {
+    display: inline;
+  }
+  .ly-header__actions .ly-user-menu__chevron {
+    display: inline-block;
   }
 }
 

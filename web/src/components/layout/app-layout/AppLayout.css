@@ -21,7 +21,7 @@
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
-  padding: var(--space-padding-spacious) var(--layout-page-gutter);
+  padding: var(--space-padding-default) var(--space-padding-compact);
 }
 .ly-footer__brand {
   display: flex;
@@ -36,7 +36,7 @@
 .ly-footer__logo-mark {
   display: block;
   width: auto;
-  height: 36px;
+  height: 24px;
 }
 .ly-footer__logo-mark path:first-child {
   fill: var(--text-inverse);
@@ -130,5 +130,13 @@
   .ly-footer__version {
     padding: 4px 9px;
     border-color: rgba(255, 255, 255, 0.22);
+  }
+}
+
+/* Tablet (768–1023px): la grilla desktop con gap 64px no cabe en este rango
+   y el pie se desbordaba 33px a 768px en todas las rutas. ≥1024 intacto. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .ly-footer__inner {
+    gap: 24px;
   }
 }

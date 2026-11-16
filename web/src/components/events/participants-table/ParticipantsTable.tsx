@@ -43,7 +43,7 @@ const VOTE_PILL: Record<VoteCell, { tone: StatusPillTone; key: TranslationKey }>
 
 /**
  * Pública (default): nombre y fecha de inscripción, nunca el email.
- * Organizador: nombre, email, archivo y, según la etapa, inscripción o voto.
+ * Organizador: nombre con el email debajo, archivo y, según la etapa, inscripción o voto.
  */
 const ParticipantsTable: React.FC<ParticipantsTableProps> = (props) => {
   const { rows, caption, loading = false } = props;
@@ -78,6 +78,7 @@ const ParticipantsTable: React.FC<ParticipantsTableProps> = (props) => {
             size="sm"
             iconStart={<CheckIcon width={16} height={16} />}
             aria-label={t('manage.participants.download', { name: attachment.original_name })}
+            title={attachment.original_name}
             onClick={() => onDownload?.(attachment)}
             className="ev-participants-table__file"
           >
@@ -101,9 +102,27 @@ const ParticipantsTable: React.FC<ParticipantsTableProps> = (props) => {
       },
     };
 
+    // El email va debajo del nombre, no en su propia columna: con cuatro columnas la tabla no
+    // entraba en la tarjeta de gestión y el nombre y el email quedaban de ~75 px.
+    const nameColumn: DataTableColumn<EventParticipant> = {
+      key: 'name',
+      header: t('manage.participants.name'),
+      render: (row) => {
+        const at = row.email.indexOf('@');
+        return (
+          <span className="ev-participants-table__person">
+            <span className="ev-participants-table__name">{row.name}</span>
+            <span className="ev-participants-table__email">
+              {/* Si no entra, corta después de la arroba y no en cualquier letra. */}
+              {at < 0 ? row.email : <>{row.email.slice(0, at + 1)}<wbr />{row.email.slice(at + 1)}</>}
+            </span>
+          </span>
+        );
+      },
+    };
+
     columns = [
-      { key: 'name', header: t('manage.participants.name') },
-      { key: 'email', header: t('manage.participants.email') },
+      nameColumn,
       fileColumn,
       stage === 'voting' ? voteColumn : registeredAt(t('manage.participants.registeredAt')),
     ];

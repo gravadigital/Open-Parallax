@@ -161,12 +161,21 @@ func (h *UserHandler) AuthenticateUser(c *gin.Context) {
 		return
 	}
 
-	// Check if the user has a password (OAuth accounts don't)
+	// A user without a password is either a Google account or someone created by signing up to
+	// an event without an account (RegisterParticipant): only the first one can use Google.
 	if existingUser.PasswordHash == nil {
-		h.log.Warn("authentication failed: user has no password (OAuth account)", "email", req.Email)
+		if existingUser.GoogleID != nil {
+			h.log.Warn("authentication failed: user has no password (OAuth account)", "email", req.Email)
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "This account was created with Google. Please use the 'Continue with Google' button to sign in.",
+				"code":  "OAUTH_ACCOUNT_NO_PASSWORD",
+			})
+			return
+		}
+		h.log.Warn("authentication failed: user has no password yet (created by an event sign-up)", "email", req.Email)
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "This account was created with Google. Please use the 'Continue with Google' button to sign in.",
-			"code":  "OAUTH_ACCOUNT_NO_PASSWORD",
+			"error": "This account has no password yet. Use 'Forgot your password?' to create one.",
+			"code":  "ACCOUNT_NO_PASSWORD",
 		})
 		return
 	}

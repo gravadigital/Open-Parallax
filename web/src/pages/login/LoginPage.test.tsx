@@ -165,6 +165,15 @@ describe('LoginPage', () => {
     );
   });
 
+  it('cuenta creada al inscribirse a un evento, sin contraseña ni Google', async () => {
+    authenticate.mockRejectedValue(apiErr(401, 'ACCOUNT_NO_PASSWORD'));
+    renderLogin();
+    fillAndSubmit();
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Esta cuenta todavía no tiene contraseña. Usa «¿La olvidaste?» para crear una.'
+    );
+  });
+
   it('TS-22: error de red y error desconocido', async () => {
     authenticate.mockRejectedValue(new TypeError('Failed to fetch'));
     const view = renderLogin();

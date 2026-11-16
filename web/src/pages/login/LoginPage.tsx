@@ -15,7 +15,12 @@ import { UserService } from '../../services/api';
 type LoginField = 'email' | 'password';
 type InputRef = HTMLInputElement | HTMLTextAreaElement;
 
-const LOGIN_ERROR_CODES = ['INVALID_CREDENTIALS', 'OAUTH_ACCOUNT_NO_PASSWORD', 'INVALID_PAYLOAD'];
+const LOGIN_ERROR_CODES = [
+  'INVALID_CREDENTIALS',
+  'OAUTH_ACCOUNT_NO_PASSWORD',
+  'ACCOUNT_NO_PASSWORD',
+  'INVALID_PAYLOAD',
+];
 
 const LoginPage: React.FC = () => {
   const { t } = useT();

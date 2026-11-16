@@ -1060,6 +1060,8 @@ export const es = {
     },
   },
   errors: {
+    ACCOUNT_NO_PASSWORD:
+      'Esta cuenta todavía no tiene contraseña. Usa «¿La olvidaste?» para crear una.',
     ALREADY_CANCELLED: 'Este evento ya fue cancelado.',
     ALREADY_REGISTERED: 'Ya estás inscrito en este evento.',
     ASSIGNMENTS_EXIST: 'Las asignaciones de este evento ya fueron generadas.',

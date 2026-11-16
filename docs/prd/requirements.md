@@ -208,10 +208,10 @@ para participar sin tener que recordar otra contraseña.
 | ID | Capacidad | Actor | Entidad | Operación | Campos Clave | Reglas de Negocio |
 |----|-----------|-------|---------|-----------|--------------|-------------------|
 | C-01 | Registrarse con email | U-03 Visitante | Usuario | CREATE | `name` (string, req), `lastname` (string, opt), `email` (string, req, unique), `password` (string, req, min 8) | Password con bcrypt DefaultCost. Email con CHECK de formato en base. Email duplicado se rechaza |
-| C-02 | Iniciar sesión | U-03 Visitante | Usuario | ACTION | `email`, `password` | Devuelve JWT HS256 con `user_id`, `email`, `role`. Vigencia 24h. ⚠️ Ver defecto D-01 |
+| C-02 | Iniciar sesión | U-03 Visitante | Usuario | ACTION | `email`, `password` | Devuelve JWT HS256 con `user_id`, `email`, `role`. Vigencia 24h. Una cuenta sin contraseña se rechaza con un código según su origen: `OAUTH_ACCOUNT_NO_PASSWORD` si tiene Google vinculado (entra con Google) y `ACCOUNT_NO_PASSWORD` si se creó al registrarse a un evento (crea su contraseña con C-05/C-06). ⚠️ Ver defecto D-01 |
 | C-03 | Verificar identidad de Google | U-03 Visitante | Usuario | ACTION | `id_token` (string, req) | El front obtiene el token con `@react-oauth/google`; el back lo verifica contra Google. Si el `google_id` ya existe, loguea |
 | C-04 | Registrarse con Google | U-03 Visitante | Usuario | CREATE | `id_token`, `name` (string, req) | Si el usuario es nuevo, la UI pide el nombre en un modal antes de registrar. `password_hash` queda nulo |
-| C-05 | Solicitar recuperación | U-03 Visitante | Usuario | ACTION | `email` (string, req) | Genera token hex de 32 bytes con expiración de 1h y lo envía por SMTP |
+| C-05 | Solicitar recuperación | U-03 Visitante | Usuario | ACTION | `email` (string, req) | Genera token hex de 32 bytes con expiración de 1h y lo envía por SMTP. Responde igual exista o no el email. También es la vía para que una cuenta creada al registrarse a un evento defina su primera contraseña. ⚠️ Ver defecto D-17 |
 | C-06 | Definir nueva contraseña | U-03 Visitante | Usuario | UPDATE | `token` (string, req, de la query), `password` (string, req, min 8) | El token debe existir y no estar expirado. Se consume al usarse |
 | C-07 | Mantener la sesión | U-02 Participante | Usuario | READ | — | Sesión en `localStorage` (`telescopio_user`, `telescopio_token`), restaurada al recargar |
 | C-08 | Cerrar sesión ante token expirado | U-02 Participante | Usuario | ACTION | — | Ante un 401, el cliente limpia la sesión y emite `CustomEvent auth:logout`; `AuthContext` desloguea **sin recargar la página** |
@@ -318,6 +318,11 @@ para entrar en la evaluación.
   CUANDO me registro con `email: "nuevo@obs.org"` que no existe en el sistema
   ENTONCES se crea el usuario sin contraseña
   Y quedo registrado como `participant` del evento
+
+- DADO que me registré a un evento sin cuenta y mi usuario no tiene contraseña ni Google
+  CUANDO intento iniciar sesión con mi email y cualquier contraseña
+  ENTONCES el login me indica que la cuenta todavía no tiene contraseña y que use "¿La olvidaste?"
+  para crearla (`ACCOUNT_NO_PASSWORD`), en lugar de mandarme a Google
 
 - DADO que ya subí mi propuesta al evento
   CUANDO abro la pantalla del evento
@@ -479,6 +484,8 @@ y porque son el insumo directo de los primeros requerimientos de corrección.
 | D-13 | **Sin rutas protegidas ni ruta 404.** `/events/create` y `/events/:eventId/manage` son alcanzables por URL sin sesión. Una URL desconocida renderiza la navbar sobre contenido vacío | Media | `web/src/App.tsx:177-184` |
 | D-14 | **El health check de `Auth` está hardcodeado en `true`.** El aviso de API no disponible es código inalcanzable | Baja | `web/src/components/auth/Auth.tsx:30-36` |
 | D-15 | **Los evaluadores no pueden abrir las propuestas que tienen que rankear.** `canDownload` permite la descarga al dueño, al autor del evento y a un `admin`, pero no a quien tiene la propuesta en su asignación. Además, `RankingVotePanel` la abre con un `<a href>` sin token y con la URL `http://localhost:8080` fija. Bloquea el flujo de evaluación. **Parte `api` resuelta en S-007** (el evaluador descarga lo asignado, con nombre neutro); pendiente la parte `web` | Crítica | `api/internal/handlers/attachment_handler.go:canDownload`; `web/src/components/ranking-vote-panel/RankingVotePanel.tsx:242` |
+| ~~D-16~~ | **El login mandaba a Google a cuentas que no lo tienen.** Una cuenta creada al registrarse a un evento sin sesión (C-18) no tiene contraseña ni `google_id`, pero el login respondía `OAUTH_ACCOUNT_NO_PASSWORD` y la UI decía "Ingresa con Google": la cuenta quedaba sin forma clara de entrar — **CORREGIDO 2026-11-16:** responde `ACCOUNT_NO_PASSWORD` y la UI indica usar "¿La olvidaste?" | ~~Alta~~ **Corregido** | `api/internal/handlers/user_handler.go:AuthenticateUser` |
+| D-17 | **El token de recuperación se guarda en claro.** `users.password_reset_token` tiene el mismo valor que viaja en el link del mail: quien pueda leer la base puede resetear la contraseña de cualquier usuario con un pedido pendiente, durante la hora de vigencia. Lo habitual es guardar solo un hash del token | Media | `api/internal/domain/participant/participant.go:GeneratePasswordResetToken` |
 
 ---
 

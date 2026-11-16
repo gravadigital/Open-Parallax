@@ -194,7 +194,7 @@ arrancar. Hay un CLI (`cmd/migrate`) con flag `-rollback`.
 
 | Tabla | Contenido |
 |---|---|
-| `users` | Identidad. `password_hash` nullable (OAuth) |
+| `users` | Identidad. `password_hash` nullable: cuentas de Google y cuentas creadas al registrarse a un evento sin sesión |
 | `events` | Eventos y su etapa |
 | `event_participants` | Relación con rol (`creator` / `participant`) — **el modelo de roles vigente** |
 | `attachments` | Las propuestas (conjunto `F` del modelo matemático) |

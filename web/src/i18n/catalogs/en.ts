@@ -1060,6 +1060,7 @@ export const en: Catalog = {
     },
   },
   errors: {
+    ACCOUNT_NO_PASSWORD: "This account doesn't have a password yet. Use \"Forgot it?\" to create one.",
     ALREADY_CANCELLED: 'This event has already been cancelled.',
     ALREADY_REGISTERED: 'You are already registered for this event.',
     ASSIGNMENTS_EXIST: 'The assignments for this event have already been generated.',

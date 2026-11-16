@@ -2,11 +2,37 @@
   min-width: 0;
 }
 
-/* El nombre del archivo no rompe el ancho de la celda apilada (mobile). */
+/* El nombre del archivo va en una sola línea y se corta con "…" (el nombre completo queda en
+   el title). Sin tope, un nombre largo estiraba la tabla fuera de su tarjeta en desktop: en
+   una tabla con layout automático, el max-width: 100% no limita la celda, así que en desktop
+   el tope es fijo. */
 .ev-participants-table__file {
   max-width: 100%;
-  overflow-wrap: anywhere;
   text-align: start;
+}
+.ev-participants-table__file .ui-button__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 768px) {
+  .ev-participants-table__file {
+    max-width: 10rem;
+  }
+}
+
+.ev-participants-table__person {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ev-participants-table__name {
+  font-weight: 600;
+}
+.ev-participants-table__email {
+  font: var(--type-caption);
+  color: var(--text-secondary);
 }
 
 /* Descarga con aspecto de píldora de éxito, como el diseño. */

@@ -160,6 +160,20 @@ func TestAuthenticateUser_RejectsOAuthAccountWithoutPassword(t *testing.T) {
 	assert.Equal(t, "OAUTH_ACCOUNT_NO_PASSWORD", jsonBody(t, w)["code"])
 }
 
+// A user created by signing up to an event without an account has neither a password nor
+// Google: telling them to use Google would leave them with no way in.
+func TestAuthenticateUser_RejectsEventSignupAccountWithoutPassword(t *testing.T) {
+	s := newTestUserHandlerSet()
+	u := participant.NewParticipant("Ana", "", "ana@example.com")
+	s.userRepo.addUser(u)
+
+	body := map[string]interface{}{"email": "ana@example.com", "password": "anything1"}
+	w := performRequest(t, http.MethodPost, s.handler.AuthenticateUser, nil, "", body)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+	assert.Equal(t, "ACCOUNT_NO_PASSWORD", jsonBody(t, w)["code"])
+}
+
 // ---------------------------------------------------------------------------
 // GetUser
 // ---------------------------------------------------------------------------

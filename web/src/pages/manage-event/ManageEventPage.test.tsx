@@ -260,7 +260,7 @@ describe('ManageEventPage', () => {
 
       const table = screen.getByRole('table');
       expect(within(table).getAllByRole('row')).toHaveLength(5);
-      expect(within(table).getByRole('columnheader', { name: 'Email' })).toBeInTheDocument();
+      expect(within(row('Bruno Ríos')).getByText('bruno@x.com')).toBeInTheDocument();
       expect(within(table).getByRole('columnheader', { name: 'Inscripción' })).toBeInTheDocument();
       expect(within(row('Eva Torres')).getByText('Falta archivo')).toBeInTheDocument();
       expect(within(row('Bruno Ríos')).getByRole('button', { name: 'Descargar sol.png' })).toBeInTheDocument();

@@ -74,7 +74,7 @@ describe('ParticipantsTable · organizador', () => {
       />
     );
     const headers = screen.getAllByRole('columnheader').map((h) => h.textContent);
-    expect(headers).toEqual(['Nombre', 'Email', 'Archivo', 'Inscripción']);
+    expect(headers).toEqual(['Nombre', 'Archivo', 'Inscripción']);
     const bruno = within(rowOf('Bruno Ríos'));
     expect(bruno.getByText('bruno@x.com')).toBeInTheDocument();
     const download = bruno.getByRole('button', { name: 'Descargar sol.png' });
@@ -114,7 +114,7 @@ describe('ParticipantsTable · organizador', () => {
       />
     );
     const headers = screen.getAllByRole('columnheader').map((h) => h.textContent);
-    expect(headers).toEqual(['Nombre', 'Email', 'Archivo', 'Voto']);
+    expect(headers).toEqual(['Nombre', 'Archivo', 'Voto']);
     expect(within(rowOf('Bruno Ríos')).getByText('✓ Enviado')).toBeInTheDocument();
     expect(within(rowOf('Carla Méndez')).getByText('Pendiente')).toBeInTheDocument();
     expect(within(rowOf('Fede Gil')).getByText('No participa')).toBeInTheDocument();

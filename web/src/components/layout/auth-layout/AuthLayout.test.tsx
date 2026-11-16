@@ -40,16 +40,23 @@ describe('AuthLayout', () => {
     expect(ref.current).toBe(screen.getByRole('heading', { level: 1 }));
   });
 
-  it('TS-10: CSS mobile-first, dos columnas iguales desde 768px', () => {
+  it('TS-10: ajustes de topbar mobile y dos columnas desde 768px', () => {
     const css = fs.readFileSync(path.join(__dirname, 'AuthLayout.css'), 'utf8');
+    const mobileIndex = css.indexOf('@media (max-width: 767px)');
     const mediaIndex = css.indexOf('@media (min-width: 768px)');
+    expect(mobileIndex).toBeGreaterThan(-1);
     expect(mediaIndex).toBeGreaterThan(-1);
+    expect(mobileIndex).toBeLessThan(mediaIndex);
     const base = css.slice(0, mediaIndex);
     const desktop = css.slice(mediaIndex);
+    const mobile = css.slice(mobileIndex, mediaIndex);
     expect(base).toMatch(/\.ly-auth__benefits\s*\{[^}]*display:\s*none/);
     expect(base).toMatch(/\.ly-auth\s*\{[^}]*flex-direction:\s*column/);
+    expect(mobile).toMatch(/\.ly-auth \.ly-auth__benefits\s*\{[^}]*display:\s*flex/);
+    expect(mobile).toMatch(/flex-direction:\s*column/);
+    expect(mobile).toMatch(/\.ly-auth__topbar\s*\{[^}]*flex-wrap:\s*nowrap/);
+    expect(mobile).toMatch(/\.ly-auth__topbar \.ly-language-select__option/);
     expect(desktop).toMatch(/\.ly-auth__benefits\s*\{[^}]*display:\s*flex/);
     expect(desktop).toMatch(/grid-template-columns:\s*1fr 1fr/);
-    expect(css).not.toMatch(/@media[^{]*max-width/);
   });
 });

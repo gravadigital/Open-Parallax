@@ -8,6 +8,8 @@
    sombras solo vía tier 2/3. Nunca --ref-color-* desde un componente.
    ======================================================================== */
 :root {
+   --layout-page-gutter: clamp(24px, 8.333vw, 120px);
+
   /* ======================================================================
      Tier 1 — reference
      ====================================================================== */
@@ -28,6 +30,7 @@
   --ref-color-gray-50: #fafbfc;
   --ref-color-violet-700: #4B3FA8;
   --ref-color-violet-500: #6e5bf2;
+  --ref-color-violet-300: #b9aef0;
   --ref-color-violet-200: #cfc9f7;
   --ref-color-violet-100: #eae7f9;
   --ref-color-violet-50: #f8f7ff;
@@ -56,6 +59,12 @@
   --ref-color-cover-lilac: #EECEF5;
   --ref-color-cover-sand: #E2D7CA;
   --ref-color-cover-mist: #D2D9E4;
+  --ref-color-blue-50: #eff6ff;
+  --ref-color-blue-300: #93c5fd;
+  --ref-color-green-50: #f0fdf4;
+  --ref-color-green-300: #86efac;
+  --ref-color-orange-50: #fff7ed;
+  --ref-color-orange-300: #fdba74;
 
   /* Tipografía (tamaños en rem, base 16px) */
   --ref-font-family-base: 'Plus Jakarta Sans', system-ui, sans-serif;
@@ -134,6 +143,7 @@
   --bg-action-primary-hover: var(--bg-action-primary);
   --bg-action-subtle: var(--ref-color-violet-100);
   --bg-accent: var(--ref-color-violet-500);
+  --bg-highlight: var(--ref-color-violet-200);
   --bg-unread: var(--ref-color-violet-50);
   --bg-success: var(--ref-color-green-600);
   --bg-success-subtle: var(--ref-color-green-100);
@@ -163,8 +173,15 @@
   --countdown-box-border: #ffffff29;
   --countdown-unit-fg: #9aa6bf;
 
+  /* Superficies y bordes sobre la banda negra */
+  --bg-inverse-subtle: rgba(255, 255, 255, 0.1);
+  --bg-inverse-hover: rgba(255, 255, 255, 0.08);
+  --border-inverse-strong: rgba(255, 255, 255, 0.3);
+  --text-inverse-muted: #9aa6bf;
+
   /* Text */
   --text-primary: var(--ref-color-ink-900);
+  --text-body: var(--ref-color-gray-700);
   --text-secondary: var(--ref-color-gray-600);
   --text-muted: var(--ref-color-gray-500);
   --text-disabled: var(--ref-color-gray-400);
@@ -173,15 +190,19 @@
   --text-signal: var(--ref-color-cyan-400);
   --text-action: var(--ref-color-violet-700);
   --text-success: var(--ref-color-green-700);
+  --text-success-accent: var(--ref-color-green-600);
   --text-warning: var(--ref-color-amber-700);
   --text-error: var(--ref-color-red-700);
 
   /* Border */
   --border-default: var(--ref-color-gray-200);
+  --border-subtle: var(--ref-color-gray-150);
   --border-strong: var(--ref-color-gray-300);
   --border-focus: var(--ref-color-violet-500);
   --border-error: var(--ref-color-red-700);
   --border-inverse: rgba(255, 255, 255, 0.12);
+  --border-warning-subtle: #ebd7a6;
+  --border-success-subtle: #c9e6d6;
 
   /* Forma y elevación */
   --radius-control: var(--ref-radius-md);
@@ -322,15 +343,33 @@
   --empty-state-icon: var(--text-muted);
   --empty-state-text: var(--text-secondary);
 
+  /* Notification tags — color por tipo de notificación */
+  --notification-tag-registration-bg: #f7edd6;
+  --notification-tag-voting-bg: #eae7f9;
+  --notification-tag-results-bg: #e1f1e8;
+  --notification-tag-myEvents-bg: #e8ecf2;
+
+  /* Notification tag borders / text */
+  --notification-tag-registration-fg: #8a6212;
+  --notification-tag-voting-fg: #4B3FA8;
+  --notification-tag-results-fg: #16744a;
+  --notification-tag-myEvents-fg: #39414d;
+
+  /* Notification icon squares (saturated colors, white symbol) */
+  --notification-icon-registration-bg: #e9a227;
+  --notification-icon-voting-bg: #6e5bf2;
+  --notification-icon-results-bg: #16744a;
+  --notification-icon-myEvents-bg: #000000;
+
   /* DateQuickPicker / NumberStepper / FileDropzone / Menu */
   --date-picker-preset-selected-bg: var(--bg-action-subtle);
   --date-picker-preset-selected-fg: var(--text-action);
   --number-stepper-border: var(--border-strong);
-  --file-dropzone-bg: var(--bg-surface-subtle);
-  --file-dropzone-border: var(--border-strong);
+  --file-dropzone-bg: var(--ref-color-violet-50);
+  --file-dropzone-border: var(--ref-color-violet-300);
   --file-dropzone-border-dragover: var(--border-focus);
   --file-dropzone-bg-dragover: var(--bg-action-subtle);
-  --file-dropzone-radius: var(--radius-area);
+  --file-dropzone-radius: 16px;
   --menu-bg: var(--bg-surface);
   --menu-shadow: var(--shadow-popover);
   --menu-item-hover: var(--bg-surface-subtle);

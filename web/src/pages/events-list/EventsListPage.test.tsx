@@ -98,6 +98,28 @@ describe('EventsListPage', () => {
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
 
+  it('ordena Todos por etapa y conserva el orden de cada etapa', async () => {
+    listEvents.mockResolvedValue(page([
+      listItem({ id: 'r1', name: 'Resultado 1', stage: 'results' }),
+      listItem({ id: 'v1', name: 'Votación 1', stage: 'voting' }),
+      listItem({ id: 'p1', name: 'Inscripción 1', stage: 'participation' }),
+      listItem({ id: 'r2', name: 'Resultado 2', stage: 'results' }),
+      listItem({ id: 'p2', name: 'Inscripción 2', stage: 'participation' }),
+    ]));
+    renderWithProviders(<EventsListPage />, { route: '/events', auth: guest });
+    await settle();
+
+    const table = screen.getByRole('table');
+    const eventRows = within(table).getAllByRole('row').slice(1);
+    expect(eventRows.map((row) => within(row).getAllByRole('cell')[0].textContent)).toEqual([
+      'Inscripción 1Diseña el afiche del festival',
+      'Inscripción 2Diseña el afiche del festival',
+      'Votación 1Diseña el afiche del festival',
+      'Resultado 1Diseña el afiche del festival',
+      'Resultado 2Diseña el afiche del festival',
+    ]);
+  });
+
   it('TS-37: filtro por etapa', async () => {
     renderWithProviders(<EventsListPage />, { route: '/events', auth: signedIn });
     await settle();
@@ -205,9 +227,11 @@ describe('EventsListPage', () => {
     expect(screen.queryByRole('heading', { name: /Tus pendientes/ })).toBeNull();
     expect(screen.getByRole('heading', { level: 2, name: 'Cómo participar' })).toBeInTheDocument();
     expect(screen.getByText('Elige un evento con inscripción abierta')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver demo' })).toHaveAttribute('href', '/');
     const create = screen.getByRole('link', { name: 'Crear un evento' });
     expect(create).toHaveClass('ui-button--secondary');
     expect(create).toHaveAttribute('href', '/login?next=%2Fevents%2Fcreate');
+    expect(create).not.toHaveClass('ui-button--primary');
     expect(screen.getByRole('link', { name: 'Crear cuenta gratis' })).toHaveAttribute('href', '/register');
     expect(screen.getByRole('button', { name: 'Participar Concurso de afiches' })).toBeInTheDocument();
     expect(screen.getByText('Requiere cuenta')).toBeInTheDocument();
@@ -273,18 +297,39 @@ describe('EventsListPage', () => {
 
   it('TS-52: CSS mobile-first', () => {
     const css = fs.readFileSync(path.join(__dirname, 'EventsListPage.css'), 'utf8');
+    const mobileAt = css.indexOf('@media (max-width: 767px)');
     const at = css.indexOf('@media (min-width: 768px)');
+    expect(mobileAt).toBeGreaterThan(-1);
+    expect(mobileAt).toBeLessThan(at);
     const base = css.slice(0, at);
+    const mobile = css.slice(mobileAt, at);
     const media = css.slice(at);
     expect(base).toMatch(/\.evl-toolbar\s*\{[^}]*flex-direction:\s*column/);
-    expect(base).toMatch(/\.evl-search\s*\{[^}]*order:\s*-1/);
     expect(base).toMatch(/\.evl-pending__list\s*\{[^}]*grid-template-columns:\s*1fr/);
-    expect(media).toMatch(/\.evl-search\s*\{[^}]*order:\s*0/);
     expect(media).toMatch(/\.evl-toolbar\s*\{[^}]*flex-direction:\s*row/);
     expect(media).toMatch(/\.evl-pending__list\s*\{[^}]*repeat\(2, 1fr\)/);
     expect(media).toMatch(/\.evl-header\s*\{[^}]*9fr 3fr/);
-    expect(media).toMatch(/\.evl-banner\s*\{[^}]*9fr 3fr/);
-    expect(css).not.toMatch(/@media[^{]*max-width/);
+    expect(media).toMatch(/\.evl-banner[^{]*\{[^}]*9fr 3fr/);
+    expect(css).toMatch(/\.evl-banner\.ui-card\s*\{[^}]*background:\s*var\(--bg-action-primary\)/);
+    expect(base).toMatch(/\.evl-results \.ui-data-table tbody\s*\{[^}]*display:\s*grid/);
+    expect(base).toMatch(/\.evl-results \.ui-data-table__row\s*\{[^}]*border-radius:/);
+    expect(mobile).toMatch(/\.evl-results\s*\{[^}]*margin-inline:/);
+    expect(mobile).toMatch(/\.evl-results \.ui-data-table__row\s*\{[^}]*padding:\s*var\(--ref-space-sm\)/);
+    expect(media).toMatch(/\.evl-results \.ui-data-table tbody\s*\{[^}]*display:\s*table-row-group/);
     expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b|rgba\(/);
+  });
+
+  it('mobile result cards use available width without changing desktop', () => {
+    const css = fs.readFileSync(path.join(__dirname, 'EventsListPage.css'), 'utf8');
+    const mobileAt = css.indexOf('@media (max-width: 767px)');
+    const desktopAt = css.indexOf('@media (min-width: 768px)');
+    const mobile = css.slice(mobileAt, desktopAt);
+    const desktop = css.slice(desktopAt);
+    expect(mobileAt).toBeGreaterThan(-1);
+    expect(desktopAt).toBeGreaterThan(mobileAt);
+    expect(mobile).toMatch(/\.evl-results\s*\{[^}]*margin-inline:/);
+    expect(mobile).toMatch(/\.evl-results \.ui-data-table__row\s*\{[^}]*padding:\s*var\(--ref-space-sm\)/);
+    expect(desktop).not.toMatch(/\.evl-results\s*\{[^}]*margin-inline:/);
+    expect(desktop).not.toMatch(/\.evl-results \.ui-data-table__row\s*\{[^}]*padding:\s*var\(--ref-space-sm\)/);
   });
 });

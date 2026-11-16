@@ -9,17 +9,26 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-stack-md);
-  padding: var(--space-padding-compact);
+  padding: var(--space-padding-compact) var(--layout-page-gutter);
   background: var(--bg-band);
   color: var(--text-inverse);
 }
 .ly-auth__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-inline-sm);
   margin: 0;
   font: var(--type-ui);
   font-weight: var(--ref-font-weight-bold);
   letter-spacing: var(--type-tracking-wide);
   text-transform: uppercase;
   color: var(--text-inverse);
+}
+.ly-auth__logo-mark {
+  display: block;
+  width: auto;
+  height: 24px;
+  flex: none;
 }
 .ly-auth__brand-body {
   display: flex;
@@ -64,7 +73,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: var(--space-padding-default) var(--space-padding-compact);
+  padding: var(--space-padding-default) var(--layout-page-gutter);
   background: var(--bg-canvas);
 }
 .ly-auth__topbar {
@@ -143,6 +152,52 @@
   text-decoration: underline;
 }
 
+@media (max-width: 767px) {
+  .ly-auth {
+    position: relative;
+  }
+  .ly-auth .ly-auth__benefits {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-stack-sm);
+  }
+  .ly-auth__topbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: var(--ref-space-sm) var(--layout-page-gutter);
+    background: var(--bg-band);
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: var(--space-inline-sm);
+  }
+  .ly-auth__topbar .ly-language-select {
+    background: transparent;
+    border-color: var(--border-inverse);
+  }
+  .ly-auth__topbar .ly-language-select__option {
+    gap: var(--ref-space-xs);
+    padding-inline: var(--ref-space-xs);
+    color: var(--ref-color-violet-200);
+  }
+  .ly-auth__topbar .ly-language-select__option--active {
+    background: var(--ref-color-white);
+    color: var(--ref-color-ink-900);
+  }
+  .ly-auth__topbar .ly-language-select__flag {
+    display: none;
+    width: 14px;
+    height: auto;
+  }
+  .ly-auth__brand {
+    padding-top: 68px;
+  }
+  .ly-auth__back {
+    color: var(--text-inverse-muted);
+  }
+}
+
 @media (min-width: 768px) {
   .ly-auth {
     display: grid;
@@ -152,11 +207,13 @@
   .ly-auth__brand {
     justify-content: space-between;
     gap: var(--space-stack-lg);
-    padding: calc(var(--ref-space-2xl) + var(--ref-space-sm))
-      calc(var(--ref-space-2xl) + var(--ref-space-xl));
+    padding: 56px 80px;
+    background: var(--bg-band);
   }
   .ly-auth__brand-title {
-    font: var(--type-display);
+    font-size: 48px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
     line-height: 1.08;
     text-wrap: balance;
   }
@@ -169,7 +226,11 @@
     display: block;
   }
   .ly-auth__panel {
-    padding: var(--ref-space-2xl);
+    padding: 56px 80px;
+    background: var(--bg-canvas);
+  }
+  .ly-auth__topbar {
+    justify-content: space-between;
   }
   .ly-auth__content {
     max-width: 440px;

@@ -1,15 +1,34 @@
 .hm-page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-stack-lg);
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: var(--space-padding-default) var(--space-padding-compact);
+  gap: 0;
+  width: 100%;
 }
-
+.hm-page > :not(.hm-hero) {
+  width: calc(100% - 2 * var(--layout-page-gutter));
+  max-width: 1168px;
+  align-self: center;
+}
+.hm-page > .hm-how,
+.hm-page > .hm-open {
+  width: 100%;
+  max-width: none;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+.hm-page > .hm-banner {
+  /* Mobile: el banner va a 16px de cada lado (su margin); con width 100% desbordaba
+     16px y movía la página al desplazar. Desktop re-declara width 100%. */
+  width: auto;
+  max-width: none;
+  align-self: stretch;
+  box-sizing: border-box;
+}
 .hm-eyebrow {
   margin: 0;
   font: var(--type-eyebrow);
+  /* Mobile: la línea "evaluación entre pares · votación distribuida" entra en una sola línea. */
+  font-size: 9px;
   letter-spacing: var(--type-tracking-wide);
   text-transform: uppercase;
   color: var(--text-signal);
@@ -24,11 +43,16 @@
   outline: none;
 }
 
-/* Hero: mobile apilado; desde 768px 7/12 + 5/12 */
+/* ===== HERO — mobile (base) ===== */
 .hm-hero {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-stack-lg);
+  background: var(--bg-band);
+  color: var(--text-inverse);
+  /* Mobile: margen de 16px para que la tarjeta destacada quepa en una línea;
+     desktop re-declara el gutter en el bloque min-width 768px. */
+  padding: 28px 16px 32px;
 }
 .hm-hero__copy {
   display: flex;
@@ -37,23 +61,83 @@
 }
 .hm-hero__title {
   margin: 0;
-  font: var(--type-heading-l);
-  color: var(--text-primary);
+  font-size: 31px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: var(--text-inverse);
+  text-wrap: balance;
 }
 .hm-hero__subtitle {
   margin: 0;
-  font: var(--type-body);
-  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1.55;
+  color: #CFC9F7;
 }
 .hm-hero__actions {
   display: flex;
   flex-direction: column;
-  gap: var(--space-stack-sm);
+  gap: 10px;
+  margin-top: 8px;
+}
+.hm-hero__actions .ui-button--primary {
+  background: #6E5BF2;
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  height: 52px;
+  border-radius: 12px;
+  border: none;
+  padding: 0 24px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.hm-hero__actions .ui-button--secondary {
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+  height: 48px;
+  border-radius: 12px;
+  padding: 0 24px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .hm-hero__featured {
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+.hm-featured-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: var(--text-primary);
+  min-width: 0;
+  margin-top: 8px;
+}
+
+.hm-featured-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-inline-md);
+}
+
+.hm-featured-card__closes {
+  margin: 0;
+  font: var(--type-caption);
+  color: var(--text-secondary);
 }
 
 .hm-featured__name,
@@ -68,44 +152,371 @@
   font: var(--type-body);
   color: var(--text-secondary);
 }
+.hm-featured__description {
+  /* Mobile: la descripción del evento destacado va a 14px (desktop restaura 15px). */
+  font-size: 14px;
+}
+
+.hm-featured-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-inline-sm);
+  border-top: 1px solid var(--border-default);
+  padding-top: var(--space-stack-md);
+}
+.hm-featured-card__capacity {
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}
+.hm-featured-card__cta {
+  flex: 0 0 auto;
+  justify-content: center;
+}
+.hm-featured-card .ev-stage-timeline--compact {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.hm-featured-card .ev-stage-timeline__list--compact {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+}
+.hm-featured-card .ev-stage-timeline__list--compact .ev-stage-timeline__title {
+  justify-content: center;
+}
+.hm-featured-card .ev-stage-timeline__list--compact .ev-stage-timeline__name-check {
+  display: none;
+}
+
+/* ===== Tarjeta destacada — stepper de etapas (mobile) ===== */
+.hm-featured-card__stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--ref-color-gray-200);
+  border-radius: 16px;
+  background: var(--ref-color-white);
+  box-shadow: none;
+}
+.hm-featured-card__stage-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-inline-sm);
+}
+.hm-featured-card__stage-of {
+  font-family: var(--ref-font-family-mono);
+  font-size: 11px;
+  font-weight: var(--ref-font-weight-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ref-color-violet-700);
+}
+.hm-featured-card__stage-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 6px 0 6px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ref-color-violet-700);
+  font-size: 13px;
+  font-weight: var(--ref-font-weight-semibold);
+  cursor: pointer;
+}
+.hm-featured-card__stage-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-xs);
+}
+.hm-featured-card__stage-chevron {
+  transition: transform 0.15s ease;
+}
+.hm-featured-card__stage-chevron--open {
+  transform: rotate(180deg);
+}
+.hm-featured-card__after {
+  margin: 0;
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}
+
+/* Chips de etapa: rectángulos de 34px con el número dentro; sin línea conectora. */
+.hm-featured-card .ev-stage-timeline__item {
+  flex: 0 0 40px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 8px;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  background: var(--ref-color-white);
+}
+.hm-featured-card .ev-stage-timeline__line {
+  display: none;
+}
+.hm-featured-card .ev-stage-timeline__marker {
+  position: static;
+  transform: none;
+  width: auto;
+  height: auto;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  box-sizing: border-box;
+  color: inherit;
+}
+.hm-featured-card .ev-stage-timeline__list--compact .ev-stage-timeline__name {
+  font-size: 13px;
+  color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hm-featured-card .ev-stage-timeline__item--completed {
+  background: var(--ref-color-green-600);
+  color: var(--ref-color-white);
+}
+.hm-featured-card .ev-stage-timeline__item--current {
+  flex: 1 1 auto;
+  background: var(--ref-color-violet-500);
+  color: var(--ref-color-white);
+}
+.hm-featured-card .ev-stage-timeline__item--pending {
+  border: 1.5px dashed var(--ref-color-violet-300);
+  background: var(--ref-color-white);
+  color: var(--ref-color-gray-400);
+}
+.hm-featured-card .ev-stage-timeline__item--completed .ev-stage-timeline__name,
+.hm-featured-card .ev-stage-timeline__item--pending .ev-stage-timeline__name {
+  display: none;
+}
+
+/* Lista vertical de etapas visible al tocar "Ver etapas". */
+.hm-featured-card__stages {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 4px 0 0;
+  border-top: 1px solid var(--ref-color-gray-150);
+  list-style: none;
+}
+.hm-featured-card__stage-row {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 12px;
+}
+.hm-featured-card__stage-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.hm-featured-card__stage-dot {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-top: 10px;
+  border: 1.5px solid var(--ref-color-violet-300);
+  border-radius: 50%;
+  background: var(--ref-color-white);
+  color: var(--ref-color-gray-400);
+  font-size: 11px;
+  font-weight: var(--ref-font-weight-extrabold);
+  line-height: 1;
+  box-sizing: border-box;
+}
+.hm-featured-card__stage-row--completed .hm-featured-card__stage-dot {
+  border: 0;
+  background: var(--ref-color-green-600);
+  color: var(--ref-color-white);
+}
+.hm-featured-card__stage-row--current .hm-featured-card__stage-dot {
+  border: 0;
+  background: var(--ref-color-violet-500);
+  color: var(--ref-color-white);
+  box-shadow: 0 0 0 4px var(--ref-color-violet-100);
+}
+.hm-featured-card__stage-line {
+  flex: 1 1 0%;
+  width: 2px;
+  min-height: 8px;
+  background: var(--ref-color-gray-150);
+}
+.hm-featured-card__stage-row--completed .hm-featured-card__stage-line {
+  background: var(--ref-color-green-600);
+}
+.hm-featured-card__stage-row--last .hm-featured-card__stage-line {
+  background: transparent;
+}
+.hm-featured-card__stage-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 0 12px;
+  min-width: 0;
+}
+.hm-featured-card__stage-name-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.hm-featured-card__stage-name {
+  font-size: 15px;
+  font-weight: var(--ref-font-weight-semibold);
+  color: var(--ref-color-gray-600);
+}
+.hm-featured-card__stage-row--completed .hm-featured-card__stage-name {
+  color: var(--ref-color-green-600);
+}
+.hm-featured-card__stage-row--current .hm-featured-card__stage-name {
+  font-weight: var(--ref-font-weight-extrabold);
+  color: var(--ref-color-ink-900);
+}
+.hm-featured-card__stage-state {
+  font-family: var(--ref-font-family-mono);
+  font-size: 10px;
+  font-weight: var(--ref-font-weight-semibold);
+  letter-spacing: 0.08em;
+  color: var(--ref-color-gray-400);
+}
+.hm-featured-card__stage-row--completed .hm-featured-card__stage-state {
+  color: var(--ref-color-green-600);
+}
+.hm-featured-card__stage-row--current .hm-featured-card__stage-state {
+  color: var(--ref-color-violet-700);
+}
+
+/* Footer de la tarjeta: sin divisor; cifra en negrita; CTA de 44px. */
+.hm-featured-card__footer {
+  border-top: 0;
+  padding-top: 0;
+}
+.hm-featured-card__capacity {
+  font-size: 14px;
+  color: var(--ref-color-gray-700);
+}
+.hm-featured-card__cta {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 0 15px;
+  background: var(--ref-color-violet-500);
+  color: var(--ref-color-white);
+  text-decoration: none;
+}
+
+/* Línea divisoria sutil entre secciones sobre fondo oscuro */
+.hm-divider {
+  height: 1px;
+  background: var(--border-default);
+  margin: 0;
+  border: none;
+  width: 100%;
+}
+
 .hm-capacity-text {
   margin: 0;
   font: var(--type-caption);
   color: var(--text-secondary);
 }
 
-/* Cómo funciona */
+/* ===== CÓMO FUNCIONA — mobile (base) ===== */
 .hm-how {
   display: flex;
   flex-direction: column;
+  gap: 18px;
+  background: var(--bg-canvas);
+  padding: 32px 16px;
+  color: var(--text-primary);
+}
+.hm-how > .hm-how__header .hm-eyebrow {
+  color: var(--text-action);
+}
+.hm-how__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   gap: var(--space-stack-md);
+}
+.hm-how__demo {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4B3FA8;
+  text-decoration: none;
+  white-space: nowrap;
 }
 .hm-steps {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-stack-md);
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.hm-step__title {
+.hm-steps__item {
+  background: #fff;
+  border: 1px solid #E1E5EC;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text-primary);
+}
+.hm-step__number {
+  font-family: var(--ref-font-family-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: #6E5BF2;
+}
+.hm-step__name {
   margin: 0;
-  font: var(--type-ui);
+  font-size: 16px;
+  font-weight: 700;
   color: var(--text-primary);
 }
 .hm-step__text {
   margin: 0;
-  font: var(--type-body);
-  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+  color: #575E6B;
 }
 
-/* Abiertos ahora: en mobile "Ver todos" va después de la lista (order) */
+/* ===== ABIERTOS AHORA — mobile (base) ===== */
 .hm-open {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-stack-md);
+  background: var(--bg-surface);
+  padding: 0 16px 32px;
+  color: var(--text-primary);
+}
+.hm-open__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-inline-md);
 }
 .hm-open__title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: var(--ref-font-leading-snug);
+  color: inherit;
   order: 1;
 }
 .hm-open__body {
@@ -115,9 +526,14 @@
   order: 3;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
   font: var(--type-ui);
   color: var(--text-action);
+  text-decoration: none;
 }
 .hm-open__list {
   display: grid;
@@ -129,6 +545,65 @@
 }
 .hm-open__item {
   display: flex;
+  min-width: 0;
+}
+.hm-open__item > .ui-card {
+  height: 100%;
+}
+.hm-open__card.ui-card {
+  background: #fff;
+  border: 1px solid #E1E5EC;
+  border-radius: 16px;
+  padding: 18px;
+  gap: 12px;
+  box-shadow: var(--shadow-raised);
+}
+.hm-open__card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-inline-sm);
+}
+.hm-open__card-capacity {
+  font: var(--type-caption);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.hm-open__card-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ref-space-xs);
+  min-height: 72px;
+}
+.hm-open__card .hm-card__name {
+  font-size: 16px;
+}
+.hm-open__item .hm-card__description {
+  font: var(--ref-font-weight-regular) var(--ref-font-size-sm)/var(--ref-font-leading-normal) var(--ref-font-family-base);
+  color: var(--text-secondary);
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.hm-open__item .hm-open__card-cta {
+  align-self: stretch;
+  width: 100%;
+  margin-top: auto;
+  padding: 0 var(--ref-space-ms);
+  border: 1.5px solid #6E5BF2;
+  background: transparent;
+  color: #4B3FA8;
+  font-weight: 600;
+  font-size: 14px;
+  height: 44px;
+  border-radius: 10px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
 }
 
 /* Skeletons */
@@ -150,62 +625,431 @@
   height: var(--ref-space-ms);
 }
 
-/* Franja para organizadores */
+/* ===== BANNER — mobile (base) ===== */
 .hm-banner {
   display: grid;
   grid-template-columns: 1fr;
   align-items: center;
-  gap: var(--space-stack-md);
+  gap: 16px;
+  background: #6E5BF2;
+  color: var(--text-inverse);
+  border-radius: 18px;
+  padding: 24px 20px;
+  margin: 0 16px 32px;
+}
+.hm-banner__cta {
+  background: #fff;
+  color: #6E5BF2;
+  font-weight: 700;
+  font-size: 16px;
+  height: 52px;
+  border-radius: 12px;
+  border: none;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 27px 0 24px;
 }
 .hm-banner__copy {
   display: flex;
   flex-direction: column;
-  gap: var(--space-stack-sm);
+  gap: 6px;
 }
 .hm-banner__title {
   margin: 0;
-  font: var(--type-heading-s);
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.25;
 }
 .hm-banner__text {
   margin: 0;
-  font: var(--type-body);
-  color: var(--text-inverse-secondary);
+  font-size: 14px;
+  color: #CFC9F7;
 }
 
+/* ===== DESKTOP (>= 768px) ===== */
 @media (min-width: 768px) {
-  .hm-page {
-    padding: var(--space-padding-spacious) var(--ref-space-xl);
+  .hm-page > :not(.hm-hero) {
+    width: calc(100% - 2 * var(--layout-page-gutter));
+    max-width: 1136px;
   }
+  .hm-page > .hm-how,
+  .hm-page > .hm-open,
+  .hm-page > .hm-banner {
+    width: 100%;
+    max-width: none;
+    align-self: stretch;
+  }
+
   .hm-hero {
-    grid-template-columns: 7fr 5fr;
-    align-items: start;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 72px;
+    align-items: center;
+    padding: 88px var(--layout-page-gutter) 104px;
+  }
+  .hm-hero__title {
+    font-size: 60px;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+  .hm-hero__subtitle {
+    font-size: 19px;
+    line-height: 1.55;
+    color: #CFC9F7;
+    max-width: 520px;
   }
   .hm-hero__actions {
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .hm-hero__actions .ui-button--primary {
+    background: #35D6F2;
+    color: #0B1020;
+    font-weight: 700;
+    font-size: 16px;
+    padding: 15px 24px;
+    border-radius: 12px;
+    border: none;
+    height: auto;
+  }
+  .hm-hero__actions .ui-button--secondary {
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    font-weight: 600;
+    font-size: 16px;
+    padding: 15px 24px;
+    border-radius: 12px;
+    height: auto;
+  }
+  .hm-hero__featured {
+    background: #fff;
+    border-radius: 18px;
+    padding: 28px;
+    gap: 20px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+  }
+  .hm-hero__featured .hm-featured-card {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    gap: inherit;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  /* Desktop: la tarjeta destacada conserva su diseño original (sin stepper,
+     sin "Después" y con la línea de etapas con etiquetas debajo). */
+  .hm-eyebrow {
+    font-size: var(--ref-font-size-2xs);
+  }
+  .hm-featured-card__stepper {
+    display: contents;
+  }
+  .hm-featured-card__stage-head,
+  .hm-featured-card__after {
+    display: none;
+  }
+  .hm-featured-card__stages {
+    display: none;
+  }
+  .hm-featured__description {
+    font-size: var(--ref-font-size-md);
+  }
+  .hm-featured-card__footer {
+    border-top: 1px solid var(--border-default);
+    padding-top: var(--space-stack-md);
+  }
+  .hm-featured-card__cta {
+    font: var(--type-ui);
+    padding: 0 18px;
+    background: var(--button-primary-bg);
+    color: var(--button-primary-fg);
+    text-decoration: underline;
+  }
+  .hm-featured-card .ev-stage-timeline__list--compact {
+    align-items: stretch;
+    gap: var(--ref-space-xs);
+  }
+  .hm-featured-card .ev-stage-timeline__item {
+    flex: 1;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 10px;
+    height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-primary);
+  }
+  .hm-featured-card .ev-stage-timeline__item--completed {
+    background: transparent;
+    color: var(--text-primary);
+  }
+  .hm-featured-card .ev-stage-timeline__item--current {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-primary);
+  }
+  .hm-featured-card .ev-stage-timeline__item--pending {
+    border: 0;
+    background: transparent;
+    color: var(--text-primary);
+  }
+  .hm-featured-card .ev-stage-timeline__line {
+    display: block;
+  }
+  .hm-featured-card .ev-stage-timeline__track {
+    width: auto;
+    height: 30px;
+  }
+  .hm-featured-card .ev-stage-timeline__title {
+    justify-content: center;
+  }
+  .hm-featured-card .ev-stage-timeline__marker {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 26px;
+    height: 26px;
+    border: 2px solid var(--ref-color-violet-300);
+    border-radius: var(--radius-pill);
+    background: var(--ref-color-white);
+    box-shadow: none;
+    box-sizing: border-box;
+    color: var(--ref-color-violet-300);
+  }
+  .hm-featured-card .ev-stage-timeline__item--completed .ev-stage-timeline__marker {
+    width: 22px;
+    height: 22px;
+    border: 3px solid var(--ref-color-white);
+    border-radius: var(--radius-pill);
+    background: var(--ref-color-green-600);
+    box-sizing: content-box;
+    color: var(--ref-color-white);
+  }
+  .hm-featured-card .ev-stage-timeline__item--current .ev-stage-timeline__marker {
+    width: 24px;
+    height: 24px;
+    border: 0;
+    background: var(--ref-color-violet-500);
+    box-shadow: var(--ref-color-violet-100) 0 0 0 5px;
+    color: var(--ref-color-white);
+  }
+  .hm-featured-card .ev-stage-timeline__list--compact .ev-stage-timeline__name {
+    font-size: 10px;
+    overflow: visible;
+    text-overflow: clip;
+  }
+  .hm-featured-card .ev-stage-timeline__item--completed .ev-stage-timeline__name {
+    color: var(--ref-color-green-600);
+  }
+  .hm-featured-card .ev-stage-timeline__item--current .ev-stage-timeline__name {
+    color: var(--ref-color-violet-700);
+  }
+  .hm-featured-card .ev-stage-timeline__item--pending .ev-stage-timeline__name {
+    color: var(--text-primary);
+  }
+  .hm-featured-card .ev-stage-timeline__item--completed .ev-stage-timeline__name,
+  .hm-featured-card .ev-stage-timeline__item--pending .ev-stage-timeline__name {
+    display: inline;
+  }
+  .hm-featured-card__capacity {
+    font: var(--type-caption);
+    color: var(--text-secondary);
+  }
+  .hm-featured-card__capacity b {
+    /* Desktop: la cifra va sin negrita (como antes); mobile la muestra en bold. */
+    font-weight: inherit;
+  }
+
+  .hm-how {
+    padding: 96px var(--layout-page-gutter);
+    gap: 40px;
+  }
+  .hm-how__header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+  .hm-how .hm-section-title {
+    color: var(--text-primary);
+    font-size: 28px;
+    font-weight: var(--ref-font-weight-extrabold);
+    line-height: var(--ref-font-leading-snug);
+  }
+  .hm-how__demo {
+    border: 1.5px solid var(--border-focus);
+    color: var(--text-action);
+    background: transparent;
+    padding: 7px 17px 8px 13px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    white-space: nowrap;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   .hm-steps {
     grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
   }
+  .hm-steps__item {
+    background: #fff;
+    border: 1.5px solid #6E5BF2;
+    border-radius: 16px;
+    padding: 28px;
+    gap: 14px;
+  }
+  .hm-step__number {
+    font-size: 14px;
+  }
+  .hm-step__name {
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .hm-step__text {
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
   .hm-open {
-    grid-template-columns: 9fr 3fr;
-    align-items: center;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    background: #fff;
+    border-top: 1px solid #E1E5EC;
+    padding: 96px var(--layout-page-gutter);
+    gap: 32px;
+  }
+  .hm-open__header {
+    display: contents;
   }
   .hm-open__title {
+    font-size: 28px;
+    font-weight: var(--ref-font-weight-extrabold);
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
     order: 0;
   }
   .hm-open__all {
     order: 0;
     justify-self: end;
+    border: 1.5px solid #4B3FA8;
+    color: #4B3FA8;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 8px;
+    padding: 8px 17px 8px 13px;
+    height: 38px;
+    white-space: nowrap;
+    background: transparent;
   }
   .hm-open__body {
     order: 0;
     grid-column: 1 / -1;
   }
   .hm-open__list {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
   }
+  .hm-open__card.ui-card {
+    background: #FAFBFC;
+    border: 1.5px solid #E1F1E8;
+    border-radius: 16px;
+    padding: 24px;
+    gap: 16px;
+    box-shadow: 0 4px 11px 0 #173E2C36;
+  }
+  .hm-open__card .hm-card__name {
+    font-size: var(--ref-font-size-xl);
+  }
+  .hm-open__item .hm-open__card-cta {
+    align-self: flex-start;
+    width: auto;
+    border: 1.5px solid #6E5BF2;
+    color: #4B3FA8;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 9px 14px;
+    border-radius: 10px;
+    height: auto;
+  }
+
   .hm-banner {
     grid-template-columns: 9fr 3fr;
+    padding: 64px var(--layout-page-gutter);
+    gap: 32px;
+    background: #6E5BF2;
+    color: var(--text-inverse);
+    border-radius: 0;
+    margin: 0;
+  }
+  .hm-banner__copy {
+    gap: 8px;
+  }
+  .hm-banner__title {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+  .hm-banner__text {
+    font-size: 17px;
+    color: #DCD6FB;
+  }
+  .hm-banner__cta {
+    background: #fff;
+    color: #4B3FA8;
+    font-weight: 700;
+    font-size: 16px;
+    padding: 15px 24px;
+    border-radius: 12px;
+    border: none;
+    text-decoration: none;
+    height: auto;
+  }
+}
+
+/* ===== Tablet (768–1023px) =====
+   En este rango el hero de 2 columnas con título de 60px expulsaba la tarjeta
+   destacada a ~74px de ancho (StatusPill vertical, contenido cortado) y
+   "Cómo participar" desbordaba con4 columnas fijas. Mobile-first: los
+   ajustes van en min-width:768 y un bloque min-width:1024 restaura los
+   valores desktop exactos (≥1024 sin cambios). */
+@media (min-width: 768px) {
+  .hm-hero {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 40px;
+  }
+  .hm-hero__title {
+    font-size: 44px;
+  }
+  .hm-steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .hm-hero {
+    grid-template-columns: 1.1fr 1fr;
+    gap: 72px;
+  }
+  .hm-hero__title {
+    font-size: 60px;
+  }
+  .hm-steps {
+    grid-template-columns: repeat(4, 1fr);
   }
 }

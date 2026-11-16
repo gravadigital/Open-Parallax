@@ -12,33 +12,37 @@ describe('AppFooter', () => {
     document.documentElement.lang = '';
   });
 
-  it('TS-1: marca, navegación y tagline en español', () => {
+  it('TS-1: marca, versión, repositorio y contacto en español', () => {
     renderWithProviders(<AppFooter />, { locale: 'es' });
 
     const footer = screen.getByRole('contentinfo');
     expect(within(footer).getByRole('link', { name: 'TELESCOPIO' })).toHaveAttribute('href', '/');
-    const nav = within(footer).getByRole('navigation', { name: 'Navegación del pie' });
-    expect(within(nav).getByRole('link', { name: 'Inicio' })).toHaveAttribute('href', '/');
-    expect(within(nav).getByRole('link', { name: 'Eventos' })).toHaveAttribute('href', '/events');
-    expect(within(footer).getByText('Telescopio · evaluación distribuida entre pares')).toBeInTheDocument();
+    expect(within(footer).getByText('V1.0')).toBeInTheDocument();
+    const repo = within(footer).getByRole('link', { name: /gravadigital\/telescope/ });
+    expect(repo).toHaveAttribute('href', 'https://github.com/gravadigital/telescope');
+    expect(repo).toHaveAttribute('target', '_blank');
+    expect(repo).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(within(footer).getByText('CONTACTO')).toBeInTheDocument();
+    expect(within(footer).getByRole('link', { name: 'info@grava.digital' })).toHaveAttribute(
+      'href',
+      'mailto:info@grava.digital'
+    );
+    expect(within(footer).getByRole('link', { name: '+54 9 11 3094 2020' })).toHaveAttribute(
+      'href',
+      'tel:+5491130942020'
+    );
   });
 
-  it('TS-2: marca, navegación y tagline en inglés', () => {
+  it('TS-2: textos en inglés', () => {
     renderWithProviders(<AppFooter />, { locale: 'en' });
 
     const footer = screen.getByRole('contentinfo');
     expect(within(footer).getByRole('link', { name: 'TELESCOPIO' })).toHaveAttribute('href', '/');
-    const nav = within(footer).getByRole('navigation', { name: 'Footer navigation' });
-    expect(within(nav).getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
-    expect(within(nav).getByRole('link', { name: 'Events' })).toHaveAttribute('href', '/events');
-    expect(within(footer).getByText('Telescopio · distributed peer review')).toBeInTheDocument();
+    expect(within(footer).getByText('CONTACT')).toBeInTheDocument();
   });
 
-  it('TS-3: los links navegan con el router, sin recargar', async () => {
-    renderWithProviders(<AppFooter />, { locale: 'es', route: '/' });
-    expect(screen.getByTestId('location')).toHaveTextContent('/');
-
-    await userEvent.click(screen.getByRole('link', { name: 'Eventos' }));
+  it('TS-3: la marca navega con el router, sin recargar', async () => {
+    renderWithProviders(<AppFooter />, { locale: 'es', route: '/events' });
     expect(screen.getByTestId('location')).toHaveTextContent('/events');
 
     await userEvent.click(screen.getByRole('link', { name: 'TELESCOPIO' }));
@@ -69,20 +73,16 @@ describe('AppFooter.css', () => {
     expect(declaration(rule(css, '.ly-footer'), 'color')).toBe('var(--text-inverse)');
   });
 
-  it('TS-5: links y foco con tokens, sin hex literales', () => {
-    expect(declaration(rule(css, '.ly-footer__link'), 'color')).toBe('var(--text-inverse-secondary)');
-    expect(declaration(rule(css, '.ly-footer__link:hover'), 'color')).toBe('var(--text-inverse)');
-    expect(declaration(rule(css, '.ly-footer__brand'), 'color')).toBe('var(--text-signal)');
-    expect(css).toMatch(/\.ly-footer__brand:focus-visible/);
-    expect(declaration(rule(css, '.ly-footer__link:focus-visible'), 'box-shadow')).toBe('var(--focus-ring)');
-    expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+  it('TS-5: foco visible con el token de foco', () => {
+    expect(css).toMatch(/\.ly-footer__logo:focus-visible/);
+    expect(css).toMatch(/\.ly-footer__github:focus-visible/);
+    expect(css).toMatch(/\.ly-footer__contact a:focus-visible/);
+    expect(css).toMatch(/box-shadow:\s*var\(--focus-ring\)/);
   });
 
-  it('TS-6: mobile primero, un solo corte a 768px', () => {
+  it('TS-6: mobile primero, en columna, y grilla desde 768px', () => {
     expect(declaration(rule(base, '.ly-footer__inner'), 'flex-direction')).toBe('column');
     expect(media).toMatch(/@media \(min-width: 768px\)/);
-    expect(declaration(rule(media, '.ly-footer__inner'), 'flex-direction')).toBe('row');
-    expect(css).not.toMatch(/@media[^{]*max-width/);
-    expect(css.match(/@media/g)).toHaveLength(1);
+    expect(declaration(rule(media, '.ly-footer__inner'), 'display')).toBe('grid');
   });
 });

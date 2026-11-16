@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CheckIcon } from '../../ui/icons/Icons';
+import { CheckIcon, TelescopeLogo } from '../../ui/icons/Icons';
 import LanguageSelect from '../language-select/LanguageSelect';
 import { useT } from '../../../i18n';
 import './AuthLayout.css';
@@ -34,7 +34,10 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   return (
     <main id="main" className="ly-auth">
       <aside className="ly-auth__brand">
-        <p className="ly-auth__logo">{t('common.appName')}</p>
+        <p className="ly-auth__logo">
+          <TelescopeLogo className="ly-auth__logo-mark" />
+          <span className="ly-auth__logo-text ui-visually-hidden">{t('common.appName')}</span>
+        </p>
         <div className="ly-auth__brand-body">
           <h2 className="ly-auth__brand-title">{brandTitle}</h2>
           {benefits && benefits.length > 0 && (

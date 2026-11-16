@@ -102,6 +102,20 @@ describe('CreateEventPage — render y validación', () => {
 });
 
 describe('CreateEventPage — pasos', () => {
+  it('mantiene las acciones dentro de la tarjeta en los tres pasos', () => {
+    renderPage();
+    const mainCard = document.querySelector('.cev-main') as HTMLElement;
+    const actions = document.querySelector('.cev-actions') as HTMLElement;
+    expect(mainCard.contains(actions)).toBe(true);
+
+    fillStep1();
+    next('Siguiente: Fechas y cupo →');
+    expect(mainCard.contains(actions)).toBe(true);
+
+    next('Siguiente: Revisar →');
+    expect(mainCard.contains(actions)).toBe(true);
+  });
+
   it('TS-26: avanzar al paso 2', () => {
     renderPage();
     fillStep1();
@@ -146,9 +160,8 @@ describe('CreateEventPage — pasos', () => {
     expect(screen.getAllByText('Diseña el afiche del festival').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Club de Diseño').length).toBeGreaterThan(0);
     expect(screen.getByText('22 participantes')).toBeInTheDocument();
-    ['nombre', 'descripción', 'organizador', 'cupo'].forEach((f) =>
-      expect(screen.getByRole('button', { name: `Editar ${f}` })).toBeInTheDocument()
-    );
+    expect(screen.getByRole('button', { name: 'Editar identificación' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Editar cupo' })).toBeInTheDocument();
     expect(screen.getByText(/El evento se crea en etapa Creación: nadie más puede verlo/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Crear evento' })).toBeInTheDocument();
   });
@@ -425,9 +438,11 @@ describe('CreateEventPage — color de portada (S-021)', () => {
     next('Siguiente: Revisar →');
 
     const summary = document.querySelector('.cev-summary') as HTMLElement;
-    const row = within(summary).getByText('Color de portada').closest('.cev-summary__row') as HTMLElement;
-    expect(within(row).getByText('Menta')).toBeInTheDocument();
-    expect(within(row).getByRole('button', { name: 'Editar color de portada' })).toBeInTheDocument();
+    // El color va en la sección de identificación del resumen, que se edita desde su encabezado.
+    const item = within(summary).getByText('Color de portada').closest('.cev-summary__item') as HTMLElement;
+    expect(within(item).getByText('Menta')).toBeInTheDocument();
+    const section = item.closest('.cev-summary__section') as HTMLElement;
+    expect(within(section).getByRole('button', { name: 'Editar identificación' })).toBeInTheDocument();
 
     next('Crear evento');
     await waitFor(() => expect(createEvent).toHaveBeenCalled());
@@ -441,7 +456,7 @@ describe('CreateEventPage — color de portada (S-021)', () => {
     next('Siguiente: Fechas y cupo →');
     next('Siguiente: Revisar →');
 
-    userEvent.click(screen.getByRole('button', { name: 'Editar color de portada' }));
+    userEvent.click(screen.getByRole('button', { name: 'Editar identificación' }));
 
     expect(radio('Cielo')).toHaveAttribute('aria-checked', 'true');
   });
@@ -502,7 +517,7 @@ describe('CreateEventPage — color de portada (S-021)', () => {
     next('Crear evento');
     await waitFor(() => expect(createEvent).toHaveBeenCalled());
 
-    userEvent.click(screen.getByRole('button', { name: 'Editar color de portada' }));
+    userEvent.click(screen.getByRole('button', { name: 'Editar identificación' }));
     expect(screen.queryByRole('radiogroup', { name: 'Color de portada' })).toBeNull();
   });
 });

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Preview mobile</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #e5e7eb;
+      }
+      .wrap {
+        display: flex;
+        gap: 16px;
+        padding: 16px;
+        align-items: flex-start;
+      }
+      iframe {
+        border: 0;
+        background: #fff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+      }
+      .label {
+        font: 12px/1.4 system-ui, sans-serif;
+        color: #111;
+        padding: 4px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div>
+        <div class="label" id="label"></div>
+        <iframe id="f" src="/" width="375" height="640" title="preview"></iframe>
+      </div>
+    </div>
+    <script>
+      var p = new URLSearchParams(location.search);
+      var f = document.getElementById('f');
+      if (p.get('w')) f.width = p.get('w');
+      if (p.get('h')) f.height = p.get('h');
+      if (p.get('src')) f.src = p.get('src');
+      var scale = p.get('scale') || 1;
+      f.style.transform = 'scale(' + scale + ')';
+      f.style.transformOrigin = 'top left';
+      f.parentNode.style.width = f.width * scale + 'px';
+      document.getElementById('label').textContent =
+        f.width + ' x ' + f.height + ' @' + scale + ' — ' + f.src;
+      if (p.get('open')) {
+        var tries = 0;
+        var tryOpen = function () {
+          var doc = f.contentDocument;
+          var btn = doc && doc.querySelector('.ly-header__menu-button');
+          if (btn) {
+            btn.click();
+            var panelTries = 0;
+            var waitPanel = function () {
+              var d = f.contentDocument;
+              if (d && d.querySelector('.ly-header__mobile-menu')) {
+                document.getElementById('label').textContent = 'MENU ABIERTO';
+                return;
+              }
+              if (panelTries++ < 80) setTimeout(waitPanel, 150);
+            };
+            waitPanel();
+            return;
+          }
+          if (tries++ < 60) setTimeout(tryOpen, 150);
+        };
+        f.addEventListener('load', function () {
+          setTimeout(tryOpen, 400);
+        });
+      }
+    </script>
+  </body>
+</html>

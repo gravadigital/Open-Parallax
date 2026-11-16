@@ -11,7 +11,7 @@ You need **Docker**, **Go 1.26** (see [`api/go.mod`](api/go.mod)), **Node.js 22*
 ```sh
 git clone https://github.com/gravadigital/telescope.git
 cd telescope
-make infra    # database + MinIO in Docker
+make infra    # database + Garage in Docker
 make api      # in another terminal
 make web      # in a third
 ```

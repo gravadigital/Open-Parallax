@@ -12,7 +12,8 @@ name: telescope-local
 
 volumes:
   database:
-  minio:
+  garage-meta:
+  garage-data:
 
 services:
   database:
@@ -34,55 +35,37 @@ services:
       timeout: 5s
       retries: 10
 
-  minio:
-    # MinIO dejó de publicar imágenes (Docker Hub y quay.io); pgsty mantiene builds del mismo código.
-    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
-    container_name: telescope-local-minio
+  # Almacenamiento de objetos S3 (propuestas). Con --single-node arma solo el layout, y con
+  # --default-bucket crea la clave de la api y el bucket al arrancar, en forma idempotente:
+  # cuando /health responde, el bucket ya existe. La api no lo crea (en Garage quedaría con
+  # alias local) y no hay contenedor de init porque el bucket es privado.
+  #
+  # La imagen no trae shell, curl ni wget: el healthcheck usa el propio binario.
+  garage:
+    image: dxflrs/garage:v2.4.1
+    container_name: telescope-local-garage
     restart: unless-stopped
-    command: server /data --console-address ":9001"
+    command: ["/garage", "server", "--single-node", "--default-bucket"]
     environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin123}
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:-4b1d2f8e0c7a9b3e5d6f1a2c4e8b0d7f9a1c3e5b7d9f0a2c4e6b8d0f2a4c6e8b}
+      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN:-telescope-local-admin-token}
+      # ID: >= 8 caracteres [A-Za-z0-9-_.]; nunca se reutiliza, ni después de borrarlo.
+      GARAGE_DEFAULT_ACCESS_KEY: ${S3_ACCESS_KEY_ID:-GKtelescopelocal01}
+      # Secreto: >= 16 caracteres. Cambiarlo con el volumen ya creado impide arrancar
+      # (no coincide con la clave existente): `make reset` lo resuelve en local.
+      GARAGE_DEFAULT_SECRET_KEY: ${S3_SECRET_ACCESS_KEY:-telescope-local-secret-0123456789}
+      GARAGE_DEFAULT_BUCKET: ${S3_BUCKET:-telescope}
     ports:
-      - "${MINIO_API_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      - "${GARAGE_S3_PORT:-3900}:3900"   # API S3; el 3903 (admin) queda en la red interna
     volumes:
-      - minio:/data
+      - ./garage/garage.toml:/etc/garage.toml:ro
+      - garage-meta:/var/lib/garage/meta
+      - garage-data:/var/lib/garage/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "/garage", "health", "-q"]
       interval: 5s
       timeout: 5s
-      retries: 10
-
-  # Crea el bucket y termina. La api NO lo crea —firma contra un bucket que da por
-  # existente—, así que sin esto la primera subida falla con NoSuchBucket. Con
-  # --ignore-existing es seguro correrlo en cada `up`.
-  #
-  # Que minio esté healthy no garantiza que este contenedor ya lo resuelva por nombre:
-  # el DNS interno de Docker puede tardar en registrarlo, y un único intento fallaba con
-  # "lookup minio ... server misbehaving". Por eso reintenta hasta un minuto, y si se
-  # rinde, el último intento sin silenciar muestra el error real.
-  minio-init:
-    image: pgsty/mc:RELEASE.2026-09-16T00-00-00Z
-    container_name: telescope-local-minio-init
-    restart: "no"
-    environment:
-      MINIO_USER: ${MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin123}
-      MINIO_BUCKET: ${MINIO_BUCKET:-telescope}
-    entrypoint: >
-      sh -c '
-      for i in $$(seq 1 30); do
-        mc alias set local http://minio:9000 "$$MINIO_USER" "$$MINIO_PASSWORD" >/dev/null 2>&1 && break;
-        echo "esperando a minio ($$i/30)...";
-        sleep 2;
-      done;
-      mc alias set local http://minio:9000 "$$MINIO_USER" "$$MINIO_PASSWORD" &&
-      mc mb --ignore-existing "local/$$MINIO_BUCKET"
-      '
-    depends_on:
-      minio:
-        condition: service_healthy
+      retries: 12
 
   api:
     build:
@@ -107,13 +90,14 @@ services:
       JWT_SECRET: ${JWT_SECRET:-telescope-local-dev-secret-no-usar-en-produccion}
       CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-*}
       FRONTEND_URL: http://localhost:${WEB_PORT:-3000}
-      STORAGE_PROVIDER: minio
-      MINIO_ENDPOINT: minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin123}
-      MINIO_BUCKET: ${MINIO_BUCKET:-telescope}
-      MINIO_USE_SSL: "false"
-      MINIO_REGION: us-east-1
+      STORAGE_PROVIDER: s3
+      S3_ENDPOINT: http://garage:3900
+      S3_REGION: garage
+      S3_BUCKET: ${S3_BUCKET:-telescope}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-GKtelescopelocal01}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-telescope-local-secret-0123456789}
+      # Host con el que se firman las URLs prefirmadas: el que ve el navegador.
+      S3_PRESIGN_ENDPOINT: http://localhost:${GARAGE_S3_PORT:-3900}
       # Vacío = sólo login con email y contraseña.
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       # Con EMAIL_ENABLED=false no se manda ningún mail (recuperación de contraseña,
@@ -129,8 +113,8 @@ services:
     depends_on:
       database:
         condition: service_healthy
-      minio-init:
-        condition: service_completed_successfully
+      garage:
+        condition: service_healthy
 
   # La configuración entra al arrancar, no al construir: el contenedor la escribe en
   # config.js (web/docker/40-runtime-config.sh). Cambiarla sólo pide recrear el

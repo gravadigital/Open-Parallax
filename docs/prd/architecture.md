@@ -67,7 +67,7 @@ graph TB
 
     subgraph Datos
         PG[("PostgreSQL<br/>telescopio_db<br/>+ triggers plpgsql")]
-        MinIO[("MinIO<br/>propuestas")]
+        Garage[("Garage (S3)<br/>propuestas")]
     end
 
     subgraph Externos
@@ -88,7 +88,7 @@ graph TB
     Web --> LS
 
     API -->|GORM · pool 100| PG
-    API -->|STORAGE_PROVIDER=minio| MinIO
+    API -->|STORAGE_PROVIDER=s3| Garage
     API -->|verifica id_token| Google
     API -.->|emails de etapa, cancelación, reset| SMTP
 
@@ -98,7 +98,7 @@ graph TB
     classDef ext fill:#f59e0b,stroke:#d97706,color:#fff
     class Web fe
     class API be
-    class PG,MinIO,LS db
+    class PG,Garage,LS db
     class Google,SMTP ext
 ```
 
@@ -110,7 +110,7 @@ Línea sólida = sincrónico. Línea punteada = fuera del camino crítico de la 
 
 | Servicio | Tipo | Responsabilidad | Tech Stack | Estado |
 |----------|------|-----------------|------------|--------|
-| **api** | Backend (REST) | Único servicio con estado: ciclo de vida de eventos, identidad, propuestas y el algoritmo de votación distribuida | Go 1.26.6 · Gin 1.10.1 · GORM 1.30.2 · PostgreSQL · MinIO · JWT HS256 | Desplegado |
+| **api** | Backend (REST) | Único servicio con estado: ciclo de vida de eventos, identidad, propuestas y el algoritmo de votación distribuida | Go 1.26.6 · Gin 1.10.1 · GORM 1.30.2 · PostgreSQL · Garage (S3) · JWT HS256 | Desplegado |
 | **web** | Frontend (SPA) | Única interfaz. Recorrido del participante y del organizador. Sin lógica de negocio propia | React 19.1.1 · react-router-dom 7.9.4 · CRA 5.0.1 · TypeScript 4.9.5 · CSS plano | Desplegado |
 
 ### api
@@ -240,7 +240,7 @@ que el CHECK pase trivialmente. Es deuda, no funcionalidad disponible.
 ### Storage de archivos
 
 Las propuestas se guardan tras la interfaz `FileStorage`, con dos implementaciones elegidas por
-`STORAGE_PROVIDER`: **MinIO** (S3-compatible) en despliegue, filesystem local en desarrollo. Los
+`STORAGE_PROVIDER`: **S3 contra Garage** (`aws-sdk-go-v2`) en despliegue, filesystem local en desarrollo. Los
 handlers no saben cuál está activa.
 
 `attachments.file_path` es la **clave en el storage**, no una ruta del filesystem.
@@ -262,7 +262,7 @@ sus datos al montar, y navegar y volver reejecuta todo.
 |---|---|---|---|
 | **Google OAuth** | `web` + `api` | El front obtiene el `id_token` con `@react-oauth/google`; el back lo verifica contra Google | Media — el login con email/password funciona sin él |
 | **SMTP** | `api` | Cambio de etapa, cancelación de evento, reset de contraseña | Media — pero el flujo de recuperación de contraseña depende por completo |
-| **MinIO** | `api` | Storage de las propuestas | **Alta** — sin él no hay carga ni descarga |
+| **Garage (S3)** | `api` | Storage de las propuestas | **Alta** — sin él no hay carga ni descarga |
 
 Google OAuth es el único externo que tocan ambos servicios, pero en roles distintos: el frontend
 obtiene el token, el backend lo verifica. No es una dependencia compartida en el sentido de estado
@@ -303,7 +303,7 @@ verificaciones sobre cualquier evento** y solo es alcanzable escribiendo en la b
 - ⚠️ **`GET /api/v1/users/{user_id}` no verifica ownership**: cualquier autenticado lee cualquier
   usuario (D-03).
 - **No hay rate limiting** ni protección contra fuerza bruta.
-- **No hay cifrado en reposo** de las propuestas: se guardan tal cual en MinIO.
+- **No hay cifrado en reposo** de las propuestas: se guardan tal cual en Garage.
 
 ### Defensa en profundidad
 
@@ -319,7 +319,7 @@ violar: si alguien evalúa su propia propuesta, el resultado pierde toda legitim
 
 Imágenes publicadas en Docker Hub (`gravadigital/telescope-api` y `gravadigital/telescope-web`)
 por el CI. El compose de servidor vive en el repositorio de deploy; en este repo,
-`deploy/docker-compose.yml` es solo el stack local, con `STORAGE_PROVIDER=minio`.
+`deploy/docker-compose.yml` es solo el stack local, con `STORAGE_PROVIDER=s3` contra Garage.
 
 Componentes a desplegar:
 
@@ -328,7 +328,7 @@ Componentes a desplegar:
 | `api` | Go compilado. Corre migraciones al arrancar |
 | `web` | Build estático de CRA, servido como archivos |
 | PostgreSQL | Con extensión `uuid-ossp` |
-| MinIO | Bucket para las propuestas |
+| Garage (S3) | Bucket privado para las propuestas, creado por la infraestructura (la API no lo crea) |
 | SMTP | Servidor configurable |
 
 ### Escalabilidad

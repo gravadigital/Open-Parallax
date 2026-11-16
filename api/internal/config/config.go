@@ -31,14 +31,15 @@ type Config struct {
 	}
 
 	Storage struct {
-		Provider       string // "local" or "minio"
-		LocalPath      string
-		MinIOEndpoint  string
-		MinIOAccessKey string
-		MinIOSecretKey string
-		MinIOBucket    string
-		MinIOUseSSL    bool
-		MinIORegion    string
+		Provider  string // "local" or "s3"
+		LocalPath string
+		// S3-compatible object storage (Garage). Endpoints carry the scheme.
+		S3Endpoint        string
+		S3PresignEndpoint string
+		S3Region          string
+		S3Bucket          string
+		S3AccessKeyID     string
+		S3SecretAccessKey string
 	}
 
 	CORS struct {
@@ -88,14 +89,15 @@ func Load() *Config {
 	config.Upload.MaxFileSize = getEnvAsInt64("MAX_FILE_SIZE", 10485760)
 
 	// Storage configuration
-	config.Storage.Provider = getEnv("STORAGE_PROVIDER", "local") // "local" or "minio"
+	config.Storage.Provider = getEnv("STORAGE_PROVIDER", "local") // "local" or "s3"
 	config.Storage.LocalPath = getEnv("STORAGE_LOCAL_PATH", "./uploads")
-	config.Storage.MinIOEndpoint = getEnv("MINIO_ENDPOINT", "localhost:9000")
-	config.Storage.MinIOAccessKey = getEnv("MINIO_ACCESS_KEY", "")
-	config.Storage.MinIOSecretKey = getEnv("MINIO_SECRET_KEY", "")
-	config.Storage.MinIOBucket = getEnv("MINIO_BUCKET", "telescopio")
-	config.Storage.MinIOUseSSL = getEnvAsBool("MINIO_USE_SSL", false)
-	config.Storage.MinIORegion = getEnv("MINIO_REGION", "us-east-1")
+	config.Storage.S3Endpoint = getEnv("S3_ENDPOINT", "http://localhost:3900")
+	config.Storage.S3PresignEndpoint = getEnv("S3_PRESIGN_ENDPOINT", "")
+	// Must match the server's s3_region; Garage's default is "garage".
+	config.Storage.S3Region = getEnv("S3_REGION", "garage")
+	config.Storage.S3Bucket = getEnv("S3_BUCKET", "telescope")
+	config.Storage.S3AccessKeyID = getEnv("S3_ACCESS_KEY_ID", "")
+	config.Storage.S3SecretAccessKey = getEnv("S3_SECRET_ACCESS_KEY", "")
 
 	config.CORS.AllowOrigins = getEnv("CORS_ALLOW_ORIGINS", "*")
 	config.CORS.AllowMethods = getEnv("CORS_ALLOW_METHODS", "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS")

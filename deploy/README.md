@@ -1,6 +1,6 @@
 # deploy
 
-The Docker Compose stack that runs Telescope locally: PostgreSQL, MinIO with its bucket, and
+The Docker Compose stack that runs Telescope locally: PostgreSQL, Garage (S3 storage) with its bucket, and
 the api and web built from the repository.
 
 Use it through the `Makefile` at the repository root (`make up`, `make infra`, …). Without

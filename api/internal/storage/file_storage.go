@@ -21,14 +21,3 @@ type FileInfo struct {
 	ETag         string
 	LastModified string
 }
-
-type StorageConfig struct {
-	Provider        string
-	LocalPath       string
-	Endpoint        string
-	AccessKeyID     string
-	SecretAccessKey string
-	BucketName      string
-	UseSSL          bool
-	Region          string
-}

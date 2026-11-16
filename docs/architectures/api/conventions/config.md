@@ -51,14 +51,14 @@ Si el área es nueva, creá un struct anidado nuevo en vez de colgar el campo en
 | `FRONTEND_URL` | `http://localhost:3000` | Base para links en emails |
 | `UPLOADS_DIR` | `./uploads` | |
 | `MAX_FILE_SIZE` | `10485760` (10MB) | Límite de subida |
-| `STORAGE_PROVIDER` | `local` | `local` o `minio` |
+| `STORAGE_PROVIDER` | `local` | `local` o `s3` |
 | `STORAGE_LOCAL_PATH` | `./uploads` | |
-| `MINIO_ENDPOINT` | `localhost:9000` | |
-| `MINIO_ACCESS_KEY` | `""` | Obligatoria si el provider es `minio` |
-| `MINIO_SECRET_KEY` | `""` | Obligatoria si el provider es `minio` |
-| `MINIO_BUCKET` | `telescopio` | |
-| `MINIO_USE_SSL` | `false` | |
-| `MINIO_REGION` | `us-east-1` | |
+| `S3_ENDPOINT` | `http://localhost:3900` | URL con esquema |
+| `S3_PRESIGN_ENDPOINT` | `""` | Host público para firmar URLs. Vacío = `S3_ENDPOINT` |
+| `S3_REGION` | `garage` | Tiene que coincidir con `s3_region` del servidor |
+| `S3_BUCKET` | `telescope` | Tiene que existir: la API no lo crea |
+| `S3_ACCESS_KEY_ID` | `""` | Obligatoria si el provider es `s3` |
+| `S3_SECRET_ACCESS_KEY` | `""` | Obligatoria si el provider es `s3` |
 | `CORS_ALLOW_ORIGINS` | `*` | Lista separada por comas, o `*` |
 | `CORS_ALLOW_METHODS` | `GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS` | |
 | `CORS_ALLOW_HEADERS` | `Origin,Content-Length,Content-Type,Authorization` | |
@@ -78,7 +78,8 @@ aborta el arranque si falla. Hoy valida solo `JWT_SECRET`. Está separado de `Lo
 
 El resto de los valores tiene default y no se valida; falla después en runtime:
 
-- Las credenciales de MinIO sí se chequean, pero recién al construir el storage.
+- Las credenciales y el bucket del provider `s3` sí se chequean, pero recién al construir el
+  storage (`HeadBucket`).
 - Una `DB_PASSWORD` incorrecta se descubre al fallar la conexión.
 
 Al agregar una variable que no puede tener default seguro (secretos, credenciales), validá

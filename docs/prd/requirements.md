@@ -511,7 +511,7 @@ y porque son el insumo directo de los primeros requerimientos de corrección.
 | — | Autorización del endpoint de descarga | ⚠️ **Ausente** — ver D-02 |
 | — | Verificación de ownership en lectura de usuarios | ⚠️ **Ausente** — ver D-03 |
 | — | Rate limiting, protección contra fuerza bruta, auditoría de accesos | **No implementado** |
-| — | Cifrado en reposo de las propuestas | **No implementado** — se guardan tal cual en MinIO |
+| — | Cifrado en reposo de las propuestas | **No implementado** — se guardan tal cual en Garage |
 
 ### Confiabilidad
 
@@ -553,7 +553,7 @@ y porque son el insumo directo de los primeros requerimientos de corrección.
 | ID | Requerimiento | Estado |
 |----|---------------|--------|
 | NFR-E-01 | El backend es stateless (la sesión vive en el JWT): admite múltiples instancias detrás de un balanceador | **Implementado por diseño**, no verificado en despliegue |
-| NFR-E-02 | El storage de propuestas está abstraído tras la interfaz `FileStorage` | **Implementado** — local o MinIO sin tocar handlers |
+| NFR-E-02 | El storage de propuestas está abstraído tras la interfaz `FileStorage` | **Implementado** — local o S3 (Garage) sin tocar handlers |
 | — | Estrategia de caché | **No implementado** — sin Redis ni caché de aplicación |
 | — | Escalado horizontal probado | **No verificado** |
 
@@ -575,7 +575,7 @@ una SPA de CRA. Las 9 convenciones de cada servicio son custom.
 ### Datos y almacenamiento
 
 - **PostgreSQL** con extensión `uuid-ossp`. 9 tablas, 3 tipos enumerados, 21 migraciones.
-- **MinIO** (S3-compatible) para las propuestas en despliegue; filesystem local en desarrollo.
+- **Garage** (S3-compatible) para las propuestas en despliegue; filesystem local en desarrollo.
 - **`localStorage`** para la sesión del navegador.
 
 ### Dependencias externas
@@ -584,11 +584,11 @@ una SPA de CRA. Las 9 convenciones de cada servicio son custom.
 |---|---|---|
 | Google OAuth | Login alternativo | Media — el login con email/password sigue funcionando sin él |
 | SMTP | Tres emails transaccionales | Media — el flujo de recuperación de contraseña depende por completo |
-| MinIO | Storage de propuestas | **Alta** — sin él no hay carga ni descarga de propuestas |
+| Garage (S3) | Storage de propuestas | **Alta** — sin él no hay carga ni descarga de propuestas |
 
 ### Restricciones de infraestructura
 
-- Despliegue con Docker Compose e imágenes publicadas, con `STORAGE_PROVIDER=minio`. El compose
+- Despliegue con Docker Compose e imágenes publicadas, con `STORAGE_PROVIDER=s3`. El compose
   de servidor vive en el repositorio de deploy; `deploy/` en este repo es solo el stack local.
 - ⚠️ **El default del código Go es `local`**: correr la api sin el compose ni el `Makefile` da
   filesystem local sin aviso.

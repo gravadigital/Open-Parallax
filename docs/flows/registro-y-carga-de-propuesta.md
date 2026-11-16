@@ -47,7 +47,7 @@ responde `200` con `data: []`.
 | `web` | Presenta el detalle del evento, el registro y el formulario de carga | Iniciador |
 | `api` | Valida etapa, cupo y unicidad; crea usuario y participación; persiste el archivo | Procesador |
 | PostgreSQL | Persiste `users`, `event_participants`, `attachments` | Almacenamiento |
-| MinIO | Guarda el binario de la propuesta | Almacenamiento |
+| Garage (S3) | Guarda el binario de la propuesta | Almacenamiento |
 
 ## Pasos del Flujo
 
@@ -57,7 +57,7 @@ sequenceDiagram
     participant WEB as web
     participant API as api
     participant DB as PostgreSQL
-    participant S3 as MinIO
+    participant S3 as Garage (S3)
 
     U->>WEB: abre /events/{id} (link compartible)
     WEB->>API: GET /api/v1/events/{event_id} (token opcional)
@@ -213,7 +213,7 @@ nombre, tamaño, "Cambiar") con el campo de comentario (hasta 1000 caracteres) y
 propuesta"; al terminar, "Recibimos tu propuesta." (5 s) y la ficha pasa a "Enviada el {fecha}".
 
 **Operaciones:**
-- **MinIO:** `PutObject`. La clave resultante se guarda en `attachments.file_path` (**es la clave
+- **Garage (S3):** `PutObject`. La clave resultante se guarda en `attachments.file_path` (**es la clave
   del storage, no una ruta de filesystem**).
 - **`INSERT` sobre `attachments`:** `event_id`, `participant_id`, `filename` (generado),
   `original_name` (el que subió el usuario), `file_path`, `file_size`, `mime_type` y
@@ -253,6 +253,6 @@ evento**; el creador no puede subir.
 - `users` — el usuario existe (creado en este flujo o preexistente).
 - `event_participants` — hay una fila (`event_id`, `user_id`) con `role = 'participant'`.
 - `attachments` — hay exactamente una propuesta de ese participante en ese evento.
-- MinIO — el binario está persistido bajo la clave de `file_path`.
+- Garage (S3) — el binario está persistido bajo la clave de `file_path`.
 
 El participante queda listo para recibir su asignación cuando el organizador avance a `voting`.

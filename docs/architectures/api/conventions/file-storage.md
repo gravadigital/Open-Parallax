@@ -1,11 +1,11 @@
 ---
 id: file-storage
-display_name: Almacenamiento de archivos (local / MinIO)
+display_name: Almacenamiento de archivos (local / S3 con Garage)
 language: golang
-description: Pluggable object storage behind a FileStorage interface, backed by the local filesystem or MinIO
+description: Pluggable object storage behind a FileStorage interface, backed by the local filesystem or an S3-compatible service (Garage)
 applies_to: [api]
 required_by: []
-package: github.com/minio/minio-go/v7
+package: github.com/aws/aws-sdk-go-v2/service/s3
 ---
 
 # File Storage (api)
@@ -37,11 +37,39 @@ Es de las pocas partes del servicio que sí recibe `context.Context`. Mantenelo.
 | Provider | Tipo | Cuándo |
 |---|---|---|
 | `local` | `LocalStorage` — filesystem bajo `STORAGE_LOCAL_PATH` | Desarrollo |
-| `minio` | `MinIOStorage` — S3-compatible | Producción |
+| `s3` | `S3Storage` — `aws-sdk-go-v2` contra Garage | Stack local y servidores |
 
 Se construye en `main.go` con `storage.NewFileStorage(cfg)`, que despacha según
-`STORAGE_PROVIDER` y falla si el valor no es ninguno de los dos. MinIO exige credenciales
-y crea el bucket si no existe.
+`STORAGE_PROVIDER` y falla si el valor no es ninguno de los dos. El valor `minio` ya no
+existe: falla con un mensaje que indica pasar a `s3`.
+
+### Reglas del provider `s3`
+
+El servidor es [Garage](https://garagehq.deuxfleurs.fr/), que reemplazó a MinIO porque MinIO
+dejó de publicar imágenes y su repositorio quedó archivado. El cliente es el SDK de AWS: no se
+usa `minio-go`, que pertenece a un proyecto archivado.
+
+- **La API no crea el bucket.** `NewS3Storage` hace `HeadBucket` al arrancar y aborta si el
+  bucket no responde (fail-fast). En Garage, un bucket creado con `CreateBucket` desde la API
+  S3 queda con alias local: no lo ven otras claves ni se puede publicar. Lo crea la
+  infraestructura: `--default-bucket` en el compose local y `garage bucket create` en un
+  servidor.
+- **La región tiene que coincidir con `s3_region` del servidor** (`garage` por defecto). Si no
+  coincide, toda petición falla con 400 y `HeadBucket` lo muestra sin cuerpo, como
+  `UnknownError`. Por eso la región sale de `S3_REGION` y nunca va fija en el código.
+- **Path style siempre** (`UsePathStyle`). El estilo virtual-host necesitaría un DNS wildcard.
+- **`Put` envía siempre el `Content-Type`.** Garage no lo deduce de la extensión. Si llega
+  vacío, se usa `application/octet-stream`.
+- **Sobre HTTP, el cuerpo tiene que ser seekable**, porque el SDK lo hashea para firmar.
+  `multipart.File` lo es. Si llega otro reader, `Put` lo lee entero en memoria. El límite es
+  `MAX_FILE_SIZE`.
+- **Las URLs prefirmadas se firman con `S3_PRESIGN_ENDPOINT`.** La firma incluye el host, y el
+  cliente que firma desactiva el checksum automático (`RequestChecksumCalculation:
+  WhenRequired`). Sin eso, un PUT prefirmado recibe `400 InvalidDigest`. Vencen como máximo a
+  los 7 días, y dejan de funcionar si la clave que las firmó pierde `read` o se borra.
+- **Lo que Garage no soporta no se usa:** bucket policies, ACL, versionado, tags, object lock
+  ni notificaciones. Un `If-None-Match` en un PUT **se ignora en silencio**, así que no sirve
+  como lock.
 
 ## Claves
 
@@ -72,7 +100,7 @@ clave que devuelve `Put` se persiste en `attachments.file_path`.
 
 ## Limitaciones conocidas
 
-- **`GetURL` de MinIO devuelve una URL prefirmada**, pero la descarga no la usa: sirve el
+- **`GetURL` del provider `s3` devuelve una URL prefirmada**, pero la descarga no la usa: sirve el
   archivo por streaming a través de la API. Eso hace pasar todo el tráfico de archivos por
   el backend en vez de delegarlo al object storage.
 - **Si `io.Copy` falla a mitad del stream de descarga**, el `200` ya se envió: la respuesta

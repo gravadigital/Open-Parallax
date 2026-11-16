@@ -154,8 +154,9 @@ existente es:
   sustancial de las reglas de negocio vive en triggers plpgsql**, no en Go.
 - **Google OAuth** — Login alternativo al de email/password.
 - **SMTP** — Notificaciones de cambio de etapa, cancelación y reset de contraseña.
-- **MinIO** — Storage de propuestas. El stack local (`deploy/docker-compose.yml`) y el
-  `Makefile` fijan `STORAGE_PROVIDER=minio`; el filesystem local queda como alternativa.
+- **Garage (S3)** — Storage de propuestas. Reemplazó a MinIO, que dejó de publicar imágenes y
+  quedó archivado. El stack local (`deploy/docker-compose.yml`) y el `Makefile` fijan
+  `STORAGE_PROVIDER=s3`; el filesystem local queda como alternativa.
   **Atención**: el default del código Go es `local` (`internal/config/config.go:86`), así que
   quien corra la api sin el compose ni el `Makefile` obtiene filesystem local sin saberlo.
 
@@ -206,7 +207,7 @@ Estas condicionan cualquier trabajo futuro y están documentadas en detalle en
 - **Participación**: registro a un evento por link, con creación del usuario en el acto si el
   email no existe; cupo máximo configurable (default 20).
 - **Propuestas**: una por participante por evento; 8 tipos MIME aceptados; límite de 10 MB
-  validado en el cliente (la base admite hasta 100 MB); storage local o MinIO.
+  validado en el cliente (la base admite hasta 100 MB); storage local o S3 (Garage).
 - **Motor de votación distribuida**: configuración de parámetros por evento, generación de
   asignaciones con conflicto de interés y cobertura mínima, validación de la condición de
   convergencia `m ≥ 2·log₂(k)`, cálculo de MBC, cálculo de calidad por evaluador y
@@ -280,7 +281,7 @@ Estado tras la validación con el responsable del producto (2026-09-18).
 | 2 | ¿El rol global `organizer` se usa? | **No.** Quedó desplazado: cualquiera puede crear eventos y participar en otros. Todo `users.role` es deuda |
 | 3 | ¿Quién define los parámetros del algoritmo? | **El sistema calcula y recomienda una base; el organizador la puede editar** |
 | 5 | ¿El rol `admin` se opera por base, o falta pantalla? | Pregunta mal planteada de mi parte. La administración *de un evento* la ejerce su creador y ya funciona. El `admin` **global** de `users.role` es otra cosa y es deuda a eliminar |
-| 6 | ¿`STORAGE_PROVIDER` en producción? | **`minio`.** Es lo que usan el stack local y las imágenes publicadas; el compose de servidor vive en el repo de deploy |
+| 6 | ¿`STORAGE_PROVIDER` en producción? | **`s3`, contra Garage** (antes `minio`). Es lo que usan el stack local y las imágenes publicadas; el compose de servidor vive en el repo de deploy |
 | 7 | ¿Dispositivo prioritario? | **Responsive es importante.** Los gaps de mobile son defectos a corregir |
 
 ### Pendientes

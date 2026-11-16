@@ -53,7 +53,7 @@ logger.Migration()                // component=migration
 
 ## Qué no loguear
 
-- Passwords, hashes, tokens JWT, tokens de reset, credenciales SMTP o de MinIO.
+- Passwords, hashes, tokens JWT, tokens de reset, credenciales SMTP o de S3.
 - **Cuidado con la connection string.** `main.go:225` loguea `cfg.GetDatabaseURL()` en
   `Debug`, que incluye la password de la base. Solo aparece con `GIN_MODE=debug`, pero no
   agregues más usos de eso.

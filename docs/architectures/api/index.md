@@ -23,7 +23,7 @@ tiempo de telescopio, con motor de votación distribuida por pares.
 | [`logging`](./conventions/logging.md) | **custom** | `charmbracelet/log` en vez de zerolog. Salida no-JSON |
 | [`config`](./conventions/config.md) | **custom** | `os.Getenv` manual + godotenv, sin validación al arranque |
 | [`testing`](./conventions/testing.md) | **custom** | Solo integración con build tag. Sin unit tests del algoritmo |
-| [`file-storage`](./conventions/file-storage.md) | **custom** | No existe en el catálogo. Local o MinIO tras una interfaz |
+| [`file-storage`](./conventions/file-storage.md) | **custom** | No existe en el catálogo. Local o S3 (Garage) tras una interfaz |
 | `dockerfile` | catálogo | Multi-stage, binario estático, `scratch`, usuario no-root |
 
 **Nueve de diez convenciones son custom.** El servicio sigue su propio stack de forma

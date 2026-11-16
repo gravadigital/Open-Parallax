@@ -23,7 +23,7 @@ documentation — architecture per service, conventions, decision records, flows
       │  HTTP + JWT
       ▼
      web  ─────── HTTP ───────▶  api  ──────▶  PostgreSQL
-   (React SPA,                  (Go)    ├───▶  MinIO (proposal files)
+   (React SPA,                  (Go)    ├───▶  Garage S3 (proposal files)
     static files)                       └───▶  SMTP (notifications)
 ```
 

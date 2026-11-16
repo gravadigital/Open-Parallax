@@ -9,7 +9,7 @@ carefully is what moves your own proposal up.
 
 ```
 browser ── HTTP ──> web ── HTTP + JWT ──> api ──> PostgreSQL
-                  (React SPA)             (Go)  ├─> MinIO (proposal files)
+                  (React SPA)             (Go)  ├─> Garage S3 (proposal files)
                                                 └─> SMTP  (notifications)
 ```
 
@@ -55,7 +55,7 @@ keeping the data.
 To work on the code, run the database and storage in Docker and each part by hand:
 
 ```sh
-make infra    # database + MinIO
+make infra    # database + Garage
 make api      # needs Go 1.26
 make web      # needs Node.js 22
 make test

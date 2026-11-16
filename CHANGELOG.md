@@ -76,6 +76,14 @@ Para correr un servidor contra él, su compose (en el repo de deploy) tiene que 
 
 ### Cambiado
 
+- **Garage reemplaza a MinIO** como almacenamiento S3 de las propuestas. MinIO dejó de
+  publicar imágenes y su repositorio quedó archivado. El stack local usa
+  `dxflrs/garage:v2.4.1`, que crea la clave y el bucket al arrancar, y la api pasa de
+  `minio-go` a `aws-sdk-go-v2`. **Incompatible en la configuración:** `STORAGE_PROVIDER=minio`
+  pasa a ser `s3`, y las variables `MINIO_*` pasan a ser `S3_ENDPOINT` (con esquema),
+  `S3_REGION` (por defecto `garage`), `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`
+  y `S3_PRESIGN_ENDPOINT`. La api ya no crea el bucket: lo verifica al arrancar y aborta si
+  no existe. Los tests de integración del storage corren contra Garage con testcontainers.
 - **`deploy/` es sólo para levantarlo local**, sin `.env`: cada variable trae su default,
   incluido un `JWT_SECRET` de desarrollo, y el bucket de MinIO lo crea el propio compose.
   Se eliminan `local.sh`, `.env.dist` y el compose de servidor, que pasa al repo de deploy.

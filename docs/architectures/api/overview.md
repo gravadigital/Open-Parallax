@@ -83,7 +83,7 @@ parámetros de votación y coherencia de los umbrales.
 ## Storage de archivos intercambiable
 
 La interfaz `FileStorage` (`internal/storage/file_storage.go`) abstrae dos backends
-elegidos por `STORAGE_PROVIDER`: filesystem local o MinIO (S3-compatible). Los handlers
+elegidos por `STORAGE_PROVIDER`: filesystem local o S3 (Garage). Los handlers
 no conocen cuál está activo. Ver la convención custom `file-storage`.
 
 ## Integraciones externas
@@ -91,7 +91,7 @@ no conocen cuál está activo. Ver la convención custom `file-storage`.
 | Integración | Uso | Configuración |
 |---|---|---|
 | PostgreSQL | Todo el estado. Pool de 100 conexiones, reintentos con backoff al arrancar | `DB_*` |
-| MinIO | Almacenamiento de propuestas (opcional) | `STORAGE_PROVIDER=minio`, `MINIO_*` |
+| Garage (S3) | Almacenamiento de propuestas (opcional) | `STORAGE_PROVIDER=s3`, `S3_*` |
 | SMTP | Notificaciones por email (las notificaciones in-app se persisten en PostgreSQL, no pasan por SMTP). Implementa AUTH LOGIN a mano porque el `net/smtp` de Go solo hace AUTH PLAIN | `EMAIL_ENABLED`, `SMTP_*` |
 | Google OAuth | Verificación de tokens de identidad | `GOOGLE_CLIENT_ID` |
 

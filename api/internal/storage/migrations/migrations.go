@@ -50,7 +50,7 @@ func GetMigrations() []Migration {
 		},
 		{
 			ID:   "006",
-			Name: "insert_sample_data",
+			Name: "insert_sample_data", // no-op since 026; the name stays as recorded in schema_migrations
 			Up:   migration006Up,
 			Down: migration006Down,
 		},
@@ -167,6 +167,12 @@ func GetMigrations() []Migration {
 			Name: "add_cover_color_and_start_date_trigger",
 			Up:   migration025Up,
 			Down: migration025Down,
+		},
+		{
+			ID:   "026",
+			Name: "remove_sample_data",
+			Up:   migration026Up,
+			Down: migration026Down,
 		},
 	}
 }

@@ -548,7 +548,7 @@ Migraciones en Go, no en SQL, con `Up` y `Down` registradas en orden en
 | 003 | `create_indexes` | Índices de performance |
 | 004 | `create_constraints_and_triggers` | Funciones plpgsql, triggers y CHECK constraints |
 | 005 | `create_views_and_functions` | Las 4 vistas |
-| 006 | `insert_sample_data` | Datos de ejemplo |
+| 006 | `insert_sample_data` | **Sin efecto desde la 026.** Antes insertaba un evento de ejemplo, 7 usuarios y un admin sin contraseña en toda base nueva |
 | 007 | `add_organizer_to_events` | Columna `organizer` |
 | 008 | `fix_assignment_constraints` | Corrección de constraints |
 | 009 | `fix_attachment_ids_type` | Tipo del array de attachments |
@@ -568,6 +568,7 @@ Migraciones en Go, no en SQL, con `Up` y `Down` registradas en orden en
 | 023 | `relax_voting_results_vote_count` | CHECK `valid_participant_counts` pasa a `total_participants > 0 AND total_votes >= 0`. `Down` restaura `total_votes >= total_participants` |
 | 024 | `add_notifications` | Enum `notification_type`, tabla `notifications` e índices |
 | 025 | `add_cover_color_and_start_date_trigger` | `events.cover_color` (default `lavender`) + CHECK `valid_cover_color`; reemplaza el CHECK `future_start_date` por el trigger `enforce_future_start_date` |
+| 026 | `remove_sample_data` | Borra el evento de ejemplo de la 006 con todo lo asociado, y sus usuarios por id salvo los que participen de otros eventos. `Down` no hace nada |
 
 Notas:
 

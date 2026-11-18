@@ -9,7 +9,7 @@ You need **Docker**, **Go 1.26** (see [`api/go.mod`](api/go.mod)), **Node.js 22*
 [`web/.nvmrc`](web/.nvmrc)) and `make`.
 
 ```sh
-git clone https://github.com/gravadigital/openparallax.git
+git clone https://github.com/gravadigital/Open-Parallax.git openparallax
 cd openparallax
 make infra    # database + Garage in Docker
 make api      # in another terminal

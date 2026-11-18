@@ -173,7 +173,7 @@ export const en: Catalog = {
     tagline: 'OpenParallax · distributed peer review',
     version: 'V1.0',
     github: 'GitHub',
-    repo: 'gravadigital/openparallax',
+    repo: 'gravadigital/Open-Parallax',
     contact: 'CONTACT',
     email: 'info@grava.digital',
     phone: '+54 9 11 3094 2020',

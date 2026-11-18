@@ -23,7 +23,7 @@ escaso.
 
 | Área | Antes | Ahora |
 |---|---|---|
-| Repositorio | `gravadigital/telescope` | `gravadigital/openparallax` (renombre pendiente en GitHub) |
+| Repositorio | `gravadigital/telescope` | `gravadigital/Open-Parallax` |
 | Módulo Go | `github.com/gravadigital/telescopio-api` | `github.com/gravadigital/openparallax/api` |
 | Paquete web | `telescopio-web` | `openparallax-web` |
 | Variables de entorno | `TELESCOPIO_*` | `OPENPARALLAX_*` |
@@ -62,7 +62,7 @@ Ninguna, a propósito: no había instalaciones en uso, solo desarrollo con datos
 
 ## Pendiente fuera del repo
 
-- Renombrar el repositorio en GitHub (Settings → Repository name). GitHub redirige los enlaces y
+- Hecho: el repositorio se renombró en GitHub a `gravadigital/Open-Parallax`. GitHub redirige los enlaces y
   remotos viejos.
 - Crear los repositorios `openparallax-api` y `openparallax-web` en Docker Hub antes del próximo
   push a `dev` o del próximo tag.

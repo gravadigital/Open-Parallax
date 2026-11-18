@@ -173,7 +173,7 @@ export const es = {
     tagline: 'OpenParallax · evaluación distribuida entre pares',
     version: 'V1.0',
     github: 'GitHub',
-    repo: 'gravadigital/openparallax',
+    repo: 'gravadigital/Open-Parallax',
     contact: 'CONTACTO',
     email: 'info@grava.digital',
     phone: '+54 9 11 3094 2020',

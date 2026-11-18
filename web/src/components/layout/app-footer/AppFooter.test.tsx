@@ -18,8 +18,8 @@ describe('AppFooter', () => {
     const footer = screen.getByRole('contentinfo');
     expect(within(footer).getByRole('link', { name: 'OPENPARALLAX' })).toHaveAttribute('href', '/');
     expect(within(footer).getByText('V1.0')).toBeInTheDocument();
-    const repo = within(footer).getByRole('link', { name: /gravadigital\/openparallax/ });
-    expect(repo).toHaveAttribute('href', 'https://github.com/gravadigital/openparallax');
+    const repo = within(footer).getByRole('link', { name: /gravadigital\/Open-Parallax/ });
+    expect(repo).toHaveAttribute('href', 'https://github.com/gravadigital/Open-Parallax');
     expect(repo).toHaveAttribute('target', '_blank');
     expect(repo).toHaveAttribute('rel', 'noopener noreferrer');
     expect(within(footer).getByText('CONTACTO')).toBeInTheDocument();

@@ -22,7 +22,7 @@ const AppFooter: React.FC = () => {
 
         <a
           className="ly-footer__github"
-          href="https://github.com/gravadigital/openparallax"
+          href="https://github.com/gravadigital/Open-Parallax"
           target="_blank"
           rel="noopener noreferrer"
         >

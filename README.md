@@ -1,6 +1,6 @@
 # OpenParallax
 
-[![CI](https://github.com/gravadigital/openparallax/actions/workflows/ci.yml/badge.svg)](https://github.com/gravadigital/openparallax/actions/workflows/ci.yml)
+[![CI](https://github.com/gravadigital/Open-Parallax/actions/workflows/ci.yml/badge.svg)](https://github.com/gravadigital/Open-Parallax/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Distributed peer review for calls where proposals outnumber the people available to judge

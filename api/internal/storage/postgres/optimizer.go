@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/log"
 	"gorm.io/gorm"
 
-	"github.com/gravadigital/telescopio-api/internal/logger"
+	"github.com/gravadigital/openparallax/api/internal/logger"
 )
 
 // QueryOptimizer provides database query optimization utilities
@@ -352,14 +352,14 @@ func (o *QueryOptimizer) generateOptimizationHints(metrics *PerformanceMetrics) 
 	return hints
 }
 
-// OptimizeIndexes analyzes and suggests index optimizations for the telescopio schema
+// OptimizeIndexes analyzes and suggests index optimizations for the openparallax schema
 func (o *QueryOptimizer) OptimizeIndexes(ctx context.Context) ([]OptimizationHint, error) {
 	o.log.Debug("Analyzing index optimization opportunities...")
 
 	var hints []OptimizationHint
 	now := time.Now()
 
-	// Suggested indexes based on common query patterns in the telescopio system
+	// Suggested indexes based on common query patterns in the openparallax system
 	suggestedIndexes := []struct {
 		table    string
 		columns  string

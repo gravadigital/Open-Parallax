@@ -76,6 +76,14 @@ Para correr un servidor contra él, su compose (en el repo de deploy) tiene que 
 
 ### Cambiado
 
+- **El producto pasa a llamarse OpenParallax** (antes Telescope / Telescopio). Cambian el
+  módulo Go (`github.com/gravadigital/openparallax/api`), las variables `TELESCOPIO_*` →
+  `OPENPARALLAX_*`, las claves de `localStorage` (`openparallax_*`), la base, el usuario y el
+  bucket locales (`openparallax_db`, `openparallax`), las imágenes Docker
+  (`gravadigital/openparallax-{api,web}`) y la marca en la interfaz, los emails y la
+  documentación. Sin compatibilidad hacia atrás: no había instalaciones en uso. El stack
+  local se llama `openparallax-local`; el anterior (`telescope-local`) queda huérfano y se
+  puede borrar. Ver `docs/changelog/2026-11-18-renombre-a-openparallax.md`.
 - **Garage reemplaza a MinIO** como almacenamiento S3 de las propuestas. MinIO dejó de
   publicar imágenes y su repositorio quedó archivado. El stack local usa
   `dxflrs/garage:v2.4.1`, que crea la clave y el bucket al arrancar, y la api pasa de

@@ -93,7 +93,7 @@ nueva con `count: 1`.
 
 **Anonimato:** `data` nunca incluye quién subió qué propuesta.
 
-**Ref:** `docs/db-schemas/telescopio_db.md` → `notifications`
+**Ref:** `docs/db-schemas/openparallax_db.md` → `notifications`
 
 ---
 

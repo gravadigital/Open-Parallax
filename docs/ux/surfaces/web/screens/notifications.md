@@ -76,7 +76,7 @@ date: 2026-10-02
 ## Contenido
 
 ### header
-- Texto/label: "TELESCOPIO | Inicio · Eventos · Cómo funciona | campana {n} · menú de usuario"
+- Texto/label: "OPENPARALLAX | Inicio · Eventos · Cómo funciona | campana {n} · menú de usuario"
 
 ### Volver
 - Texto/label: "← Volver"
@@ -118,7 +118,7 @@ date: 2026-10-02
 - Texto/label: "No pudimos cargar tus notificaciones." · acción "Reintentar"
 
 ### footer
-- Texto/label: "Telescopio · evaluación distribuida entre pares"
+- Texto/label: "OpenParallax · evaluación distribuida entre pares"
 
 ## Estados
 

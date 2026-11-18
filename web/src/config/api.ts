@@ -136,7 +136,7 @@ export const apiRequest = async <T = any>(
 
   // Get JWT token from localStorage
   // Note: The token is stored directly as a string (not JSON.stringify)
-  const token = localStorage.getItem('telescopio_token');
+  const token = localStorage.getItem('openparallax_token');
 
   // Si estamos enviando FormData, no establecer Content-Type (el browser lo hace automáticamente)
   const isFormData = options.body instanceof FormData;
@@ -160,8 +160,8 @@ export const apiRequest = async <T = any>(
       // Si recibimos 401 Unauthorized, limpiar la sesión
       if (response.status === 401) {
         console.warn('🔒 Token inválido o expirado. Limpiando sesión...');
-        localStorage.removeItem('telescopio_user');
-        localStorage.removeItem('telescopio_token');
+        localStorage.removeItem('openparallax_user');
+        localStorage.removeItem('openparallax_token');
 
         // Disparar un evento personalizado para que el AuthContext detecte el cambio
         window.dispatchEvent(new CustomEvent('auth:logout', {
@@ -189,7 +189,7 @@ export const uploadFile = async (endpoint: string, formData: FormData): Promise<
 
   // Get JWT token from localStorage
   // Note: The token is stored directly as a string (not JSON.stringify)
-  const token = localStorage.getItem('telescopio_token');
+  const token = localStorage.getItem('openparallax_token');
 
   try {
     const response = await fetch(url, {
@@ -217,7 +217,7 @@ export const uploadFile = async (endpoint: string, formData: FormData): Promise<
 // No puede ser un <a href> directo: el backend exige Authorization: Bearer.
 export const fetchFile = async (endpoint: string): Promise<Blob> => {
   const url = `${API_CONFIG.BASE_URL}${endpoint}`;
-  const token = localStorage.getItem('telescopio_token');
+  const token = localStorage.getItem('openparallax_token');
 
   const response = await fetch(url, {
     headers: token ? { 'Authorization': `Bearer ${token}` } : {},

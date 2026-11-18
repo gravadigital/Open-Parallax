@@ -6,8 +6,8 @@ import { UserService } from '../services/api';
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // ver si esto va en un config o algo asi
-const TELESCOPIO_USER_KEY = 'telescopio_user';
-const TELESCOPIO_TOKEN_KEY = 'telescopio_token';
+const OPENPARALLAX_USER_KEY = 'openparallax_user';
+const OPENPARALLAX_TOKEN_KEY = 'openparallax_token';
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
@@ -25,9 +25,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // Check if there's a saved user and token in localStorage
-    const savedUser = getItem(TELESCOPIO_USER_KEY) as string;
+    const savedUser = getItem(OPENPARALLAX_USER_KEY) as string;
     // Read token directly from localStorage (not through useLocalStorage hook)
-    const savedToken = localStorage.getItem(TELESCOPIO_TOKEN_KEY);
+    const savedToken = localStorage.getItem(OPENPARALLAX_TOKEN_KEY);
 
     console.log('🔍 AuthContext: Checking saved session', {
       hasSavedUser: !!savedUser,
@@ -45,8 +45,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         syncUserEvents(parsedUser.id);
       } catch (error) {
         console.error('❌ Error parsing saved user:', error);
-        removeItem(TELESCOPIO_USER_KEY);
-        localStorage.removeItem(TELESCOPIO_TOKEN_KEY);
+        removeItem(OPENPARALLAX_USER_KEY);
+        localStorage.removeItem(OPENPARALLAX_TOKEN_KEY);
       }
     } else {
       console.log('ℹ️ No saved session found. User must login.');
@@ -66,7 +66,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (!prevUser) return null;
           
           const updatedUser = { ...prevUser, joinedEventIDs: eventIds };
-          setItem(TELESCOPIO_USER_KEY, JSON.stringify(updatedUser));
+          setItem(OPENPARALLAX_USER_KEY, JSON.stringify(updatedUser));
           console.log('✅ User events synced:', eventIds.length, 'events');
           return updatedUser;
         });
@@ -96,9 +96,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = (userData: User, authToken: string): void => {
     setUser(userData);
     setToken(authToken);
-    setItem(TELESCOPIO_USER_KEY, JSON.stringify(userData));
+    setItem(OPENPARALLAX_USER_KEY, JSON.stringify(userData));
     // Save token directly to localStorage without JSON.stringify (since it's already a string)
-    localStorage.setItem(TELESCOPIO_TOKEN_KEY, authToken);
+    localStorage.setItem(OPENPARALLAX_TOKEN_KEY, authToken);
     
     // Sync user events after login
     syncUserEvents(userData.id);
@@ -107,9 +107,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = (): void => {
     setUser(null);
     setToken(null);
-    removeItem(TELESCOPIO_USER_KEY);
+    removeItem(OPENPARALLAX_USER_KEY);
     // Remove token directly from localStorage
-    localStorage.removeItem(TELESCOPIO_TOKEN_KEY);
+    localStorage.removeItem(OPENPARALLAX_TOKEN_KEY);
     // Redirect to home page after logout
     window.location.href = '/';
   };
@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     const updatedUser = { ...user, ...updatedData };
     setUser(updatedUser);
-    setItem(TELESCOPIO_USER_KEY, JSON.stringify(updatedUser));
+    setItem(OPENPARALLAX_USER_KEY, JSON.stringify(updatedUser));
   };
 
   const joinEvent = (eventId: string): void => {
@@ -132,7 +132,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const updatedUser = { ...user, joinedEventIDs: updatedJoinedEvents };
     setUser(updatedUser);
-    setItem(TELESCOPIO_USER_KEY, JSON.stringify(updatedUser));
+    setItem(OPENPARALLAX_USER_KEY, JSON.stringify(updatedUser));
   };
 
   const value: AuthContextType = {

@@ -47,14 +47,14 @@ describe('I18nProvider', () => {
 
   it('TS-5: la preferencia guardada gana al navegador', () => {
     setNavigatorLanguage('en-US');
-    localStorage.setItem('telescopio_locale', '"es"');
+    localStorage.setItem('openparallax_locale', '"es"');
     render(<I18nProvider><Probe /></I18nProvider>);
     expect(screen.getByTestId('probe')).toHaveTextContent('Eventos|es');
   });
 
   it('TS-6: un valor guardado inválido se ignora', () => {
     setNavigatorLanguage('es-AR');
-    localStorage.setItem('telescopio_locale', '"de"');
+    localStorage.setItem('openparallax_locale', '"de"');
     render(<I18nProvider><Probe /></I18nProvider>);
     expect(screen.getByTestId('probe')).toHaveTextContent('Eventos|es');
   });
@@ -83,7 +83,7 @@ describe('I18nProvider', () => {
     expect(screen.getByTestId('probe')).toBe(node);
     expect(node).toHaveTextContent('Eventos|es');
     expect(document.documentElement.lang).toBe('es');
-    expect(localStorage.getItem('telescopio_locale')).toBe('"es"');
+    expect(localStorage.getItem('openparallax_locale')).toBe('"es"');
 
     render(<I18nProvider><Probe /></I18nProvider>);
     expect(screen.getAllByTestId('probe')[1]).toHaveTextContent('Eventos|es');

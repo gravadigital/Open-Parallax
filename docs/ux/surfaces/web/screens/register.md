@@ -74,7 +74,7 @@ date: 2026-10-02
 ## Contenido
 
 ### Panel de marca
-- Texto/label: "TELESCOPIO"
+- Texto/label: "OPENPARALLAX"
 
 ### Título de marca
 - Texto/label: "Participá en eventos donde la comunidad decide."

@@ -40,7 +40,7 @@ describe('AppHeader', () => {
     expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login');
     expect(screen.getByRole('link', { name: 'Crear cuenta' })).toHaveAttribute('href', '/register');
     expect(screen.getByRole('link', { name: 'Crear cuenta' })).toHaveClass('ui-button--primary');
-    expect(screen.getByRole('link', { name: 'TELESCOPIO' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'OPENPARALLAX' })).toHaveAttribute('href', '/');
     expect(screen.queryByText('About')).toBeNull();
     expect(screen.queryByText('See Demo')).toBeNull();
     expect(screen.queryByRole('link', { name: 'Ver demo' })).toBeNull();
@@ -93,7 +93,7 @@ describe('AppHeader', () => {
     userEvent.click(screen.getByRole('menuitemradio', { name: 'English' }));
     expect(document.documentElement.lang).toBe('en');
     expect(screen.getByRole('link', { name: 'Events' })).toBeInTheDocument();
-    expect(localStorage.getItem('telescopio_locale')).toBe('"en"');
+    expect(localStorage.getItem('openparallax_locale')).toBe('"en"');
   });
 
   it('TS-37: cambia el idioma desde el selector junto al usuario', () => {
@@ -103,7 +103,7 @@ describe('AppHeader', () => {
     expect(screen.getByRole('link', { name: 'How it works' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Eventos' })).toBeNull();
     expect(document.documentElement.lang).toBe('en');
-    expect(localStorage.getItem('telescopio_locale')).toBe('"en"');
+    expect(localStorage.getItem('openparallax_locale')).toBe('"en"');
     expect(screen.getByRole('group', { name: 'Language: EN' })).toBeInTheDocument();
   });
 

@@ -1,4 +1,4 @@
-# Database Schema: `telescopio_db`
+# Database Schema: `openparallax_db`
 
 | | |
 |---|---|

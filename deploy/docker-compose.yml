@@ -1,4 +1,4 @@
-# Levanta Telescope completo en esta máquina, construyendo desde el repo:
+# Levanta OpenParallax completo en esta máquina, construyendo desde el repo:
 #
 #   docker compose up -d --build
 #
@@ -8,7 +8,7 @@
 #
 # Es sólo para desarrollo: los secretos por defecto son públicos y los puertos quedan
 # expuestos en localhost. El deploy a un servidor vive en el repo de deploy.
-name: telescope-local
+name: openparallax-local
 
 volumes:
   database:
@@ -18,12 +18,12 @@ volumes:
 services:
   database:
     image: postgres:15-alpine
-    container_name: telescope-local-database
+    container_name: openparallax-local-database
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-telescope_db}
-      POSTGRES_USER: ${POSTGRES_USER:-telescope}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-telescope_password}
+      POSTGRES_DB: ${POSTGRES_DB:-openparallax_db}
+      POSTGRES_USER: ${POSTGRES_USER:-openparallax}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-openparallax_password}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -45,18 +45,18 @@ services:
   # La imagen no trae shell, curl ni wget: el healthcheck usa el propio binario.
   storage:
     image: dxflrs/garage:v2.4.1
-    container_name: telescope-local-storage
+    container_name: openparallax-local-storage
     restart: unless-stopped
     command: ["/garage", "server", "--single-node", "--default-bucket"]
     environment:
       GARAGE_RPC_SECRET: ${STORAGE_RPC_SECRET:-4b1d2f8e0c7a9b3e5d6f1a2c4e8b0d7f9a1c3e5b7d9f0a2c4e6b8d0f2a4c6e8b}
-      GARAGE_ADMIN_TOKEN: ${STORAGE_ADMIN_TOKEN:-telescope-local-admin-token}
+      GARAGE_ADMIN_TOKEN: ${STORAGE_ADMIN_TOKEN:-openparallax-local-admin-token}
       # ID: >= 8 caracteres [A-Za-z0-9-_.]; nunca se reutiliza, ni después de borrarlo.
-      GARAGE_DEFAULT_ACCESS_KEY: ${S3_ACCESS_KEY_ID:-GKtelescopelocal01}
+      GARAGE_DEFAULT_ACCESS_KEY: ${S3_ACCESS_KEY_ID:-GKopenparallaxlocal01}
       # Secreto: >= 16 caracteres. Cambiarlo con el volumen ya creado impide arrancar
       # (no coincide con la clave existente): `make reset` lo resuelve en local.
-      GARAGE_DEFAULT_SECRET_KEY: ${S3_SECRET_ACCESS_KEY:-telescope-local-secret-0123456789}
-      GARAGE_DEFAULT_BUCKET: ${S3_BUCKET:-telescope}
+      GARAGE_DEFAULT_SECRET_KEY: ${S3_SECRET_ACCESS_KEY:-openparallax-local-secret-0123456789}
+      GARAGE_DEFAULT_BUCKET: ${S3_BUCKET:-openparallax}
     ports:
       - "${STORAGE_PORT:-3900}:3900"   # API S3; el 3903 (admin) queda en la red interna
     volumes:
@@ -73,31 +73,31 @@ services:
     build:
       context: ../api
       dockerfile: Dockerfile
-    container_name: telescope-local-api
+    container_name: openparallax-local-api
     restart: unless-stopped
     ports:
       - "${API_PORT:-8080}:8080"
     environment:
       DB_HOST: database
       DB_PORT: 5432
-      DB_USER: ${POSTGRES_USER:-telescope}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-telescope_password}
-      DB_NAME: ${POSTGRES_DB:-telescope_db}
+      DB_USER: ${POSTGRES_USER:-openparallax}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-openparallax_password}
+      DB_NAME: ${POSTGRES_DB:-openparallax_db}
       DB_SSLMODE: disable
       PORT: 8080
       GIN_MODE: ${GIN_MODE:-release}
       MAX_FILE_SIZE: ${MAX_FILE_SIZE:-10485760}
       # Default fijo a propósito: este compose es sólo local y los tokens que firma
       # sólo valen contra esta misma base. En un servidor, JWT_SECRET se define siempre.
-      JWT_SECRET: ${JWT_SECRET:-telescope-local-dev-secret-no-usar-en-produccion}
+      JWT_SECRET: ${JWT_SECRET:-openparallax-local-dev-secret-no-usar-en-produccion}
       CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-*}
       FRONTEND_URL: http://localhost:${WEB_PORT:-3000}
       STORAGE_PROVIDER: s3
       S3_ENDPOINT: http://storage:3900
       S3_REGION: garage
-      S3_BUCKET: ${S3_BUCKET:-telescope}
-      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-GKtelescopelocal01}
-      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-telescope-local-secret-0123456789}
+      S3_BUCKET: ${S3_BUCKET:-openparallax}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-GKopenparallaxlocal01}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-openparallax-local-secret-0123456789}
       # Host con el que se firman las URLs prefirmadas: el que ve el navegador.
       S3_PRESIGN_ENDPOINT: http://localhost:${STORAGE_PORT:-3900}
       # Vacío = sólo login con email y contraseña.
@@ -111,7 +111,7 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_SECURE: ${SMTP_SECURE:-false}
       EMAIL_FROM: ${EMAIL_FROM:-}
-      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Telescope}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-OpenParallax}
     depends_on:
       database:
         condition: service_healthy
@@ -125,7 +125,7 @@ services:
     build:
       context: ../web
       dockerfile: docker/Dockerfile
-    container_name: telescope-local-web
+    container_name: openparallax-local-web
     restart: unless-stopped
     environment:
       # Como la ve el navegador, no el contenedor: nunca http://api:8080.
@@ -139,7 +139,7 @@ services:
   # Opcional: docker compose --profile tools up -d pgadmin
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: telescope-local-pgadmin
+    container_name: openparallax-local-pgadmin
     restart: unless-stopped
     ports:
       - "${PGADMIN_PORT:-5050}:80"

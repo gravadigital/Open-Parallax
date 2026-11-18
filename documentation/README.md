@@ -1,10 +1,10 @@
-# Telescope documentation
+# OpenParallax documentation
 
 Distributed peer review for calls where proposals outnumber the people available to judge
 them: the participants rank each other's proposals, and evaluating carefully is what moves your
 own proposal up.
 
-This is the documentation for **using and running Telescope**. The internal working
+This is the documentation for **using and running OpenParallax**. The internal working
 documentation — architecture per service, conventions, decision records, flows — lives in
 [`docs/`](../docs/) and is written in Spanish for the team that builds it.
 
@@ -66,6 +66,6 @@ Two consequences worth knowing:
 ## Going further
 
 - The HTTP contract in full: [`docs/apis/api.yaml`](../docs/apis/api.yaml) (OpenAPI 3.0).
-- The database, triggers included: [`docs/db-schemas/telescopio_db.md`](../docs/db-schemas/telescopio_db.md).
+- The database, triggers included: [`docs/db-schemas/openparallax_db.md`](../docs/db-schemas/openparallax_db.md).
 - Why things are the way they are: [`docs/adrs/`](../docs/adrs/).
 - Contributing: [`CONTRIBUTING.md`](../CONTRIBUTING.md).

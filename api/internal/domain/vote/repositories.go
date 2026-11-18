@@ -1,6 +1,6 @@
 package vote
 
-import "github.com/gravadigital/telescopio-api/internal/domain/common"
+import "github.com/gravadigital/openparallax/api/internal/domain/common"
 
 // Repository interfaces for the voting service
 

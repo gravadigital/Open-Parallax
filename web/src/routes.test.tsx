@@ -137,7 +137,7 @@ describe('rutas', () => {
     renderWithProviders(<AppRoutes />, { route: '/login', auth: guest });
     expect(screen.getByRole('heading', { level: 1, name: 'Iniciar sesión' })).toBeInTheDocument();
     expect(screen.queryByRole('banner')).toBeNull();
-    expect(screen.queryByText('Telescopio · evaluación distribuida entre pares')).toBeNull();
+    expect(screen.queryByText('OpenParallax · evaluación distribuida entre pares')).toBeNull();
   });
 
   it('TS-7 (S-020): el pie aparece en las rutas con chrome, con y sin sesión', () => {
@@ -147,7 +147,7 @@ describe('rutas', () => {
         const view = renderWithProviders(<AppRoutes />, { route, auth });
         const footers = screen.getAllByRole('contentinfo');
         expect(footers).toHaveLength(1);
-        expect(within(footers[0]).getByRole('link', { name: 'TELESCOPIO' })).toHaveAttribute('href', '/');
+        expect(within(footers[0]).getByRole('link', { name: 'OPENPARALLAX' })).toHaveAttribute('href', '/');
         view.unmount();
       }
     }

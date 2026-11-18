@@ -17,7 +17,7 @@ status: Draft - Generado desde código existente
 
 ### Nombre
 
-**Telescopio**
+**OpenParallax**
 
 El nombre aparece en el logo de la navbar (`App.tsx:151`), en los títulos de la pantalla de
 reset de contraseña (`🔭 Reset Password`) y en el módulo Go
@@ -30,7 +30,7 @@ evaluación se convierte en el cuello de botella. Un comité chico no da abasto;
 caro y lento de coordinar. El resultado habitual es que se evalúa poco, se evalúa tarde, o se
 evalúa con criterios que varían según quién haya leído qué.
 
-Telescopio reparte la evaluación entre los propios participantes: cada quien evalúa un
+OpenParallax reparte la evaluación entre los propios participantes: cada quien evalúa un
 subconjunto de las propuestas ajenas, y de ese conjunto de rankings parciales se deriva un
 ranking global. Eso resuelve la escala, pero abre dos problemas nuevos que el producto ataca
 explícitamente:
@@ -44,7 +44,9 @@ explícitamente:
 
 La implementación sigue el modelo de **Merrifield & Saari (2009)** de revisión por pares
 distribuida, con Modified Borda Count. El dominio original del paper es la asignación de
-tiempo de observación en telescopios, que es de donde viene el nombre del producto.
+tiempo de observación en telescopios. De ahí viene el nombre del producto: el paralaje mide la distancia
+a una estrella observándola desde varios puntos de vista, y OpenParallax ordena propuestas
+combinando la mirada de muchos evaluadores.
 
 ### Usuarios Objetivo
 
@@ -150,7 +152,7 @@ existente es:
 - **`api`** — Backend Go/Gin con 30 endpoints, PostgreSQL, y el algoritmo de
   votación implementado en `internal/domain/vote/voting_service.go`.
 - **`web`** — SPA React con 6 rutas, única interfaz del producto.
-- **PostgreSQL `telescopio_db`** — 9 tablas, 21 migraciones versionadas. **Una parte
+- **PostgreSQL `openparallax_db`** — 9 tablas, 21 migraciones versionadas. **Una parte
   sustancial de las reglas de negocio vive en triggers plpgsql**, no en Go.
 - **Google OAuth** — Login alternativo al de email/password.
 - **SMTP** — Notificaciones de cambio de etapa, cancelación y reset de contraseña.

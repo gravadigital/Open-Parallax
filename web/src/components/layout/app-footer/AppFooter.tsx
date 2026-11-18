@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useT } from '../../../i18n';
-import { GitHubIcon, TelescopeLogo } from '../../ui/icons/Icons';
+import { GitHubIcon, OpenParallaxLogo } from '../../ui/icons/Icons';
 import '../../ui/visually-hidden.css';
 import './AppFooter.css';
 
@@ -14,7 +14,7 @@ const AppFooter: React.FC = () => {
       <div className="ly-footer__inner">
         <div className="ly-footer__brand">
           <Link to="/" className="ly-footer__logo">
-            <TelescopeLogo className="ly-footer__logo-mark" />
+            <OpenParallaxLogo className="ly-footer__logo-mark" />
             <span className="ui-visually-hidden">{t('common.appName')}</span>
           </Link>
           <span className="ly-footer__version">{t('footer.version')}</span>
@@ -22,7 +22,7 @@ const AppFooter: React.FC = () => {
 
         <a
           className="ly-footer__github"
-          href="https://github.com/gravadigital/telescope"
+          href="https://github.com/gravadigital/openparallax"
           target="_blank"
           rel="noopener noreferrer"
         >

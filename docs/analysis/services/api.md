@@ -10,7 +10,7 @@
 | **Nombre** | `api` |
 | **Módulo Go** | `github.com/gravadigital/api` |
 | **Tipo** | Backend (API REST) |
-| **Path** | `api/` (monorepo `telescope`) |
+| **Path** | `api/` (monorepo `openparallax`) |
 | **Lenguaje** | Go 1.26.6 |
 | **Framework HTTP** | Gin 1.10.1 |
 | **Base de datos** | PostgreSQL (vía GORM 1.30.2) |
@@ -18,7 +18,7 @@
 
 ### Propósito
 
-Backend del sistema de asignación de tiempo de telescopio. Gestiona eventos de
+Backend de OpenParallax, plataforma de asignación de recursos escasos. Gestiona eventos de
 convocatoria, la participación de los investigadores, la carga de propuestas
 (attachments) y — el núcleo del producto — un **sistema de votación distribuida
 por pares** que produce un ranking de las propuestas.
@@ -307,4 +307,4 @@ Estas no se pueden responder desde el código y necesitan relevamiento:
 |---|---|
 | Arquitectura | `docs/architectures/api/` |
 | API Specification | `docs/apis/api.yaml` |
-| Database Schema | `docs/db-schemas/telescopio_db.md` |
+| Database Schema | `docs/db-schemas/openparallax_db.md` |

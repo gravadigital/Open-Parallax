@@ -3,7 +3,7 @@ package email
 import "fmt"
 
 func stageChangeSubject(eventName, newStage string) string {
-	return fmt.Sprintf("[Telescopio] El evento «%s» avanzó a la etapa %s", eventName, stageLabel(newStage))
+	return fmt.Sprintf("[OpenParallax] El evento «%s» avanzó a la etapa %s", eventName, stageLabel(newStage))
 }
 
 func stageChangeBody(eventName, newStage string) string {
@@ -11,15 +11,15 @@ func stageChangeBody(eventName, newStage string) string {
 
 Te informamos que el evento «%s» en el que participas ha avanzado a la etapa: %s.
 
-Ingresá a Telescopio para ver los detalles y próximos pasos.
+Ingresá a OpenParallax para ver los detalles y próximos pasos.
 
 Saludos,
-El equipo de Telescopio
+El equipo de OpenParallax
 `, eventName, stageLabel(newStage))
 }
 
 func cancellationSubject(eventName string) string {
-	return fmt.Sprintf("[Telescopio] El evento «%s» fue cancelado", eventName)
+	return fmt.Sprintf("[OpenParallax] El evento «%s» fue cancelado", eventName)
 }
 
 func cancellationBody(eventName string) string {
@@ -30,12 +30,12 @@ Lamentamos informarte que el evento «%s» en el que participabas ha sido cancel
 Si tenés preguntas, comunicate con el organizador del evento.
 
 Saludos,
-El equipo de Telescopio
+El equipo de OpenParallax
 `, eventName)
 }
 
 func estimatedDateChangeSubject(eventName, stage string) string {
-	return fmt.Sprintf("[Telescopio] Cambio de fecha estimada en el evento «%s»", eventName)
+	return fmt.Sprintf("[OpenParallax] Cambio de fecha estimada en el evento «%s»", eventName)
 }
 
 func estimatedDateChangeBody(eventName, stage, newDate string) string {
@@ -45,21 +45,21 @@ Te informamos que la fecha estimada de cierre de la etapa %s del evento «%s» f
 
 Nueva fecha estimada: %s
 
-Ingresá a Telescopio para ver los detalles.
+Ingresá a OpenParallax para ver los detalles.
 
 Saludos,
-El equipo de Telescopio
+El equipo de OpenParallax
 `, stageLabel(stage), eventName, newDate)
 }
 
 func passwordResetSubject() string {
-	return "[Telescopio] Recuperación de contraseña"
+	return "[OpenParallax] Recuperación de contraseña"
 }
 
 func passwordResetBody(resetURL string) string {
 	return fmt.Sprintf(`Hola,
 
-Recibimos una solicitud para restablecer la contraseña de tu cuenta en Telescopio.
+Recibimos una solicitud para restablecer la contraseña de tu cuenta en OpenParallax.
 
 Hacé clic en el siguiente enlace para crear una nueva contraseña (válido por 1 hora):
 
@@ -68,12 +68,12 @@ Hacé clic en el siguiente enlace para crear una nueva contraseña (válido por 
 Si no solicitaste este cambio, podés ignorar este mensaje. Tu contraseña actual no será modificada.
 
 Saludos,
-El equipo de Telescopio
+El equipo de OpenParallax
 `, resetURL)
 }
 
 func pauseSubject(eventName string) string {
-	return fmt.Sprintf("[Telescopio] El evento «%s» fue pausado", eventName)
+	return fmt.Sprintf("[OpenParallax] El evento «%s» fue pausado", eventName)
 }
 
 func pauseBody(eventName string) string {
@@ -83,10 +83,10 @@ Te informamos que el evento «%s» en el que participas ha sido pausado temporal
 
 Durante la pausa no es posible registrarse ni enviar archivos al evento.
 
-Ingresá a Telescopio para más información.
+Ingresá a OpenParallax para más información.
 
 Saludos,
-El equipo de Telescopio
+El equipo de OpenParallax
 `, eventName)
 }
 
@@ -98,7 +98,7 @@ func deadlineLine(deadline string) string {
 }
 
 func fileReminderSubject(eventName string) string {
-	return fmt.Sprintf("[Telescopio] Falta tu propuesta en el evento «%s»", eventName)
+	return fmt.Sprintf("[OpenParallax] Falta tu propuesta en el evento «%s»", eventName)
 }
 
 func fileReminderBody(eventName, deadline string) string {
@@ -106,15 +106,15 @@ func fileReminderBody(eventName, deadline string) string {
 
 Te recordamos que todavía no subiste tu propuesta al evento «%s».
 
-%sIngresa a Telescopio para subirla.
+%sIngresa a OpenParallax para subirla.
 
 Saludos,
-El equipo de Telescopio
+El equipo de OpenParallax
 `, eventName, deadlineLine(deadline))
 }
 
 func voteReminderSubject(eventName string) string {
-	return fmt.Sprintf("[Telescopio] Falta tu ranking en el evento «%s»", eventName)
+	return fmt.Sprintf("[OpenParallax] Falta tu ranking en el evento «%s»", eventName)
 }
 
 func voteReminderBody(eventName, deadline string) string {
@@ -122,10 +122,10 @@ func voteReminderBody(eventName, deadline string) string {
 
 Te recordamos que todavía no enviaste tu ranking en el evento «%s».
 
-%sIngresa a Telescopio para completarlo.
+%sIngresa a OpenParallax para completarlo.
 
 Saludos,
-El equipo de Telescopio
+El equipo de OpenParallax
 `, eventName, deadlineLine(deadline))
 }
 

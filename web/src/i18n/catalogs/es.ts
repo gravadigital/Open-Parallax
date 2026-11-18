@@ -4,7 +4,7 @@ import { plural } from '../types';
 export const es = {
   common: {
     retry: 'Reintentar',
-    appName: 'TELESCOPIO',
+    appName: 'OPENPARALLAX',
     points: '{score} pts',
     participants: plural({ one: '{count} participante', other: '{count} participantes' }),
   },
@@ -144,7 +144,7 @@ export const es = {
     description: 'Puede que el enlace esté mal escrito o que el evento ya no esté disponible.',
     goToEvents: 'Ir a Eventos',
     backHome: 'Volver al inicio',
-    documentTitle: 'Página no encontrada · Telescopio',
+    documentTitle: 'Página no encontrada · OpenParallax',
   },
   coverColor: {
     label: 'Color de portada',
@@ -170,10 +170,10 @@ export const es = {
   },
   footer: {
     nav: 'Navegación del pie',
-    tagline: 'Telescopio · evaluación distribuida entre pares',
+    tagline: 'OpenParallax · evaluación distribuida entre pares',
     version: 'V1.0',
     github: 'GitHub',
-    repo: 'gravadigital/telescope',
+    repo: 'gravadigital/openparallax',
     contact: 'CONTACTO',
     email: 'info@grava.digital',
     phone: '+54 9 11 3094 2020',

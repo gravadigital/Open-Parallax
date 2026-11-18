@@ -16,10 +16,10 @@ describe('AppFooter', () => {
     renderWithProviders(<AppFooter />, { locale: 'es' });
 
     const footer = screen.getByRole('contentinfo');
-    expect(within(footer).getByRole('link', { name: 'TELESCOPIO' })).toHaveAttribute('href', '/');
+    expect(within(footer).getByRole('link', { name: 'OPENPARALLAX' })).toHaveAttribute('href', '/');
     expect(within(footer).getByText('V1.0')).toBeInTheDocument();
-    const repo = within(footer).getByRole('link', { name: /gravadigital\/telescope/ });
-    expect(repo).toHaveAttribute('href', 'https://github.com/gravadigital/telescope');
+    const repo = within(footer).getByRole('link', { name: /gravadigital\/openparallax/ });
+    expect(repo).toHaveAttribute('href', 'https://github.com/gravadigital/openparallax');
     expect(repo).toHaveAttribute('target', '_blank');
     expect(repo).toHaveAttribute('rel', 'noopener noreferrer');
     expect(within(footer).getByText('CONTACTO')).toBeInTheDocument();
@@ -37,7 +37,7 @@ describe('AppFooter', () => {
     renderWithProviders(<AppFooter />, { locale: 'en' });
 
     const footer = screen.getByRole('contentinfo');
-    expect(within(footer).getByRole('link', { name: 'TELESCOPIO' })).toHaveAttribute('href', '/');
+    expect(within(footer).getByRole('link', { name: 'OPENPARALLAX' })).toHaveAttribute('href', '/');
     expect(within(footer).getByText('CONTACT')).toBeInTheDocument();
   });
 
@@ -45,7 +45,7 @@ describe('AppFooter', () => {
     renderWithProviders(<AppFooter />, { locale: 'es', route: '/events' });
     expect(screen.getByTestId('location')).toHaveTextContent('/events');
 
-    await userEvent.click(screen.getByRole('link', { name: 'TELESCOPIO' }));
+    await userEvent.click(screen.getByRole('link', { name: 'OPENPARALLAX' }));
     expect(screen.getByTestId('location')).toHaveTextContent('/');
   });
 });

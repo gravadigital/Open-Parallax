@@ -25,7 +25,7 @@ plataformas de concursos.
 ## Referencia principal: EasyChair (el rol de *chair*)
 
 En uso desde 2002, es el sistema de referencia por ubicuidad. El rol de *chair* es el equivalente
-más cercano al organizador de Telescopio.
+más cercano al organizador de OpenParallax.
 
 ### Capacidades del chair, documentadas
 
@@ -37,9 +37,9 @@ más cercano al organizador de Telescopio.
 | **Gestión de deadlines** | Seguimiento de quién completó y **capacidad de contactar a los revisores** cuando se acerca el vencimiento |
 | **Múltiples tracks** | Cada track con su comité y sus chairs, más un *superchair* que supervisa |
 
-### Contraste con Telescopio
+### Contraste con OpenParallax
 
-| Aspecto | EasyChair | Telescopio |
+| Aspecto | EasyChair | OpenParallax |
 |---|---|---|
 | Asignación | El chair **ejecuta** el algoritmo, sobre expertise declarado y *bids* | Automática, sin expertise ni preferencias. `expertise_match_score` existe en la base y **nunca se escribe** |
 | Progreso por pieza | Cuántas revisiones tiene **cada** propuesta | ⚠️ **No existe.** Solo hay un agregado: `{n} de {m} participantes votaron` |
@@ -47,7 +47,7 @@ más cercano al organizador de Telescopio.
 | Etapas | Configurables por conferencia | Cuatro fijas, unidireccionales |
 
 **El contraste de "progreso por pieza" es el más relevante.** En EasyChair el chair ve qué envío
-está corto de revisiones y actúa. En Telescopio ese dato **es exactamente el que determina si el
+está corto de revisiones y actúa. En OpenParallax ese dato **es exactamente el que determina si el
 ranking es confiable** —una propuesta con pocas evaluaciones tiene un MBC menos sólido— y el
 organizador no lo ve. Se agrava porque el algoritmo **puede dejar propuestas por debajo del mínimo
 configurado sin avisar** (D-10 del PRD). `[fuente: benchmark]`
@@ -62,7 +62,7 @@ Revisión abierta y transparente; impulsa ICLR, NeurIPS y UAI. Su diferencia es 
 pública del proceso**: revisiones y discusión son consultables.
 
 **Qué sugiere:** hay un modelo donde la legitimidad del resultado se sostiene en que el proceso sea
-auditable públicamente, no en la autoridad del comité. Telescopio sostiene la legitimidad en que el
+auditable públicamente, no en la autoridad del comité. OpenParallax sostiene la legitimidad en que el
 cálculo sea determinístico y reproducible — **pero hoy no expone nada de eso al organizador**, que
 solo ve el ranking final.
 
@@ -77,8 +77,8 @@ De las plataformas revisadas, es la que más se acerca en *features* de asignaci
 o doble ciego, **asignación automática con detección de conflictos**, **topes de carga de trabajo**,
 matching por expertise y subcomités por track.
 
-**Los dos conceptos que Telescopio ya tiene, y conviene nombrar igual:**
-- **Detección de conflictos** — En Telescopio es la garantía de que nadie evalúa lo propio,
+**Los dos conceptos que OpenParallax ya tiene, y conviene nombrar igual:**
+- **Detección de conflictos** — En OpenParallax es la garantía de que nadie evalúa lo propio,
   validada en dos capas.
 - **Tope de carga** — Es el parámetro `m` (`attachments_per_evaluator`).
 
@@ -87,7 +87,7 @@ matching por expertise y subcomités por track.
 ### Nota transversal de las tres
 
 Ni OpenReview ni Microsoft CMT manejan registro, pagos ni sitio del evento: **funcionan mejor
-cuando la revisión por pares es el único requisito.** Telescopio está en esa misma categoría, y es
+cuando la revisión por pares es el único requisito.** OpenParallax está en esa misma categoría, y es
 una decisión de alcance razonable.
 
 ---
@@ -102,12 +102,12 @@ una decisión de alcance razonable.
 | **Launchpad6** | Jurado formal o voto popular |
 
 **Diferencia estructural:** en todas, el organizador **elige el modelo de selección**. En
-Telescopio el modelo es uno solo y no es configurable — lo configurable son sus parámetros
+OpenParallax el modelo es uno solo y no es configurable — lo configurable son sus parámetros
 matemáticos.
 
 **Qué significa:** un organizador que venga de este mundo va a buscar "¿cómo se eligen los
 ganadores?" y va a encontrar, en cambio, un formulario que le pide `attachments_per_evaluator` y
-dos umbrales de calidad. **La configuración de Telescopio expone el modelo matemático, no la
+dos umbrales de calidad. **La configuración de OpenParallax expone el modelo matemático, no la
 decisión de producto.** El valor recomendado que precarga el campo mitiga esto, pero no lo resuelve.
 `[fuente: benchmark]`
 
@@ -117,7 +117,7 @@ decisión de producto.** El valor recomendado que precarga el campo mitiga esto,
 
 Cada una es una **hipótesis a validar**, no una conclusión.
 
-| # | Expectativa | Origen | Se cumple hoy en Telescopio |
+| # | Expectativa | Origen | Se cumple hoy en OpenParallax |
 |---|---|---|---|
 | E-01 | Veo el progreso de la evaluación y puedo actuar si va lento | EasyChair | **Parcialmente.** Hay un agregado (`{n} de {m} votaron`) y estado por participante, pero **no por propuesta** |
 | E-02 | Puedo recordarle el deadline a quien no completó | EasyChair | **No.** No hay forma de contactar participantes desde la interfaz |
@@ -127,7 +127,7 @@ Cada una es una **hipótesis a validar**, no una conclusión.
 | E-06 | Puedo leer las propuestas que recibí | Todas | ⚠️ **No.** El endpoint de descarga existe, sin auth, y el frontend no lo consume |
 | E-07 | Sé que el resultado es defendible ante quien lo cuestione | Todas | **Parcialmente.** El cálculo es determinístico y reproducible, pero la interfaz no expone nada que permita auditarlo |
 
-**E-04 merece atención.** En EasyChair el chair reasigna cuando hace falta. En Telescopio las
+**E-04 merece atención.** En EasyChair el chair reasigna cuando hace falta. En OpenParallax las
 asignaciones son irreversibles desde la interfaz: si se generan con una configuración equivocada,
 **no hay camino de vuelta**. Es una diferencia de expectativa con consecuencias serias, porque el
 error se descubre tarde.

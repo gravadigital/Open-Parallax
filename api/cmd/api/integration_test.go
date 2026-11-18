@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/gravadigital/telescopio-api/internal/config"
-	"github.com/gravadigital/telescopio-api/internal/storage/postgres"
+	"github.com/gravadigital/openparallax/api/internal/config"
+	"github.com/gravadigital/openparallax/api/internal/storage/postgres"
 	"github.com/stretchr/testify/assert"
 )
 

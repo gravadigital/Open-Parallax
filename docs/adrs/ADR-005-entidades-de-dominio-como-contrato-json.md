@@ -73,5 +73,5 @@ No hay capa de DTOs de respuesta ni mapeo entre representaciones.
 ## Referencias
 
 - Entidades: `api/internal/domain/`
-- Deuda derivada: sección "Columnas huérfanas" en `docs/db-schemas/telescopio_db.md`
+- Deuda derivada: sección "Columnas huérfanas" en `docs/db-schemas/openparallax_db.md`
 - Capa de normalización del frontend: `web/src/services/api.ts`

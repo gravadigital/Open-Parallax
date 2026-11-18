@@ -75,4 +75,4 @@ export const isValidOrder = (
 };
 
 export const submittedRankingKey = (assignmentId: string): string =>
-  `telescopio_submitted_ranking:${assignmentId}`;
+  `openparallax_submitted_ranking:${assignmentId}`;

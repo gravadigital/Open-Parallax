@@ -5,7 +5,7 @@ date: 2026-09-18
 status: Draft - Transcripto desde el código existente
 ---
 
-# Product Overview — Telescopio
+# Product Overview — OpenParallax
 
 > Documento raíz del set de UX. Define audiencias, superficies y la relación
 > entre ellas. Todos los demás artefactos UX referencian acá.
@@ -21,7 +21,7 @@ status: Draft - Transcripto desde el código existente
 
 ## Visión del Producto
 
-Telescopio resuelve el cuello de botella de evaluar una convocatoria que recibe más propuestas de
+OpenParallax resuelve el cuello de botella de evaluar una convocatoria que recibe más propuestas de
 las que un comité puede leer. En lugar de un comité, la evaluación se reparte entre los propios
 participantes: cada uno evalúa un subconjunto de las propuestas ajenas, y de esos rankings
 parciales se deriva un ranking global.

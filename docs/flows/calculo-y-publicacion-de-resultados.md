@@ -210,7 +210,7 @@ de la propuesta propia.
 `valid_evaluator_counts` referencia dos de ellas, que quedan en 0 y hacen que el CHECK pase
 trivialmente.
 
-**Ref:** `docs/db-schemas/telescopio_db.md` → `voting_results`
+**Ref:** `docs/db-schemas/openparallax_db.md` → `voting_results`
 
 ---
 

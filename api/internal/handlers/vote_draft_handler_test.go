@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/gravadigital/telescopio-api/internal/domain/vote"
+	"github.com/gravadigital/openparallax/api/internal/domain/vote"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

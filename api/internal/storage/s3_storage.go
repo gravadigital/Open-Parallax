@@ -15,7 +15,7 @@ import (
 	"github.com/aws/smithy-go"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"github.com/charmbracelet/log"
-	"github.com/gravadigital/telescopio-api/internal/logger"
+	"github.com/gravadigital/openparallax/api/internal/logger"
 )
 
 // MaxPresignExpiry is the longest a presigned URL may live: SigV4 caps it at one week and
@@ -37,7 +37,7 @@ type S3Config struct {
 }
 
 // S3Storage implements FileStorage over any S3-compatible service (Garage in every
-// environment of Telescope).
+// environment of OpenParallax).
 type S3Storage struct {
 	client    *s3.Client
 	presigner *s3.PresignClient

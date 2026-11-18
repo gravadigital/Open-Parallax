@@ -101,7 +101,7 @@ date: 2026-10-02
 ## Contenido
 
 ### header
-- Texto/label: "TELESCOPIO | Inicio · Eventos · Cómo funciona | campana · menú de usuario" (sin sesión: "ES/EN · Iniciar sesión · Crear cuenta")
+- Texto/label: "OPENPARALLAX | Inicio · Eventos · Cómo funciona | campana · menú de usuario" (sin sesión: "ES/EN · Iniciar sesión · Crear cuenta")
 
 ### Eyebrow visitante
 - Texto/label: "EXPLORAR · {n} EVENTOS PÚBLICOS"
@@ -158,7 +158,7 @@ date: 2026-10-02
 - Texto/label: "Crear cuenta gratis"
 
 ### footer
-- Texto/label: "Telescopio · evaluación distribuida entre pares"
+- Texto/label: "OpenParallax · evaluación distribuida entre pares"
 
 ## Estados
 

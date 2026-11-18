@@ -13,7 +13,7 @@ import { detectLocale, isLocale } from './detect';
 import { translate } from './translate';
 import type { Catalog, Locale, Params, TranslationKey } from './types';
 
-export const LOCALE_STORAGE_KEY = 'telescopio_locale';
+export const LOCALE_STORAGE_KEY = 'openparallax_locale';
 
 const CATALOGS: Record<Locale, Catalog> = { es, en };
 

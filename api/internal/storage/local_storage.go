@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/log"
-	"github.com/gravadigital/telescopio-api/internal/logger"
+	"github.com/gravadigital/openparallax/api/internal/logger"
 )
 
 // LocalStorage implements FileStorage interface using local filesystem

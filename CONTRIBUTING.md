@@ -1,4 +1,4 @@
-# Contributing to Telescope
+# Contributing to OpenParallax
 
 This document covers how to get the project running, what the codebase expects from a change,
 and the rules that are not obvious from reading the code.
@@ -9,8 +9,8 @@ You need **Docker**, **Go 1.26** (see [`api/go.mod`](api/go.mod)), **Node.js 22*
 [`web/.nvmrc`](web/.nvmrc)) and `make`.
 
 ```sh
-git clone https://github.com/gravadigital/telescope.git
-cd telescope
+git clone https://github.com/gravadigital/openparallax.git
+cd openparallax
 make infra    # database + Garage in Docker
 make api      # in another terminal
 make web      # in a third

@@ -639,7 +639,7 @@ describe('EventDetailPage', () => {
       updated_at: '2026-10-05T10:00:00Z',
     });
     const rankingOf = (...ids: string[]) => ids.map((id, i) => ({ attachment_id: id, rank: i + 1 }));
-    const SUBMITTED_KEY = 'telescopio_submitted_ranking:a1';
+    const SUBMITTED_KEY = 'openparallax_submitted_ranking:a1';
     const titles = () =>
       within(screen.getByRole('list', { name: 'Tu ranking de propuestas' }))
         .getAllByRole('listitem')

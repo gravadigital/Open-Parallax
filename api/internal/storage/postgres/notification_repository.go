@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/gravadigital/telescopio-api/internal/domain/notification"
-	"github.com/gravadigital/telescopio-api/internal/logger"
+	"github.com/gravadigital/openparallax/api/internal/domain/notification"
+	"github.com/gravadigital/openparallax/api/internal/logger"
 )
 
 // retentionInterval is built from a constant, never from user input.

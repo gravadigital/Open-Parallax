@@ -6,15 +6,15 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/gravadigital/telescopio-api/internal/config"
-	"github.com/gravadigital/telescopio-api/internal/domain/notification"
-	"github.com/gravadigital/telescopio-api/internal/email"
-	"github.com/gravadigital/telescopio-api/internal/handlers"
-	"github.com/gravadigital/telescopio-api/internal/logger"
-	"github.com/gravadigital/telescopio-api/internal/middleware/auth"
-	"github.com/gravadigital/telescopio-api/internal/middleware/events"
-	"github.com/gravadigital/telescopio-api/internal/storage"
-	"github.com/gravadigital/telescopio-api/internal/storage/postgres"
+	"github.com/gravadigital/openparallax/api/internal/config"
+	"github.com/gravadigital/openparallax/api/internal/domain/notification"
+	"github.com/gravadigital/openparallax/api/internal/email"
+	"github.com/gravadigital/openparallax/api/internal/handlers"
+	"github.com/gravadigital/openparallax/api/internal/logger"
+	"github.com/gravadigital/openparallax/api/internal/middleware/auth"
+	"github.com/gravadigital/openparallax/api/internal/middleware/events"
+	"github.com/gravadigital/openparallax/api/internal/storage"
+	"github.com/gravadigital/openparallax/api/internal/storage/postgres"
 )
 
 // La fija el linker al compilar (-ldflags "-X main.version=..."), así que en un build
@@ -31,7 +31,7 @@ func main() {
 	logger.Initialize(logLevel)
 	log := logger.Get()
 
-	log.Info("starting telescope api", "version", version)
+	log.Info("starting openparallax api", "version", version)
 
 	if err := cfg.Validate(); err != nil {
 		log.Fatal("Invalid configuration", "error", err)
@@ -260,7 +260,7 @@ func main() {
 		}
 	}
 
-	log.Info("Starting Telescopio API server", "port", cfg.Server.Port)
+	log.Info("Starting OpenParallax API server", "port", cfg.Server.Port)
 
 	log.Debug("Configuration",
 		"database_url", cfg.GetDatabaseURL(),

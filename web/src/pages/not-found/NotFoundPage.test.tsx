@@ -19,7 +19,7 @@ const tree = (
 
 describe('NotFoundPage', () => {
   beforeEach(() => {
-    document.title = 'Telescopio';
+    document.title = 'OpenParallax';
   });
 
   it('TS-58: ruta inexistente', () => {
@@ -28,7 +28,7 @@ describe('NotFoundPage', () => {
     expect(screen.getByText('Puede que el enlace esté mal escrito o que el evento ya no esté disponible.')).toBeInTheDocument();
     expect(screen.getByRole('banner')).toBeInTheDocument();
     expect(screen.getByRole('contentinfo')).toBeInTheDocument();
-    expect(document.title).toBe('Página no encontrada · Telescopio');
+    expect(document.title).toBe('Página no encontrada · OpenParallax');
     expect(h1).toHaveFocus();
   });
 
@@ -48,8 +48,8 @@ describe('NotFoundPage', () => {
     renderWithProviders(tree, { route: '/no-existe', locale: 'en' });
     expect(screen.getByRole('heading', { level: 1, name: "We couldn't find this page" })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Go to Events' })).toBeInTheDocument();
-    expect(document.title).toBe('Page not found · Telescopio');
+    expect(document.title).toBe('Page not found · OpenParallax');
     userEvent.click(screen.getByRole('button', { name: 'Go to Events' }));
-    expect(document.title).toBe('Telescopio');
+    expect(document.title).toBe('OpenParallax');
   });
 });

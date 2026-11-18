@@ -1,6 +1,6 @@
-# Telescope
+# OpenParallax
 
-[![CI](https://github.com/gravadigital/telescope/actions/workflows/ci.yml/badge.svg)](https://github.com/gravadigital/telescope/actions/workflows/ci.yml)
+[![CI](https://github.com/gravadigital/openparallax/actions/workflows/ci.yml/badge.svg)](https://github.com/gravadigital/openparallax/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Distributed peer review for calls where proposals outnumber the people available to judge
@@ -38,7 +38,7 @@ Full description in [documentation/features.md](documentation/features.md).
 | [api/](api/)                     | HTTP service in Go: events, identity, files, voting      |
 | [web/](web/)                     | The user interface: a React single-page app              |
 | [deploy/](deploy/)               | The Docker Compose stack for running it locally          |
-| [documentation/](documentation/) | Using and running Telescope — the public documentation   |
+| [documentation/](documentation/) | Using and running OpenParallax — the public documentation   |
 | [docs/](docs/)                   | Internal docs: architecture, decisions, flows, product   |
 
 ## Getting started
@@ -68,7 +68,7 @@ Run `make` to list every command. Details in
 
 Two sets of documentation, for two audiences:
 
-**[documentation/](documentation/README.md)** — using and running Telescope. English, brief,
+**[documentation/](documentation/README.md)** — using and running OpenParallax. English, brief,
 stable. Start with its README: it maps how the parts fit together.
 
 | | |
@@ -80,7 +80,7 @@ stable. Start with its README: it maps how the parts fit together.
 
 **[docs/](docs/)** — the internal working documentation: architecture per service,
 conventions, decision records and flows. Written in Spanish, for the team that builds
-Telescope. It follows the grava-workflow methodology in [`.claude/`](.claude/).
+OpenParallax. It follows the grava-workflow methodology in [`.claude/`](.claude/).
 
 ## Contributing
 

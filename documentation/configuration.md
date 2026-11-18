@@ -1,6 +1,6 @@
 # Configuration
 
-Telescope has two kinds of configuration: what you may change when running it **locally**,
+OpenParallax has two kinds of configuration: what you may change when running it **locally**,
 and what a **server** must set. Locally nothing is required.
 
 ## Locally
@@ -37,8 +37,8 @@ time.
 | `JWT_SECRET` | a fixed development value | Signs the session tokens |
 | `EMAIL_ENABLED` | `false` | Set to `true` to send email; needs the `SMTP_*` variables below |
 | `GIN_MODE` | `release` (`debug` with `make api`) | `debug` for verbose api logs |
-| `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | `telescope_db` / `telescope` / `telescope_password` | Database credentials |
-| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` / `S3_BUCKET` | `GKtelescopelocal01` / a fixed development value / `telescope` | The api's storage key and bucket. Garage creates both on start. The ID needs 8 or more characters (`A-Z a-z 0-9 - _ .`) and the secret 16 or more |
+| `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | `openparallax_db` / `openparallax` / `openparallax_password` | Database credentials |
+| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` / `S3_BUCKET` | `GKopenparallaxlocal01` / a fixed development value / `openparallax` | The api's storage key and bucket. Garage creates both on start. The ID needs 8 or more characters (`A-Z a-z 0-9 - _ .`) and the secret 16 or more |
 | `STORAGE_RPC_SECRET` / `STORAGE_ADMIN_TOKEN` | fixed development values | The storage's internal secret and its admin token (Garage's `rpc_secret` and `admin_token`) |
 
 Changing the database credentials after the first start has no effect on the existing
@@ -83,7 +83,7 @@ anywhere: changing a value means recreating the container, not rebuilding the im
 | `EMAIL_ENABLED` | `false` | With `false`, no email is sent and nothing fails |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | —, `587`, —, — | The mail server |
 | `SMTP_SECURE` | `false` | `true` for TLS from the start (port 465), `false` for STARTTLS (587) |
-| `EMAIL_FROM`, `EMAIL_FROM_NAME` | —, `Telescopio` | The sender |
+| `EMAIL_FROM`, `EMAIL_FROM_NAME` | —, `OpenParallax` | The sender |
 | `CORS_ALLOW_METHODS`, `CORS_ALLOW_HEADERS` | the ones the web uses | Rarely changed |
 
 Configuration is not validated at startup: a wrong value shows up later, when it is first
@@ -104,7 +104,7 @@ used. Check `/health` after deploying — it reports whether the database is rea
 docker run -p 80:80 \
   -e API_URL=https://api.example.com \
   -e GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com \
-  gravadigital/telescope-web:1.2.3
+  gravadigital/openparallax-web:1.2.3
 ```
 
 How it works: the web is a static bundle, and Create React App would bake any

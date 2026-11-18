@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/gravadigital/telescopio-api/internal/domain/vote"
-	"github.com/gravadigital/telescopio-api/internal/logger"
+	"github.com/gravadigital/openparallax/api/internal/domain/vote"
+	"github.com/gravadigital/openparallax/api/internal/logger"
 )
 
 // PostgresVoteRepository implements VoteRepository using GORM

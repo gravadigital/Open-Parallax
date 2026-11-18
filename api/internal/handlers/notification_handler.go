@@ -9,10 +9,10 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/gravadigital/telescopio-api/internal/domain/notification"
-	"github.com/gravadigital/telescopio-api/internal/logger"
-	"github.com/gravadigital/telescopio-api/internal/middleware/auth"
-	"github.com/gravadigital/telescopio-api/internal/storage/postgres"
+	"github.com/gravadigital/openparallax/api/internal/domain/notification"
+	"github.com/gravadigital/openparallax/api/internal/logger"
+	"github.com/gravadigital/openparallax/api/internal/middleware/auth"
+	"github.com/gravadigital/openparallax/api/internal/storage/postgres"
 )
 
 const (

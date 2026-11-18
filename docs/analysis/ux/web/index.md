@@ -26,7 +26,7 @@
 | Lenguaje | TypeScript 4.9.5, `strict: true` | `tsconfig.json` |
 | Estilos | **CSS plano, un archivo por componente**. Sin Tailwind, sin CSS-in-JS, sin librería de UI | — |
 | Estado | React Context (`AuthContext`) + `useState` local | `src/context/AuthContext.tsx` |
-| Persistencia cliente | `localStorage` (`telescopio_user`, `telescopio_token`) | `AuthContext.tsx:9-10` |
+| Persistencia cliente | `localStorage` (`openparallax_user`, `openparallax_token`) | `AuthContext.tsx:9-10` |
 | Data fetching | `fetch` nativo envuelto en `apiRequest` | `src/config/api.ts` |
 | OAuth | `@react-oauth/google` 0.13.4 | `package.json:4` |
 | Testing | Testing Library + Jest (CRA) | `package.json` |

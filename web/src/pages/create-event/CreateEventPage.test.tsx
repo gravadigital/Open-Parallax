@@ -39,7 +39,7 @@ const goToStep3 = (organizer = 'Club de Diseño') => {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  localStorage.removeItem('telescopio_event_draft');
+  localStorage.removeItem('openparallax_event_draft');
 });
 
 describe('CreateEventPage — render y validación', () => {
@@ -338,7 +338,7 @@ describe('CreateEventPage — idioma, responsive y reemplazo', () => {
 });
 
 describe('CreateEventPage — borrador', () => {
-  const DRAFT_KEY = 'telescopio_event_draft';
+  const DRAFT_KEY = 'openparallax_event_draft';
 
   beforeEach(() => {
     localStorage.removeItem(DRAFT_KEY);
@@ -409,7 +409,7 @@ describe('CreateEventPage — borrador', () => {
 });
 
 describe('CreateEventPage — color de portada (S-021)', () => {
-  const DRAFT_KEY = 'telescopio_event_draft';
+  const DRAFT_KEY = 'openparallax_event_draft';
   const group = () => screen.getByRole('radiogroup', { name: 'Color de portada' });
   const radio = (name: string) => within(group()).getByRole('radio', { name });
 

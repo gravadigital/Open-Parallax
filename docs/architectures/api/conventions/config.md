@@ -42,9 +42,9 @@ Si el área es nueva, creá un struct anidado nuevo en vez de colgar el campo en
 |---|---|---|
 | `DB_HOST` | `localhost` | Postgres |
 | `DB_PORT` | `5432` | |
-| `DB_USER` | `telescopio` | |
-| `DB_PASSWORD` | `telescopio_password` | |
-| `DB_NAME` | `telescopio_db` | |
+| `DB_USER` | `openparallax` | |
+| `DB_PASSWORD` | `openparallax_password` | |
+| `DB_NAME` | `openparallax_db` | |
 | `DB_SSLMODE` | `disable` | |
 | `PORT` | `8080` | Puerto HTTP |
 | `GIN_MODE` | `debug` | Modo de Gin; también define el nivel de log |
@@ -56,7 +56,7 @@ Si el área es nueva, creá un struct anidado nuevo en vez de colgar el campo en
 | `S3_ENDPOINT` | `http://localhost:3900` | URL con esquema |
 | `S3_PRESIGN_ENDPOINT` | `""` | Host público para firmar URLs. Vacío = `S3_ENDPOINT` |
 | `S3_REGION` | `garage` | Tiene que coincidir con `s3_region` del servidor |
-| `S3_BUCKET` | `telescope` | Tiene que existir: la API no lo crea |
+| `S3_BUCKET` | `openparallax` | Tiene que existir: la API no lo crea |
 | `S3_ACCESS_KEY_ID` | `""` | Obligatoria si el provider es `s3` |
 | `S3_SECRET_ACCESS_KEY` | `""` | Obligatoria si el provider es `s3` |
 | `CORS_ALLOW_ORIGINS` | `*` | Lista separada por comas, o `*` |
@@ -66,7 +66,7 @@ Si el área es nueva, creá un struct anidado nuevo en vez de colgar el campo en
 | `SMTP_HOST` / `SMTP_PORT` | `""` / `587` | |
 | `SMTP_USER` / `SMTP_PASSWORD` | `""` | |
 | `SMTP_SECURE` | `false` | `true` = TLS directo (465), `false` = STARTTLS (587) |
-| `EMAIL_FROM` / `EMAIL_FROM_NAME` | `""` / `Telescopio` | |
+| `EMAIL_FROM` / `EMAIL_FROM_NAME` | `""` / `OpenParallax` | |
 | `GOOGLE_CLIENT_ID` | `""` | Google OAuth |
 | `JWT_SECRET` | **ninguno, obligatorio** | Firma de tokens. Sin él la API no arranca (`Config.Validate`) |
 

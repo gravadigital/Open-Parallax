@@ -22,7 +22,7 @@
           "name": "header",
           "type": "header",
           "category": "layout",
-          "content": "TELESCOPIO | Inicio · Eventos · Cómo funciona | ES/EN · Iniciar sesión · Crear cuenta",
+          "content": "OPENPARALLAX | Inicio · Eventos · Cómo funciona | ES/EN · Iniciar sesión · Crear cuenta",
           "annotation": "Con sesión reemplaza los botones de sesión por la campana y el menú de usuario (ver product-map, Chrome global)."
         },
         {
@@ -258,7 +258,7 @@
           "name": "footer",
           "type": "footer",
           "category": "layout",
-          "content": "Telescopio · evaluación distribuida entre pares"
+          "content": "OpenParallax · evaluación distribuida entre pares"
         }
       ],
       "layouts": {
@@ -428,10 +428,10 @@
           "name": "header",
           "type": "header",
           "category": "layout",
-          "content": "TELESCOPIO | Inicio · Eventos · Cómo funciona | campana · menú de usuario",
+          "content": "OPENPARALLAX | Inicio · Eventos · Cómo funciona | campana · menú de usuario",
           "state_overrides": {
             "visitante": {
-              "content": "TELESCOPIO | Inicio · Eventos · Cómo funciona | ES/EN · Iniciar sesión · Crear cuenta"
+              "content": "OPENPARALLAX | Inicio · Eventos · Cómo funciona | ES/EN · Iniciar sesión · Crear cuenta"
             }
           }
         },
@@ -769,7 +769,7 @@
           "name": "footer",
           "type": "footer",
           "category": "layout",
-          "content": "Telescopio · evaluación distribuida entre pares"
+          "content": "OpenParallax · evaluación distribuida entre pares"
         }
       ],
       "layouts": {
@@ -921,7 +921,7 @@
           "name": "header",
           "type": "header",
           "category": "layout",
-          "content": "TELESCOPIO | Inicio · Eventos · Cómo funciona | campana · menú de usuario"
+          "content": "OPENPARALLAX | Inicio · Eventos · Cómo funciona | campana · menú de usuario"
         },
         {
           "name": "Migas",
@@ -1383,7 +1383,7 @@
           "name": "header",
           "type": "header",
           "category": "layout",
-          "content": "TELESCOPIO | Inicio · Eventos · Cómo funciona | campana · menú de usuario",
+          "content": "OPENPARALLAX | Inicio · Eventos · Cómo funciona | campana · menú de usuario",
           "annotation": "Sin sesión: «ES/EN · Iniciar sesión · Crear cuenta»."
         },
         {
@@ -2179,7 +2179,7 @@
           "name": "footer",
           "type": "footer",
           "category": "layout",
-          "content": "Telescopio · evaluación distribuida entre pares"
+          "content": "OpenParallax · evaluación distribuida entre pares"
         }
       ],
       "layouts": {
@@ -2382,7 +2382,7 @@
           "name": "header",
           "type": "header",
           "category": "layout",
-          "content": "TELESCOPIO | Inicio · Eventos · Cómo funciona | campana · menú de usuario"
+          "content": "OPENPARALLAX | Inicio · Eventos · Cómo funciona | campana · menú de usuario"
         },
         {
           "name": "Volver",
@@ -3303,7 +3303,7 @@
           "name": "footer",
           "type": "footer",
           "category": "layout",
-          "content": "Telescopio · evaluación distribuida entre pares"
+          "content": "OpenParallax · evaluación distribuida entre pares"
         }
       ],
       "layouts": {
@@ -3534,7 +3534,7 @@
           "name": "Panel de marca",
           "type": "section",
           "category": "layout",
-          "content": "TELESCOPIO",
+          "content": "OPENPARALLAX",
           "h": 220,
           "viewport_overrides": {
             "mobile": {
@@ -3743,7 +3743,7 @@
           "name": "Panel de marca",
           "type": "section",
           "category": "layout",
-          "content": "TELESCOPIO",
+          "content": "OPENPARALLAX",
           "h": 220,
           "viewport_overrides": {
             "mobile": {
@@ -3982,7 +3982,7 @@
           "name": "Panel de marca",
           "type": "section",
           "category": "layout",
-          "content": "TELESCOPIO",
+          "content": "OPENPARALLAX",
           "h": 220,
           "viewport_overrides": {
             "mobile": {
@@ -4216,7 +4216,7 @@
           "name": "Panel de marca",
           "type": "section",
           "category": "layout",
-          "content": "TELESCOPIO",
+          "content": "OPENPARALLAX",
           "h": 220,
           "viewport_overrides": {
             "mobile": {
@@ -4396,7 +4396,7 @@
           "name": "Panel de marca",
           "type": "section",
           "category": "layout",
-          "content": "TELESCOPIO",
+          "content": "OPENPARALLAX",
           "h": 220,
           "viewport_overrides": {
             "mobile": {
@@ -4549,7 +4549,7 @@
           "name": "header",
           "type": "header",
           "category": "layout",
-          "content": "TELESCOPIO | Inicio · Eventos · Cómo funciona | campana · menú de usuario"
+          "content": "OPENPARALLAX | Inicio · Eventos · Cómo funciona | campana · menú de usuario"
         },
         {
           "name": "Título",
@@ -4836,7 +4836,7 @@
           "name": "footer",
           "type": "footer",
           "category": "layout",
-          "content": "Telescopio · evaluación distribuida entre pares"
+          "content": "OpenParallax · evaluación distribuida entre pares"
         }
       ],
       "layouts": {
@@ -4928,7 +4928,7 @@
           "name": "header",
           "type": "header",
           "category": "layout",
-          "content": "TELESCOPIO | Inicio · Eventos · Cómo funciona | campana 3 · menú de usuario"
+          "content": "OPENPARALLAX | Inicio · Eventos · Cómo funciona | campana 3 · menú de usuario"
         },
         {
           "name": "Volver",
@@ -5087,7 +5087,7 @@
           "name": "footer",
           "type": "footer",
           "category": "layout",
-          "content": "Telescopio · evaluación distribuida entre pares"
+          "content": "OpenParallax · evaluación distribuida entre pares"
         }
       ],
       "layouts": {
@@ -5203,7 +5203,7 @@
           "name": "header",
           "type": "header",
           "category": "layout",
-          "content": "TELESCOPIO | Inicio · Eventos · Cómo funciona | sesión"
+          "content": "OPENPARALLAX | Inicio · Eventos · Cómo funciona | sesión"
         },
         {
           "name": "Estado vacío",
@@ -5230,7 +5230,7 @@
           "name": "footer",
           "type": "footer",
           "category": "layout",
-          "content": "Telescopio · evaluación distribuida entre pares"
+          "content": "OpenParallax · evaluación distribuida entre pares"
         }
       ],
       "layouts": {
@@ -7234,7 +7234,7 @@
           "category": "input",
           "content": "",
           "label": "Enlace del evento",
-          "value": "https://telescopio.app/events/1042",
+          "value": "https://openparallax.app/events/1042",
           "annotation": "Solo lectura. El enlace corto /e/xxxx del diseño está fuera de alcance; se muestra la URL real.",
           "state_overrides": {
             "error de sistema": {

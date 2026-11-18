@@ -1,4 +1,4 @@
-# What Telescope does
+# What OpenParallax does
 
 An organizer opens a call, participants submit one proposal each, and then the participants
 themselves evaluate each other's proposals. The result is a ranking nobody had to produce by
@@ -59,7 +59,7 @@ A proposal can be downloaded by its owner, the event's creator and administrator
 
 ## How the voting works
 
-This is what makes Telescope different, and what participants most need to understand.
+This is what makes OpenParallax different, and what participants most need to understand.
 
 ### 1. Configuration
 
@@ -94,7 +94,7 @@ be changed.
 
 ### 4. Results
 
-From all the rankings, Telescope computes:
+From all the rankings, OpenParallax computes:
 
 - **The global ranking**, by Modified Borda Count: each proposal scores by the positions it
   received, normalised to `[0, 1]`. Ties are broken by number of votes and then by id, so the
@@ -107,7 +107,7 @@ From all the rankings, Telescope computes:
 Both rankings are shown. The consequence to explain to participants: **evaluating carefully
 improves your own proposal's position, and not evaluating at all pushes it down.**
 
-## What Telescope does not do
+## What OpenParallax does not do
 
 - **No re-evaluation.** Assignments and the voting configuration are fixed once created.
 - **No going back a stage.** Advancing is irreversible.

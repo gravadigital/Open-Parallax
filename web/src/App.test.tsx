@@ -11,7 +11,7 @@ describe('App', () => {
 
   it('TS-65: smoke de la app con la barra nueva', async () => {
     render(<App />);
-    expect(screen.getAllByText(/TELESCOPIO/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/OPENPARALLAX/i).length).toBeGreaterThan(0);
     const nav = await screen.findByRole('navigation', { name: 'Main navigation' });
     ['Home', 'Events', 'How it works'].forEach((name) =>
       expect(nav).toHaveTextContent(name)

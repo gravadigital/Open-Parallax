@@ -64,6 +64,6 @@ Restricciones:
 
 ## Referencias
 
-- `docs/db-schemas/telescopio_db.md` → `notifications`
+- `docs/db-schemas/openparallax_db.md` → `notifications`
 - `docs/apis/api.yaml` → `/api/v1/notifications*`, schema `Notification`
 - `docs/flows/notificaciones-in-app.md`

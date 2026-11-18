@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	attachmentDomain "github.com/gravadigital/telescopio-api/internal/domain/attachment"
-	"github.com/gravadigital/telescopio-api/internal/logger"
+	attachmentDomain "github.com/gravadigital/openparallax/api/internal/domain/attachment"
+	"github.com/gravadigital/openparallax/api/internal/logger"
 )
 
 // PostgresAttachmentRepository implements AttachmentRepository using GORM

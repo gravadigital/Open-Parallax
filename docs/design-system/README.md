@@ -1,4 +1,4 @@
-# Design System — Telescopio
+# Design System — OpenParallax
 
 Raíz del Design System. Una carpeta por superficie, con versionado independiente.
 

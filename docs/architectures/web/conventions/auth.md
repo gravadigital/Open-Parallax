@@ -17,13 +17,13 @@ JWT emitido por el backend, guardado en `localStorage` y expuesto a la aplicaci�
 
 | Clave | Contenido | Cómo se escribe |
 |---|---|---|
-| `telescopio_user` | El objeto `User` serializado | Vía `useLocalStorage` (hace `JSON.stringify`) |
-| `telescopio_token` | El JWT en crudo | **`localStorage` directo**, sin `JSON.stringify` |
+| `openparallax_user` | El objeto `User` serializado | Vía `useLocalStorage` (hace `JSON.stringify`) |
+| `openparallax_token` | El JWT en crudo | **`localStorage` directo**, sin `JSON.stringify` |
 
 La asimetría es deliberada y está comentada en el código (`AuthContext.tsx:101-102`): el
 token ya es un string, pasarlo por `JSON.stringify` le agregaría comillas y rompería el
 header. **Si tocás esto, respetá la asimetría**: `apiRequest` lee el token con
-`localStorage.getItem('telescopio_token')` y lo usa tal cual.
+`localStorage.getItem('openparallax_token')` y lo usa tal cual.
 
 ## `AuthContext`
 
@@ -51,7 +51,7 @@ los eventos del usuario desde el backend.
 Patrón deliberado, no accidental, y conviene mantenerlo:
 
 1. `apiRequest` recibe un `401`.
-2. Borra `telescopio_user` y `telescopio_token`.
+2. Borra `openparallax_user` y `openparallax_token`.
 3. Emite `window.dispatchEvent(new CustomEvent('auth:logout', { detail: { reason: 'token_expired' } }))`.
 4. `AuthContext` escucha ese evento (`AuthContext.tsx:81-95`) y limpia su estado.
 

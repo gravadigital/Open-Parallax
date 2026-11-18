@@ -9,7 +9,7 @@ platform: web
 # Design System — `web`
 
 > **v2.0.0 — lenguaje visual del rediseño (REQ-003).** Reemplaza al DS relevado del código
-> (v1.0.0, glassmorphism oscuro). Fuente: `documentation/Telescopio Rediseño Vistas.html` y las
+> (v1.0.0, glassmorphism oscuro). Fuente: `documentation/OpenParallax Rediseño Vistas.html` y las
 > decisiones DA-7 / DA-8 de [REQ-003](../../requests/REQ-003.rediseno-de-vistas-notificaciones-y-multilenguaje.md).
 >
 > ⚠️ **El código desplegado todavía usa la v1.0.** La v2.0.0 se implementa con las stories de

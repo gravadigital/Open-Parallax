@@ -9,7 +9,7 @@
 |---|---|
 | **Nombre** | `web` |
 | **Tipo** | Frontend (SPA) |
-| **Path** | `web/` (monorepo `telescope`) |
+| **Path** | `web/` (monorepo `openparallax`) |
 | **Framework** | React 19.1.1 |
 | **Lenguaje** | TypeScript 4.9.5 (`strict: true`, `target: es5`) |
 | **Build** | Create React App (`react-scripts` 5.0.1) |
@@ -128,7 +128,7 @@ devolviendo tipos limpios. Los componentes no saben de eso.
 |---|---|---|
 | REST API | `api` | Toda la funcionalidad. `REACT_APP_API_URL`, default `http://localhost:8080` |
 | API externa | Google OAuth | Vía `@react-oauth/google`, con `REACT_APP_GOOGLE_CLIENT_ID` |
-| Browser storage | `localStorage` | Sesión (`telescopio_user`, `telescopio_token`) |
+| Browser storage | `localStorage` | Sesión (`openparallax_user`, `openparallax_token`) |
 
 ---
 

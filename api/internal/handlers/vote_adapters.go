@@ -5,10 +5,10 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/google/uuid"
-	"github.com/gravadigital/telescopio-api/internal/domain/common"
-	"github.com/gravadigital/telescopio-api/internal/domain/vote"
-	"github.com/gravadigital/telescopio-api/internal/logger"
-	"github.com/gravadigital/telescopio-api/internal/storage/postgres"
+	"github.com/gravadigital/openparallax/api/internal/domain/common"
+	"github.com/gravadigital/openparallax/api/internal/domain/vote"
+	"github.com/gravadigital/openparallax/api/internal/logger"
+	"github.com/gravadigital/openparallax/api/internal/storage/postgres"
 )
 
 // VoteRepositoryAdapter adapts postgres.VoteRepository to vote.VoteRepository

@@ -4,7 +4,7 @@ import type { Catalog } from '../types';
 export const en: Catalog = {
   common: {
     retry: 'Try again',
-    appName: 'TELESCOPIO',
+    appName: 'OPENPARALLAX',
     points: '{score} pts',
     participants: plural({ one: '{count} participant', other: '{count} participants' }),
   },
@@ -144,7 +144,7 @@ export const en: Catalog = {
     description: 'The link may be mistyped, or the event may no longer be available.',
     goToEvents: 'Go to Events',
     backHome: 'Back to home',
-    documentTitle: 'Page not found · Telescopio',
+    documentTitle: 'Page not found · OpenParallax',
   },
   coverColor: {
     label: 'Cover color',
@@ -170,10 +170,10 @@ export const en: Catalog = {
   },
   footer: {
     nav: 'Footer navigation',
-    tagline: 'Telescopio · distributed peer review',
+    tagline: 'OpenParallax · distributed peer review',
     version: 'V1.0',
     github: 'GitHub',
-    repo: 'gravadigital/telescope',
+    repo: 'gravadigital/openparallax',
     contact: 'CONTACT',
     email: 'info@grava.digital',
     phone: '+54 9 11 3094 2020',

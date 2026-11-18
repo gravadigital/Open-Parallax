@@ -8,7 +8,7 @@ status: diseñada
 # Elevation
 
 > **v2.0.0 — sombras del rediseño (REQ-003).** Valores contados sobre
-> `documentation/Telescopio Rediseño Vistas.html`. `[fuente: diseño REQ-003]`
+> `documentation/OpenParallax Rediseño Vistas.html`. `[fuente: diseño REQ-003]`
 
 ## Propósito
 

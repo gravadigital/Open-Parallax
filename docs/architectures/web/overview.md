@@ -2,7 +2,7 @@
 
 ## Propósito
 
-Frontend del sistema de asignación de tiempo de telescopio. Es la única interfaz de usuario
+Frontend de OpenParallax, plataforma de asignación de recursos escasos. Es la única interfaz de usuario
 del producto: cubre el recorrido del participante (descubrir un evento, registrarse, subir
 su propuesta, evaluar las asignadas, ver resultados) y el del organizador (crear el evento,
 avanzar etapas, configurar la votación, ver resultados).

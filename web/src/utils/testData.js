@@ -12,7 +12,7 @@ export const createTestEvents = async () => {
       end_date: "2025-09-15"
     },
     {
-      name: "Hackathon Telescopio",
+      name: "Hackathon OpenParallax",
       description: "Desarrolla la próxima gran aplicación en 48 horas. Premios para las mejores ideas.",
       start_date: "2025-09-01",
       end_date: "2025-09-03"
@@ -87,13 +87,13 @@ await updateEventToParticipation('EVENT_ID_AQUI');
 
 // Función para limpiar localStorage (logout manual)
 export const clearAuth = () => {
-  localStorage.removeItem('telescopio_user');
+  localStorage.removeItem('openparallax_user');
   window.location.reload();
 };
 
 // Exponer funciones globalmente para testing
 if (typeof window !== 'undefined') {
-  window.telescopioTest = {
+  window.openparallaxTest = {
     createTestEvents,
     updateEventToParticipation,
     showTestInstructions,

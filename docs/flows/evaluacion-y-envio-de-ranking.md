@@ -216,7 +216,7 @@ guardar un ranking parcial o inconsistente: es un guardado de progreso, no una e
 cliente tiene que normalizar.
 
 **Reenvío en la web (S-017).** Tras un `201` la web guarda el orden enviado en `localStorage`
-(`telescopio_submitted_ranking:{assignment_id}`) y lo toma como referencia: "Reenviar mi ranking"
+(`openparallax_submitted_ranking:{assignment_id}`) y lo toma como referencia: "Reenviar mi ranking"
 solo se habilita si el orden en pantalla difiere de lo enviado. Si el envío falla con `400` y
 `current_stage` distinto de `voting`, muestra "La votación ya cerró…" y recarga (la lista pasa a
 solo lectura).

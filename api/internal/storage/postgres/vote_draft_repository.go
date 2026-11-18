@@ -9,8 +9,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/gravadigital/telescopio-api/internal/domain/vote"
-	"github.com/gravadigital/telescopio-api/internal/logger"
+	"github.com/gravadigital/openparallax/api/internal/domain/vote"
+	"github.com/gravadigital/openparallax/api/internal/logger"
 )
 
 // PostgresVoteDraftRepository implements VoteDraftRepository using GORM

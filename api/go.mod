@@ -1,4 +1,4 @@
-module github.com/gravadigital/telescopio-api
+module github.com/gravadigital/openparallax/api
 
 go 1.26.6
 

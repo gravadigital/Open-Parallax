@@ -10,9 +10,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/gravadigital/telescopio-api/internal/domain/event"
-	"github.com/gravadigital/telescopio-api/internal/domain/participant"
-	"github.com/gravadigital/telescopio-api/internal/middleware/auth"
+	"github.com/gravadigital/openparallax/api/internal/domain/event"
+	"github.com/gravadigital/openparallax/api/internal/domain/participant"
+	"github.com/gravadigital/openparallax/api/internal/middleware/auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

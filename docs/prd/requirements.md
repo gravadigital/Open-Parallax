@@ -19,7 +19,7 @@ status: Draft - Generado desde código existente
 
 ## Entidades de Dominio
 
-Fuente: [`docs/db-schemas/telescopio_db.md`](../db-schemas/telescopio_db.md). Los nombres de
+Fuente: [`docs/db-schemas/openparallax_db.md`](../db-schemas/openparallax_db.md). Los nombres de
 esta sección son el vocabulario único del PRD.
 
 ### Usuario (`users`)
@@ -213,7 +213,7 @@ para participar sin tener que recordar otra contraseña.
 | C-04 | Registrarse con Google | U-03 Visitante | Usuario | CREATE | `id_token`, `name` (string, req) | Si el usuario es nuevo, la UI pide el nombre en un modal antes de registrar. `password_hash` queda nulo |
 | C-05 | Solicitar recuperación | U-03 Visitante | Usuario | ACTION | `email` (string, req) | Genera token hex de 32 bytes con expiración de 1h y lo envía por SMTP. Responde igual exista o no el email. También es la vía para que una cuenta creada al registrarse a un evento defina su primera contraseña. ⚠️ Ver defecto D-17 |
 | C-06 | Definir nueva contraseña | U-03 Visitante | Usuario | UPDATE | `token` (string, req, de la query), `password` (string, req, min 8) | El token debe existir y no estar expirado. Se consume al usarse |
-| C-07 | Mantener la sesión | U-02 Participante | Usuario | READ | — | Sesión en `localStorage` (`telescopio_user`, `telescopio_token`), restaurada al recargar |
+| C-07 | Mantener la sesión | U-02 Participante | Usuario | READ | — | Sesión en `localStorage` (`openparallax_user`, `openparallax_token`), restaurada al recargar |
 | C-08 | Cerrar sesión ante token expirado | U-02 Participante | Usuario | ACTION | — | Ante un 401, el cliente limpia la sesión y emite `CustomEvent auth:logout`; `AuthContext` desloguea **sin recargar la página** |
 | C-09 | Consultar un usuario | U-02 Participante | Usuario | READ | `user_id` (uuid) | ⚠️ Ver defecto D-03 |
 

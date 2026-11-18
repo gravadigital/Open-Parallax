@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/gravadigital/telescopio-api/internal/domain/participant"
-	"github.com/gravadigital/telescopio-api/internal/logger"
+	"github.com/gravadigital/openparallax/api/internal/domain/participant"
+	"github.com/gravadigital/openparallax/api/internal/logger"
 )
 
 // PostgresUserRepository implements UserRepository using GORM

@@ -154,7 +154,7 @@ Máximo 5. Se documentan 4.
 |---|---|---|---|
 | H-01 | Entra al producto **solo cuando recibe un email** de cambio de etapa. No vuelve por iniciativa propia | `inferida-PRD` | Analítica de sesiones cruzada con envíos de email. **Hoy no hay instrumentación** |
 | H-02 | Deja la evaluación para el final del plazo | `por-analogía` | Distribución temporal de `votes.voted_at` respecto del deadline. **Requiere entrevistas para entender el porqué** |
-| H-03 | Si viene del mundo académico, **espera que el proceso sea anónimo** y le llama la atención que no lo sea | `inferida-benchmark` | Entrevista corta. ALMA es doble ciego en ambas direcciones; Telescopio no lo es en ninguna |
+| H-03 | Si viene del mundo académico, **espera que el proceso sea anónimo** y le llama la atención que no lo sea | `inferida-benchmark` | Entrevista corta. ALMA es doble ciego en ambas direcciones; OpenParallax no lo es en ninguna |
 | H-04 | Prioriza entregar sobre evaluar: si tuviera que elegir, entrega y no evalúa | `por-analogía` | Comparar tasa de entrega contra tasa de completitud de asignaciones por evento |
 
 **H-04 es la hipótesis de mayor consecuencia.** Si es cierta, el sistema de incentivos es

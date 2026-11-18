@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/gravadigital/telescopio-api/internal/storage"
+	"github.com/gravadigital/openparallax/api/internal/storage"
 )
 
 var _ storage.FileStorage = (*mockFileStorage)(nil)

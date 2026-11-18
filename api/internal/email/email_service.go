@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/log"
-	"github.com/gravadigital/telescopio-api/internal/config"
-	"github.com/gravadigital/telescopio-api/internal/logger"
+	"github.com/gravadigital/openparallax/api/internal/config"
+	"github.com/gravadigital/openparallax/api/internal/logger"
 )
 
 // loginAuth implementa AUTH LOGIN para servidores que no aceptan AUTH PLAIN de Go.

@@ -67,8 +67,8 @@ describe("apiRequest - errores", () => {
   });
 
   it("el 401 sigue limpiando la sesión (TS-4)", async () => {
-    localStorage.setItem("telescopio_token", "t");
-    localStorage.setItem("telescopio_user", "{}");
+    localStorage.setItem("openparallax_token", "t");
+    localStorage.setItem("openparallax_user", "{}");
     const dispatchSpy = jest.spyOn(window, "dispatchEvent");
     mockFetchResponse(401, () => ({ error: "UNAUTHORIZED", message: "Invalid token" }));
 
@@ -76,7 +76,7 @@ describe("apiRequest - errores", () => {
 
     expect(err.message).toBe("UNAUTHORIZED");
     expect(err.status).toBe(401);
-    expect(localStorage.getItem("telescopio_token")).toBeNull();
+    expect(localStorage.getItem("openparallax_token")).toBeNull();
     const event = dispatchSpy.mock.calls
       .map((c) => c[0])
       .find((e) => e.type === "auth:logout") as CustomEvent | undefined;
@@ -129,8 +129,8 @@ describe("ApiError", () => {
   });
 
   it("forma B: code = error y limpia la sesión (TS-88)", async () => {
-    localStorage.setItem("telescopio_token", "t");
-    localStorage.setItem("telescopio_user", "{}");
+    localStorage.setItem("openparallax_token", "t");
+    localStorage.setItem("openparallax_user", "{}");
     const dispatchSpy = jest.spyOn(window, "dispatchEvent");
     mockFetchResponse(401, () => ({ error: "UNAUTHORIZED", message: "Missing Authorization header" }));
 
@@ -139,8 +139,8 @@ describe("ApiError", () => {
     expect(err.code).toBe("UNAUTHORIZED");
     expect(err.message).toBe("UNAUTHORIZED");
     expect(err.details).toEqual({});
-    expect(localStorage.getItem("telescopio_token")).toBeNull();
-    expect(localStorage.getItem("telescopio_user")).toBeNull();
+    expect(localStorage.getItem("openparallax_token")).toBeNull();
+    expect(localStorage.getItem("openparallax_user")).toBeNull();
     const event = dispatchSpy.mock.calls
       .map((c) => c[0])
       .find((e) => e.type === "auth:logout") as CustomEvent | undefined;

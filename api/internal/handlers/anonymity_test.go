@@ -8,10 +8,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/gravadigital/telescopio-api/internal/config"
-	"github.com/gravadigital/telescopio-api/internal/domain/attachment"
-	"github.com/gravadigital/telescopio-api/internal/domain/event"
-	"github.com/gravadigital/telescopio-api/internal/domain/participant"
+	"github.com/gravadigital/openparallax/api/internal/config"
+	"github.com/gravadigital/openparallax/api/internal/domain/attachment"
+	"github.com/gravadigital/openparallax/api/internal/domain/event"
+	"github.com/gravadigital/openparallax/api/internal/domain/participant"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

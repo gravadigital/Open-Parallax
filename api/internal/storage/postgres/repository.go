@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/gravadigital/telescopio-api/internal/domain/attachment"
-	"github.com/gravadigital/telescopio-api/internal/domain/event"
-	"github.com/gravadigital/telescopio-api/internal/domain/notification"
-	"github.com/gravadigital/telescopio-api/internal/domain/participant"
-	"github.com/gravadigital/telescopio-api/internal/domain/vote"
+	"github.com/gravadigital/openparallax/api/internal/domain/attachment"
+	"github.com/gravadigital/openparallax/api/internal/domain/event"
+	"github.com/gravadigital/openparallax/api/internal/domain/notification"
+	"github.com/gravadigital/openparallax/api/internal/domain/participant"
+	"github.com/gravadigital/openparallax/api/internal/domain/vote"
 )
 
 // PaginationParams contains pagination parameters

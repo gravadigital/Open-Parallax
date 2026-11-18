@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gravadigital/telescopio-api/internal/domain/event"
-	"github.com/gravadigital/telescopio-api/internal/domain/participant"
-	"github.com/gravadigital/telescopio-api/internal/middleware/auth"
+	"github.com/gravadigital/openparallax/api/internal/domain/event"
+	"github.com/gravadigital/openparallax/api/internal/domain/participant"
+	"github.com/gravadigital/openparallax/api/internal/middleware/auth"
 )
 
 // eventVisibleTo reports whether the caller may see evt. An event in creation is

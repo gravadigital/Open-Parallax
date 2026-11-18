@@ -40,7 +40,7 @@ const CREATE_EVENT_ERROR_CODES = [
   'MAX_PARTICIPANTS_LIMIT_EXCEEDED',
 ] as const;
 
-const DRAFT_KEY = 'telescopio_event_draft';
+const DRAFT_KEY = 'openparallax_event_draft';
 const DRAFT_DEBOUNCE_MS = 500;
 const DRAFT_AGE_TICK_MS = 15000;
 

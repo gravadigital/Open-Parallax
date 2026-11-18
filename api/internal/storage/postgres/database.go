@@ -9,9 +9,9 @@ import (
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
 
-	"github.com/gravadigital/telescopio-api/internal/config"
-	"github.com/gravadigital/telescopio-api/internal/logger"
-	"github.com/gravadigital/telescopio-api/internal/storage/migrations"
+	"github.com/gravadigital/openparallax/api/internal/config"
+	"github.com/gravadigital/openparallax/api/internal/logger"
+	"github.com/gravadigital/openparallax/api/internal/storage/migrations"
 )
 
 // DB holds the database connection

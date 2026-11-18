@@ -4,7 +4,7 @@ name: Dev images
 # Ese tag es un puntero móvil a la punta de dev, no un release.
 #
 # Para correr un servidor contra él, el compose del servidor (en el repo de deploy)
-# tiene que bajar `gravadigital/telescope-{api,web}:dev`.
+# tiene que bajar `gravadigital/openparallax-{api,web}:dev`.
 #
 # Los releases son otro workflow: release.yml, disparado por tags de versión, es el
 # que publica los tags inmutables 1.2.3 / 1.2 / latest.
@@ -81,10 +81,10 @@ jobs:
           build-args: |
             VERSION=dev-${{ github.sha }}
           tags: |
-            ${{ env.REGISTRY_NAMESPACE }}/telescope-${{ matrix.service }}:dev
-            ${{ env.REGISTRY_NAMESPACE }}/telescope-${{ matrix.service }}:dev-${{ github.sha }}
+            ${{ env.REGISTRY_NAMESPACE }}/openparallax-${{ matrix.service }}:dev
+            ${{ env.REGISTRY_NAMESPACE }}/openparallax-${{ matrix.service }}:dev-${{ github.sha }}
           labels: |
-            org.opencontainers.image.title=telescope-${{ matrix.service }}
+            org.opencontainers.image.title=openparallax-${{ matrix.service }}
             org.opencontainers.image.vendor=Grava Digital
             org.opencontainers.image.revision=${{ github.sha }}
           # Comparte el scope de caché con release.yml a propósito: las capas son las
@@ -104,4 +104,4 @@ jobs:
             echo "::error::Alguna imagen dev no se publicó. El tag dev puede ser una mezcla de este build y el anterior."
             exit 1
           fi
-          echo "Publicadas dev y dev-${GITHUB_SHA} para telescope-api y telescope-web."
+          echo "Publicadas dev y dev-${GITHUB_SHA} para openparallax-api y openparallax-web."

@@ -12,13 +12,13 @@ status: Draft - Generado desde código existente
 >
 > Para el detalle por servicio, ver [`docs/architectures/`](../architectures/). Para el contrato
 > de la API, [`docs/apis/api.yaml`](../apis/api.yaml). Para el esquema de
-> datos, [`docs/db-schemas/telescopio_db.md`](../db-schemas/telescopio_db.md).
+> datos, [`docs/db-schemas/openparallax_db.md`](../db-schemas/openparallax_db.md).
 
 ---
 
 ## Visión General
 
-Telescopio es un **backend monolítico con una SPA que lo consume**. No es una arquitectura de
+OpenParallax es un **backend monolítico con una SPA que lo consume**. No es una arquitectura de
 microservicios y no conviene describirla como tal: hay exactamente dos servicios desplegables, la
 comunicación entre ellos es siempre en el mismo sentido (del frontend al backend, HTTP REST), y
 **no existe comunicación backend-a-backend, bus de eventos ni mensajería asincrónica**.
@@ -66,7 +66,7 @@ graph TB
     end
 
     subgraph Datos
-        PG[("PostgreSQL<br/>telescopio_db<br/>+ triggers plpgsql")]
+        PG[("PostgreSQL<br/>openparallax_db<br/>+ triggers plpgsql")]
         Garage[("Garage (S3)<br/>propuestas")]
     end
 
@@ -76,7 +76,7 @@ graph TB
     end
 
     subgraph Navegador
-        LS[localStorage<br/>telescopio_user · telescopio_token]
+        LS[localStorage<br/>openparallax_user · openparallax_token]
     end
 
     Visitante --> Web
@@ -187,7 +187,7 @@ mantiene el código compacto y sin capa de mapeo.
 
 ## Arquitectura de Datos
 
-### PostgreSQL `telescopio_db`
+### PostgreSQL `openparallax_db`
 
 9 tablas, 3 tipos enumerados, 21 migraciones versionadas en Go con `Up`/`Down`, ejecutadas al
 arrancar. Hay un CLI (`cmd/migrate`) con flag `-rollback`.
@@ -250,7 +250,7 @@ filesystem local sin aviso.
 
 ### Persistencia en el cliente
 
-`localStorage` guarda `telescopio_user` y `telescopio_token`. Es toda la persistencia del
+`localStorage` guarda `openparallax_user` y `openparallax_token`. Es toda la persistencia del
 frontend: **no hay caché de datos de servidor**, ni deduplicación de requests. Cada pantalla pide
 sus datos al montar, y navegar y volver reejecuta todo.
 
@@ -317,7 +317,7 @@ violar: si alguien evalúa su propia propuesta, el resultado pierde toda legitim
 
 ### Despliegue
 
-Imágenes publicadas en Docker Hub (`gravadigital/telescope-api` y `gravadigital/telescope-web`)
+Imágenes publicadas en Docker Hub (`gravadigital/openparallax-api` y `gravadigital/openparallax-web`)
 por el CI. El compose de servidor vive en el repositorio de deploy; en este repo,
 `deploy/docker-compose.yml` es solo el stack local, con `STORAGE_PROVIDER=s3` contra Garage.
 

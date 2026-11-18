@@ -90,7 +90,7 @@ describe('toRankings', () => {
 
 describe('submittedRankingKey', () => {
   it('TS-10: clave por asignación', () => {
-    expect(submittedRankingKey('a1')).toBe('telescopio_submitted_ranking:a1');
+    expect(submittedRankingKey('a1')).toBe('openparallax_submitted_ranking:a1');
   });
 });
 

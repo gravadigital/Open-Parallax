@@ -1,4 +1,4 @@
-# Entry point for working on Telescope locally. Run `make` to list the commands.
+# Entry point for working on OpenParallax locally. Run `make` to list the commands.
 #
 # Everything runs against the stack in deploy/docker-compose.yml, so there is one
 # database and one S3 storage (Garage) whether the api runs in a container or with `go run`.
@@ -11,19 +11,19 @@ COMPOSE := docker compose -f deploy/docker-compose.yml
 -include deploy/.env
 
 # Same defaults as deploy/docker-compose.yml. The api's own defaults in Go
-# (telescopio / telescopio_db, local file storage) do not match the stack, so
+# (openparallax / openparallax_db, local file storage) do not match the stack, so
 # running it outside Docker needs these passed explicitly.
-POSTGRES_DB       ?= telescope_db
-POSTGRES_USER     ?= telescope
-POSTGRES_PASSWORD ?= telescope_password
+POSTGRES_DB       ?= openparallax_db
+POSTGRES_USER     ?= openparallax
+POSTGRES_PASSWORD ?= openparallax_password
 POSTGRES_PORT     ?= 5432
-S3_ACCESS_KEY_ID     ?= GKtelescopelocal01
-S3_SECRET_ACCESS_KEY ?= telescope-local-secret-0123456789
-S3_BUCKET            ?= telescope
+S3_ACCESS_KEY_ID     ?= GKopenparallaxlocal01
+S3_SECRET_ACCESS_KEY ?= openparallax-local-secret-0123456789
+S3_BUCKET            ?= openparallax
 STORAGE_PORT         ?= 3900
 API_PORT          ?= 8080
 WEB_PORT          ?= 3000
-JWT_SECRET        ?= telescope-local-dev-secret-no-usar-en-produccion
+JWT_SECRET        ?= openparallax-local-dev-secret-no-usar-en-produccion
 GOOGLE_CLIENT_ID  ?=
 
 API_ENV = \
@@ -89,9 +89,9 @@ test: web/node_modules ## Unit tests of api and web (no Docker needed)
 test-integration: ## Integration tests of the api, against the stack's database
 	$(COMPOSE) up -d --wait database
 	@$(COMPOSE) exec -T database psql -U $(POSTGRES_USER) -d $(POSTGRES_DB) -tAc \
-		"SELECT 1 FROM pg_database WHERE datname = 'telescope_test'" | grep -q 1 || \
-		$(COMPOSE) exec -T database createdb -U $(POSTGRES_USER) telescope_test
-	cd api && $(API_ENV) TEST_DB_NAME=telescope_test go test -tags=integration -count=1 ./...
+		"SELECT 1 FROM pg_database WHERE datname = 'openparallax_test'" | grep -q 1 || \
+		$(COMPOSE) exec -T database createdb -U $(POSTGRES_USER) openparallax_test
+	cd api && $(API_ENV) TEST_DB_NAME=openparallax_test go test -tags=integration -count=1 ./...
 
 web/node_modules: web/package-lock.json
 	cd web && npm ci

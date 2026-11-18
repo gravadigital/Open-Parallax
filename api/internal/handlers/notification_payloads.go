@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/google/uuid"
-	"github.com/gravadigital/telescopio-api/internal/domain/vote"
+	"github.com/gravadigital/openparallax/api/internal/domain/vote"
 )
 
 // resultPosition returns the adjusted rank of userID and the number of ranked attachments.

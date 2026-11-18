@@ -8,7 +8,7 @@ status: diseñada
 # Tipografía
 
 > **v2.0.0 — tipografía del rediseño (REQ-003).** Familias, tamaños, pesos e interlineados contados
-> sobre `documentation/Telescopio Rediseño Vistas.html`. `[fuente: diseño REQ-003]`
+> sobre `documentation/OpenParallax Rediseño Vistas.html`. `[fuente: diseño REQ-003]`
 
 ## Familias
 

@@ -42,7 +42,7 @@ The storage service runs Garage, which has no web console. To look at the stored
 its CLI inside the container:
 
 ```sh
-docker compose -f deploy/docker-compose.yml exec storage /garage bucket info telescope
+docker compose -f deploy/docker-compose.yml exec storage /garage bucket info openparallax
 docker compose -f deploy/docker-compose.yml exec storage /garage key list
 ```
 
@@ -74,7 +74,7 @@ make test               # api (go vet + go test -race) and web (Jest) — no Doc
 make test-integration   # api integration tests, against the stack's PostgreSQL and a Garage of their own
 ```
 
-The integration tests use their own database, `telescope_test`, inside the stack's PostgreSQL,
+The integration tests use their own database, `openparallax_test`, inside the stack's PostgreSQL,
 so they never touch the data you work with. The storage tests start their own throwaway
 Garage container with testcontainers, so they need Docker but not the stack's Garage.
 
@@ -88,7 +88,7 @@ in CI.
 `deploy/.env` (`WEB_PORT=3001`, `API_PORT=8081`, …); see
 [configuration.md](configuration.md).
 
-**The api does not start: `bucket "telescope" not reachable`** — the api checks the bucket on
+**The api does not start: `bucket "openparallax" not reachable`** — the api checks the bucket on
 start and never creates it. Garage creates it when it starts, so `make logs s=storage` shows
 what happened. A `400` in that message means `S3_REGION` does not match Garage's `s3_region`
 (`garage`).
@@ -104,7 +104,7 @@ Log in again.
 
 ## On a server
 
-This repository only runs Telescope locally. The published images are
-`gravadigital/telescope-api` and `gravadigital/telescope-web` on Docker Hub; how a server runs
+This repository only runs OpenParallax locally. The published images are
+`gravadigital/openparallax-api` and `gravadigital/openparallax-web` on Docker Hub; how a server runs
 them is kept in a separate deployment repository. See [configuration.md](configuration.md) for
 what a server must set.

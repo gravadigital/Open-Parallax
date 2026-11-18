@@ -81,13 +81,13 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY_NAMESPACE }}/telescope-${{ matrix.service }}
+          images: ${{ env.REGISTRY_NAMESPACE }}/openparallax-${{ matrix.service }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest
           labels: |
-            org.opencontainers.image.title=telescope-${{ matrix.service }}
+            org.opencontainers.image.title=openparallax-${{ matrix.service }}
             org.opencontainers.image.vendor=Grava Digital
 
       # Sin configuración de ninguna instalación adentro: ver dev-images.yml.
@@ -117,4 +117,4 @@ jobs:
             echo "::error::Alguna imagen no se publicó. Revisá los jobs de la matriz antes de anunciar ${GITHUB_REF_NAME}."
             exit 1
           fi
-          echo "Publicado ${GITHUB_REF_NAME}: telescope-api, telescope-web."
+          echo "Publicado ${GITHUB_REF_NAME}: openparallax-api, openparallax-web."

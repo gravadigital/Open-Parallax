@@ -8,7 +8,7 @@ status: diseñada
 # Color
 
 > **v2.0.0 — lenguaje visual del rediseño (REQ-003, DA-7).** Los valores salen del archivo de diseño
-> `documentation/Telescopio Rediseño Vistas.html` (pantallas 1a–2g), contados sobre los estilos de
+> `documentation/OpenParallax Rediseño Vistas.html` (pantallas 1a–2g), contados sobre los estilos de
 > sus 19 pantallas. `[fuente: diseño REQ-003]`
 >
 > Reemplaza la paleta glassmorphism de la v1.0 (relevada del código). Ver la migración en el

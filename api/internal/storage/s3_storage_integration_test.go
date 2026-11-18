@@ -36,9 +36,9 @@ api_bind_addr = "[::]:3903"
 `
 
 const (
-	testBucket    = "telescope-test"
-	testAccessKey = "GKtelescopetest01"
-	testSecretKey = "telescope-test-secret-0123456789"
+	testBucket    = "openparallax-test"
+	testAccessKey = "GKopenparallaxtest01"
+	testSecretKey = "openparallax-test-secret-0123456789"
 )
 
 // startGarage runs a single-node Garage that creates testBucket on start: by the time /health

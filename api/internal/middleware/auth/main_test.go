@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/gravadigital/telescopio-api/internal/domain/participant"
+	"github.com/gravadigital/openparallax/api/internal/domain/participant"
 )
 
 const testSecret = "auth-test-secret"

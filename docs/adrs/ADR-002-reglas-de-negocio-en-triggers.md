@@ -92,5 +92,5 @@ lados, cambiar los dos en la misma story.
 ## Referencias
 
 - Implementación: `api/internal/storage/migrations/004_constraints_and_triggers.go`
-- Esquema completo: `docs/db-schemas/telescopio_db.md`
+- Esquema completo: `docs/db-schemas/openparallax_db.md`
 - Consecuencia documentada: D-10 en `docs/prd/requirements.md`

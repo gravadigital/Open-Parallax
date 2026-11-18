@@ -40,7 +40,7 @@ y el versionado [Semantic Versioning](https://semver.org/lang/es/).
 ## [2.0.0] - 2026-10-02
 
 > **Breaking.** Reemplaza el lenguaje visual relevado del código (glassmorphism oscuro) por el del
-> rediseño de REQ-003 (`documentation/Telescopio Rediseño Vistas.html`, DA-7 y DA-8). Origen: la
+> rediseño de REQ-003 (`documentation/OpenParallax Rediseño Vistas.html`, DA-7 y DA-8). Origen: la
 > sección `## Revisión UX` de REQ-003, que dejó estos cambios en `pendiente-DS`.
 
 ### Cambiado

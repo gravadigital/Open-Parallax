@@ -3,7 +3,7 @@
 # entrypoint de la imagen de nginx (todo lo que está en /docker-entrypoint.d/) antes de
 # arrancar, así la misma imagen sirve para cualquier instalación:
 #
-#   docker run -e API_URL=https://api.example.com -e GOOGLE_CLIENT_ID=... telescope-web
+#   docker run -e API_URL=https://api.example.com -e GOOGLE_CLIENT_ID=... openparallax-web
 #
 # Ver src/config/runtime.ts para cómo lo lee la app.
 set -eu

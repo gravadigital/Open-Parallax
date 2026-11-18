@@ -19,7 +19,7 @@ describe('AuthLayout', () => {
     );
     expect(screen.getByRole('main')).toBeInTheDocument();
     const aside = screen.getByRole('complementary');
-    expect(aside).toHaveTextContent('TELESCOPIO');
+    expect(aside).toHaveTextContent('OPENPARALLAX');
     expect(screen.getByRole('heading', { level: 2, name: 'Vuelve a donde dejaste tus eventos.' })).toBeInTheDocument();
     expect(within(aside).getAllByRole('listitem')).toHaveLength(3);
     expect(screen.getByRole('link', { name: '← Volver al inicio' })).toHaveAttribute('href', '/');

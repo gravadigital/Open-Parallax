@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/gravadigital/telescopio-api/internal/domain/participant"
+	"github.com/gravadigital/openparallax/api/internal/domain/participant"
 )
 
 // jwtSecret signs and verifies tokens. It has no default: main sets it from JWT_SECRET via
@@ -51,7 +51,7 @@ func GenerateToken(userID uuid.UUID, email string, role participant.Role) (strin
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
-			Issuer:    "telescopio-api",
+			Issuer:    "openparallax-api",
 		},
 	}
 

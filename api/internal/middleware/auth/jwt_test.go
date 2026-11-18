@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/gravadigital/telescopio-api/internal/domain/participant"
+	"github.com/gravadigital/openparallax/api/internal/domain/participant"
 )
 
 func probeRouter(mw gin.HandlerFunc) *gin.Engine {

@@ -196,21 +196,21 @@ describe('splitResults', () => {
 
 describe('compartir', () => {
   it('TS-12 enlaces de redes', () => {
-    expect(shareUrl('https://telescopio.app', 'e-1')).toBe('https://telescopio.app/events/e-1');
-    const links = shareLinks('https://telescopio.app/events/e-1', 'Concurso de afiches');
+    expect(shareUrl('https://openparallax.app', 'e-1')).toBe('https://openparallax.app/events/e-1');
+    const links = shareLinks('https://openparallax.app/events/e-1', 'Concurso de afiches');
     expect(links.map(l => l.network)).toEqual(['whatsapp', 'x', 'linkedin', 'facebook', 'instagram', 'email']);
     expect(links.map(l => l.href)).toEqual([
-      'https://wa.me/?text=Concurso%20de%20afiches%0Ahttps%3A%2F%2Ftelescopio.app%2Fevents%2Fe-1',
-      'https://twitter.com/intent/tweet?text=Concurso%20de%20afiches&url=https%3A%2F%2Ftelescopio.app%2Fevents%2Fe-1',
-      'https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Ftelescopio.app%2Fevents%2Fe-1',
-      'https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Ftelescopio.app%2Fevents%2Fe-1',
+      'https://wa.me/?text=Concurso%20de%20afiches%0Ahttps%3A%2F%2Fopenparallax.app%2Fevents%2Fe-1',
+      'https://twitter.com/intent/tweet?text=Concurso%20de%20afiches&url=https%3A%2F%2Fopenparallax.app%2Fevents%2Fe-1',
+      'https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fopenparallax.app%2Fevents%2Fe-1',
+      'https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fopenparallax.app%2Fevents%2Fe-1',
       'https://www.instagram.com/direct/inbox/',
-      'mailto:?subject=Concurso%20de%20afiches&body=https%3A%2F%2Ftelescopio.app%2Fevents%2Fe-1',
+      'mailto:?subject=Concurso%20de%20afiches&body=https%3A%2F%2Fopenparallax.app%2Fevents%2Fe-1',
     ]);
   });
 
   it('TS-12 Instagram: intent en Android, sharesheet en iOS, web en desktop', () => {
-    const url = 'https://telescopio.app/events/e-1';
+    const url = 'https://openparallax.app/events/e-1';
     const android = instagramShareLinks('Mozilla/5.0 (Linux; Android 14)', url);
     expect(android.primary).toBe(
       'intent://#Intent;action=android.intent.action.SEND;type=text/plain;' +

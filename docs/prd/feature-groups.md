@@ -8,7 +8,7 @@ status: Pending Formalization
 
 ## Overview
 
-Este documento contiene los feature groups del producto **Telescopio**.
+Este documento contiene los feature groups del producto **OpenParallax**.
 
 > **Este producto no es greenfield.** El template de feature groups asume que el Feature Group 1
 > es el *walking skeleton* (infraestructura + funcionalidad mínima). Acá eso **ya existe y está
@@ -380,7 +380,7 @@ incorporación de participantes—, la primera impresión del producto es una p�
 - No queda código muerto ni texto en español no intencional.
 
 **Valor entregado:**
-Alguien que recibe el link de una convocatoria entiende qué es Telescopio antes de registrarse.
+Alguien que recibe el link de una convocatoria entiende qué es OpenParallax antes de registrarse.
 
 ---
 

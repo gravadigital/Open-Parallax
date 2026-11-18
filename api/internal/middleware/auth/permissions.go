@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/gravadigital/telescopio-api/internal/domain/participant"
-	"github.com/gravadigital/telescopio-api/internal/storage/postgres"
+	"github.com/gravadigital/openparallax/api/internal/domain/participant"
+	"github.com/gravadigital/openparallax/api/internal/storage/postgres"
 )
 
 // RequireRole is a middleware that checks if the user has one of the required roles

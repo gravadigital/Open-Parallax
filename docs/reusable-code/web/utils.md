@@ -284,7 +284,7 @@ hasChanged(order: readonly string[], submitted: readonly string[] | null): boole
 initialOrder(attachments: readonly { id: string }[], draft: readonly { attachment_id: string; rank: number }[] | null): string[]
 toRankings(order: readonly string[]): { attachment_id: string; rank: number }[]
 isValidOrder(order: unknown, attachments: readonly { id: string }[]): order is string[]
-submittedRankingKey(assignmentId: string): string   // 'telescopio_submitted_ranking:{id}'
+submittedRankingKey(assignmentId: string): string   // 'openparallax_submitted_ranking:{id}'
 DRAFT_DEBOUNCE_MS = 500
 ```
 

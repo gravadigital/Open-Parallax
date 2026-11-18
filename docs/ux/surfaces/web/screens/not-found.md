@@ -56,7 +56,7 @@ date: 2026-10-02
 ## Contenido
 
 ### header
-- Texto/label: "TELESCOPIO | Inicio · Eventos · Cómo funciona | sesión"
+- Texto/label: "OPENPARALLAX | Inicio · Eventos · Cómo funciona | sesión"
 
 ### Estado vacío
 - Texto/label: "No encontramos esta página — Puede que el enlace esté mal escrito o que el evento ya no esté disponible."
@@ -69,7 +69,7 @@ date: 2026-10-02
 - Texto/label: "Volver al inicio"
 
 ### footer
-- Texto/label: "Telescopio · evaluación distribuida entre pares"
+- Texto/label: "OpenParallax · evaluación distribuida entre pares"
 
 ## Estados
 
@@ -114,7 +114,7 @@ date: 2026-10-02
 - **Orden de foco:** header → Botón ir a eventos → Link inicio.
 - **Landmarks y jerarquía:** header / main / footer. h1 = título del Estado vacío.
 - **Foco y teclado:** el foco inicial va al h1.
-- **Propio de esta composición:** el título del documento cambia a "Página no encontrada · Telescopio".
+- **Propio de esta composición:** el título del documento cambia a "Página no encontrada · OpenParallax".
 
 ## Decisiones y descartes
 

@@ -17,7 +17,7 @@ date: 2026-10-02
 - **Audiencia primaria (co-primary):**
   - [participante](../../../audiences/participante/research-context.md) — llega sin contexto y necesita entender qué es el producto y dónde participar.
   - [organizador](../../../audiences/organizador/research-context.md) — evalúa si puede armar su convocatoria acá.
-- **JTBD / Propósito:** entender en segundos qué hace Telescopio y elegir entre explorar eventos abiertos o crear uno. Cubre REQ-003 RF 12 (propuesta de valor, 4 etapas, eventos abiertos, CTA crear).
+- **JTBD / Propósito:** entender en segundos qué hace OpenParallax y elegir entre explorar eventos abiertos o crear uno. Cubre REQ-003 RF 12 (propuesta de valor, 4 etapas, eventos abiertos, CTA crear).
 - **Viewports:**
   - **desktop** — hero a dos columnas (mensaje + evento destacado) para que los dos caminos queden arriba del pliegue.
   - **mobile** — todo apilado; el evento destacado va después de los CTAs.
@@ -116,7 +116,7 @@ date: 2026-10-02
 ## Contenido
 
 ### header
-- Texto/label: "TELESCOPIO | Inicio · Eventos · Cómo funciona | ES/EN · Iniciar sesión · Crear cuenta"
+- Texto/label: "OPENPARALLAX | Inicio · Eventos · Cómo funciona | ES/EN · Iniciar sesión · Crear cuenta"
 - Annotation: con sesión reemplaza los botones de sesión por la campana y el menú de usuario (ver product-map, Chrome global).
 
 ### Eyebrow hero
@@ -191,7 +191,7 @@ date: 2026-10-02
 - Texto/label: "Crear mi primer evento"
 
 ### footer
-- Texto/label: "Telescopio · evaluación distribuida entre pares"
+- Texto/label: "OpenParallax · evaluación distribuida entre pares"
 
 ## Estados
 

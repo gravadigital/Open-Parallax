@@ -3,7 +3,7 @@ package email
 import (
 	"testing"
 
-	"github.com/gravadigital/telescopio-api/internal/config"
+	"github.com/gravadigital/openparallax/api/internal/config"
 	"github.com/stretchr/testify/assert"
 )
 

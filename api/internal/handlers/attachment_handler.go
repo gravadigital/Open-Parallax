@@ -12,14 +12,14 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/gravadigital/telescopio-api/internal/config"
-	"github.com/gravadigital/telescopio-api/internal/domain/attachment"
-	"github.com/gravadigital/telescopio-api/internal/domain/event"
-	"github.com/gravadigital/telescopio-api/internal/domain/participant"
-	"github.com/gravadigital/telescopio-api/internal/logger"
-	"github.com/gravadigital/telescopio-api/internal/middleware/auth"
-	"github.com/gravadigital/telescopio-api/internal/storage"
-	"github.com/gravadigital/telescopio-api/internal/storage/postgres"
+	"github.com/gravadigital/openparallax/api/internal/config"
+	"github.com/gravadigital/openparallax/api/internal/domain/attachment"
+	"github.com/gravadigital/openparallax/api/internal/domain/event"
+	"github.com/gravadigital/openparallax/api/internal/domain/participant"
+	"github.com/gravadigital/openparallax/api/internal/logger"
+	"github.com/gravadigital/openparallax/api/internal/middleware/auth"
+	"github.com/gravadigital/openparallax/api/internal/storage"
+	"github.com/gravadigital/openparallax/api/internal/storage/postgres"
 )
 
 // maxAttachmentDescriptionLength bounds the optional description a participant

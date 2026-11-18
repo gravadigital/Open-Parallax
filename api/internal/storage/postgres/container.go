@@ -7,8 +7,8 @@ import (
 	"github.com/charmbracelet/log"
 	"gorm.io/gorm"
 
-	"github.com/gravadigital/telescopio-api/internal/config"
-	"github.com/gravadigital/telescopio-api/internal/logger"
+	"github.com/gravadigital/openparallax/api/internal/config"
+	"github.com/gravadigital/openparallax/api/internal/logger"
 )
 
 type Container struct {

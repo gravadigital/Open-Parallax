@@ -125,7 +125,7 @@ Dos invariantes que ya están cubiertas y no deben romperse:
 
 Detrás de `//go:build integration`, para que `go test ./...` siga siendo rápido y sin
 dependencias. Hoy cubren conexión y migraciones. La base de prueba se selecciona con
-`TEST_DB_NAME`: `make test-integration` crea `telescope_test` dentro del PostgreSQL del stack
+`TEST_DB_NAME`: `make test-integration` crea `openparallax_test` dentro del PostgreSQL del stack
 local y la usa, así nunca corre migraciones sobre la base de desarrollo. No corren en CI.
 
 **Ojo con los triggers**: la base impone reglas propias (ver `database`). Los datos de prueba

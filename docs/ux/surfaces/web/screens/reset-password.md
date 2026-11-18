@@ -66,7 +66,7 @@ date: 2026-10-02
 ## Contenido
 
 ### Panel de marca
-- Texto/label: "TELESCOPIO"
+- Texto/label: "OPENPARALLAX"
 
 ### Título de marca
 - Texto/label: "Un paso más y volvés a tus eventos."

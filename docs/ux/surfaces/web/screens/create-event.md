@@ -99,7 +99,7 @@ date: 2026-10-02
 ## Contenido
 
 ### header
-- Texto/label: "TELESCOPIO | Inicio · Eventos · Cómo funciona | campana · menú de usuario"
+- Texto/label: "OPENPARALLAX | Inicio · Eventos · Cómo funciona | campana · menú de usuario"
 
 ### Migas
 - Texto/label: "Eventos / Crear evento"

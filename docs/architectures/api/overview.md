@@ -2,7 +2,7 @@
 
 ## Propósito
 
-Backend del sistema de asignación de tiempo de telescopio. Es el único servicio con
+Backend de OpenParallax, plataforma de asignación de recursos escasos. Es el único servicio con
 estado del producto: gestiona los eventos de convocatoria, la identidad de los
 usuarios, las propuestas que se suben y el **motor de votación distribuida por pares**
 que produce el ranking final.

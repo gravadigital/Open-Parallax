@@ -14,7 +14,7 @@ func healthHandler(version string, checkDB func() error) gin.HandlerFunc {
 		if err := checkDB(); err != nil {
 			c.JSON(http.StatusServiceUnavailable, gin.H{
 				"status":  "error",
-				"service": "telescopio-api",
+				"service": "openparallax-api",
 				"version": version,
 				"error":   err.Error(),
 			})
@@ -23,7 +23,7 @@ func healthHandler(version string, checkDB func() error) gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, gin.H{
 			"status":   "ok",
-			"service":  "telescopio-api",
+			"service":  "openparallax-api",
 			"version":  version,
 			"database": "connected",
 		})

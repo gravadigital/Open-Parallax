@@ -12,7 +12,7 @@
 ## Chrome global
 
 Presente en las 6 rutas: `<nav className="navbar">` renderizada por `AppContent` por encima
-de `<Routes>` (`App.tsx:149-174`). Contiene el logo `TELESCOPIO` (link a `/`) y el menú
+de `<Routes>` (`App.tsx:149-174`). Contiene el logo `OPENPARALLAX` (link a `/`) y el menú
 `About` · `See Demo` · `Events`, más el bloque de sesión.
 
 ## Bloques
@@ -33,11 +33,11 @@ Todo en inglés.
 | Texto | Origen |
 |---|---|
 | `WHY?` | `App.tsx:28` |
-| `This is the WHY section where we explain the purpose and motivation behind Telescopio.` | `App.tsx:30` |
+| `This is the WHY section where we explain the purpose and motivation behind OpenParallax.` | `App.tsx:30` |
 | `HOW?` | `App.tsx:38` |
-| `This is the HOW section where we explain the process and methodology of Telescopio.` | `App.tsx:40` |
+| `This is the HOW section where we explain the process and methodology of OpenParallax.` | `App.tsx:40` |
 | `DEMO` | `App.tsx:48` |
-| `This is the DEMO section where we showcase the capabilities of Telescopio.` | `App.tsx:50` |
+| `This is the DEMO section where we showcase the capabilities of OpenParallax.` | `App.tsx:50` |
 
 Los tres párrafos son **texto placeholder autorreferencial** ("This is the X section
 where we…"), no contenido real.

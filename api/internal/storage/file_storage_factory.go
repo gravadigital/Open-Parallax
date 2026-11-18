@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gravadigital/telescopio-api/internal/config"
+	"github.com/gravadigital/openparallax/api/internal/config"
 )
 
 // NewFileStorage creates a new FileStorage instance based on configuration

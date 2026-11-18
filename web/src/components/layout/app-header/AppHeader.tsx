@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Button from '../../ui/button/Button';
-import { CloseIcon, MenuIcon, TelescopeLogo } from '../../ui/icons/Icons';
+import { CloseIcon, MenuIcon, OpenParallaxLogo } from '../../ui/icons/Icons';
 import '../../ui/visually-hidden.css';
 import NotificationBell from '../../notifications/notification-bell/NotificationBell';
 import { useAuth } from '../../../context/AuthContext';
@@ -58,7 +58,7 @@ const AppHeader: React.FC = () => {
       <div className="ly-header__inner">
         <div className="ly-header__brand">
           <Link to="/" className="ly-header__logo" onClick={closeMobileMenu}>
-            <TelescopeLogo className="ly-header__logo-mark" />
+            <OpenParallaxLogo className="ly-header__logo-mark" />
             <span className="ui-visually-hidden">{t('common.appName')}</span>
           </Link>
         </div>

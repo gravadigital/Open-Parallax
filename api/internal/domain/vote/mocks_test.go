@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/gravadigital/telescopio-api/internal/domain/common"
+	"github.com/gravadigital/openparallax/api/internal/domain/common"
 )
 
 // fakeAttachment implements common.AttachmentInterface for tests.

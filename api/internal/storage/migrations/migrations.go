@@ -3,7 +3,7 @@ package migrations
 import (
 	"fmt"
 
-	"github.com/gravadigital/telescopio-api/internal/logger"
+	"github.com/gravadigital/openparallax/api/internal/logger"
 	"gorm.io/gorm"
 )
 

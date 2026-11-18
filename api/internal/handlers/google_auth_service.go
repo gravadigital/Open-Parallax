@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/gravadigital/telescopio-api/internal/domain/participant"
-	"github.com/gravadigital/telescopio-api/internal/storage/postgres"
+	"github.com/gravadigital/openparallax/api/internal/domain/participant"
+	"github.com/gravadigital/openparallax/api/internal/storage/postgres"
 )
 
 // ErrInvalidGoogleToken is returned when the Google token is invalid or expired.

@@ -1,7 +1,7 @@
 # Arquitectura: api
 
-API REST en Go 1.26.6 (Gin + GORM + PostgreSQL). Backend del sistema de asignación de
-tiempo de telescopio, con motor de votación distribuida por pares.
+API REST en Go 1.26.6 (Gin + GORM + PostgreSQL). Backend de OpenParallax, plataforma
+de asignación de recursos escasos, con motor de votación distribuida por pares.
 
 | | |
 |---|---|
@@ -39,5 +39,5 @@ chi y sqlc.
 ## Documentación relacionada
 
 - [API Specification](../../apis/api.yaml) — OpenAPI 3.0, 31 endpoints
-- [Database Schema](../../db-schemas/telescopio_db.md) — entidades, relaciones, triggers
+- [Database Schema](../../db-schemas/openparallax_db.md) — entidades, relaciones, triggers
 - [Análisis del servicio](../../analysis/services/api.md) — insumo de consolidación

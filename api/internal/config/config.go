@@ -76,9 +76,9 @@ func Load() *Config {
 
 	config.DB.Host = getEnv("DB_HOST", "localhost")
 	config.DB.Port = getEnv("DB_PORT", "5432")
-	config.DB.User = getEnv("DB_USER", "telescopio")
-	config.DB.Password = getEnv("DB_PASSWORD", "telescopio_password")
-	config.DB.Name = getEnv("DB_NAME", "telescopio_db")
+	config.DB.User = getEnv("DB_USER", "openparallax")
+	config.DB.Password = getEnv("DB_PASSWORD", "openparallax_password")
+	config.DB.Name = getEnv("DB_NAME", "openparallax_db")
 	config.DB.SSLMode = getEnv("DB_SSLMODE", "disable")
 
 	config.Server.Port = getEnv("PORT", "8080")
@@ -95,7 +95,7 @@ func Load() *Config {
 	config.Storage.S3PresignEndpoint = getEnv("S3_PRESIGN_ENDPOINT", "")
 	// Must match the server's s3_region; Garage's default is "garage".
 	config.Storage.S3Region = getEnv("S3_REGION", "garage")
-	config.Storage.S3Bucket = getEnv("S3_BUCKET", "telescope")
+	config.Storage.S3Bucket = getEnv("S3_BUCKET", "openparallax")
 	config.Storage.S3AccessKeyID = getEnv("S3_ACCESS_KEY_ID", "")
 	config.Storage.S3SecretAccessKey = getEnv("S3_SECRET_ACCESS_KEY", "")
 
@@ -109,7 +109,7 @@ func Load() *Config {
 	config.Email.SMTPUser = getEnv("SMTP_USER", "")
 	config.Email.SMTPPassword = getEnv("SMTP_PASSWORD", "")
 	config.Email.FromAddress = getEnv("EMAIL_FROM", "")
-	config.Email.FromName = getEnv("EMAIL_FROM_NAME", "Telescopio")
+	config.Email.FromName = getEnv("EMAIL_FROM_NAME", "OpenParallax")
 	config.Email.Secure = getEnvAsBool("SMTP_SECURE", false)
 	config.Google.ClientID = getEnv("GOOGLE_CLIENT_ID", "")
 	config.Auth.JWTSecret = getEnv("JWT_SECRET", "")

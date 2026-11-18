@@ -82,7 +82,7 @@ date: 2026-10-02
 ## Contenido
 
 ### header
-- Texto/label: "TELESCOPIO | Inicio · Eventos · Cómo funciona | campana · menú de usuario"
+- Texto/label: "OPENPARALLAX | Inicio · Eventos · Cómo funciona | campana · menú de usuario"
 
 ### Título
 - Texto/label: "Mis eventos"
@@ -117,7 +117,7 @@ date: 2026-10-02
 - Texto/label: "No pudimos cargar tus eventos." · acción "Reintentar"
 
 ### footer
-- Texto/label: "Telescopio · evaluación distribuida entre pares"
+- Texto/label: "OpenParallax · evaluación distribuida entre pares"
 
 ## Estados
 

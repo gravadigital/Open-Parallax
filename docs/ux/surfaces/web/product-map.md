@@ -11,7 +11,7 @@ viewports: [desktop, mobile]
 # Product Map — `web`
 
 > **Versión 2.0 — rediseño de REQ-003.** La versión 1.0 transcribía el código existente (as-is).
-> Esta versión describe el rediseño de `documentation/Telescopio Rediseño Vistas.html` (pantallas
+> Esta versión describe el rediseño de `documentation/OpenParallax Rediseño Vistas.html` (pantallas
 > `1a`–`2g`) con las decisiones de [REQ-003](../../../requests/REQ-003.rediseno-de-vistas-notificaciones-y-multilenguaje.md):
 > pantallas de auth como páginas, Mis eventos, notificaciones in-app, 404, multilenguaje es/en y
 > responsive en todas las pantallas.
@@ -59,7 +59,7 @@ barra de navegación.
 
 | Elemento | Sin sesión | Con sesión | Destino |
 |---|---|---|---|
-| Logo `TELESCOPIO` | ✓ | ✓ | `/` |
+| Logo `OPENPARALLAX` | ✓ | ✓ | `/` |
 | `Inicio` | ✓ | ✓ | `/` |
 | `Eventos` | ✓ | ✓ | `/events` |
 | `Cómo funciona` | ✓ | ✓ | `/#como-funciona` (sección de S-01) |
@@ -74,8 +74,8 @@ desplegable; la campana y el avatar quedan visibles en la barra. `[fuente: REQ-0
 
 **Footer (REQ-004).** Presente en las mismas pantallas que el header. Comparte su fondo `bg.band`
 (negro) con texto inverso: header y footer enmarcan la plataforma, y el evento se distingue por su
-portada de color (hero de S-04 y S-05). Contenido: marca `TELESCOPIO`, links `Inicio` (`/`) y
-`Eventos` (`/events`) y el tagline actual ("Telescopio · evaluación distribuida entre pares"), en
+portada de color (hero de S-04 y S-05). Contenido: marca `OPENPARALLAX`, links `Inicio` (`/`) y
+`Eventos` (`/events`) y el tagline actual ("OpenParallax · evaluación distribuida entre pares"), en
 ES y EN. En `mobile` se apila. `[fuente: input-cliente — REQ-004]`
 ---
 
@@ -259,6 +259,6 @@ componente Dialog del DS). O-13 no existe en mobile: la campana navega a S-12.
 
 ## Fuente
 
-- Diseño: `documentation/Telescopio Rediseño Vistas.html` (pantallas 1a–1l, 2a–2g).
+- Diseño: `documentation/OpenParallax Rediseño Vistas.html` (pantallas 1a–1l, 2a–2g).
 - Decisiones: [REQ-003](../../../requests/REQ-003.rediseno-de-vistas-notificaciones-y-multilenguaje.md), secciones "Relevamiento de pantallas", "Discrepancias de lógica y agregados", "Diseño Técnico" (DA-1 a DA-10).
 - Capabilities: [`requirements.md`](../../../prd/requirements.md).

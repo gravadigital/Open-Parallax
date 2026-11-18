@@ -1,7 +1,7 @@
 # Entry point for working on Telescope locally. Run `make` to list the commands.
 #
 # Everything runs against the stack in deploy/docker-compose.yml, so there is one
-# database and one Garage (S3) whether the api runs in a container or with `go run`.
+# database and one S3 storage (Garage) whether the api runs in a container or with `go run`.
 #
 # No .env is needed. deploy/.env is optional and is read both by docker compose and
 # by this Makefile, so a GOOGLE_CLIENT_ID set there reaches every way of running.
@@ -20,7 +20,7 @@ POSTGRES_PORT     ?= 5432
 S3_ACCESS_KEY_ID     ?= GKtelescopelocal01
 S3_SECRET_ACCESS_KEY ?= telescope-local-secret-0123456789
 S3_BUCKET            ?= telescope
-GARAGE_S3_PORT       ?= 3900
+STORAGE_PORT         ?= 3900
 API_PORT          ?= 8080
 WEB_PORT          ?= 3000
 JWT_SECRET        ?= telescope-local-dev-secret-no-usar-en-produccion
@@ -29,7 +29,7 @@ GOOGLE_CLIENT_ID  ?=
 API_ENV = \
 	DB_HOST=localhost DB_PORT=$(POSTGRES_PORT) DB_SSLMODE=disable \
 	DB_USER=$(POSTGRES_USER) DB_PASSWORD=$(POSTGRES_PASSWORD) DB_NAME=$(POSTGRES_DB) \
-	STORAGE_PROVIDER=s3 S3_ENDPOINT=http://localhost:$(GARAGE_S3_PORT) S3_REGION=garage \
+	STORAGE_PROVIDER=s3 S3_ENDPOINT=http://localhost:$(STORAGE_PORT) S3_REGION=garage \
 	S3_ACCESS_KEY_ID=$(S3_ACCESS_KEY_ID) S3_SECRET_ACCESS_KEY=$(S3_SECRET_ACCESS_KEY) S3_BUCKET=$(S3_BUCKET) \
 	PORT=$(API_PORT) FRONTEND_URL=http://localhost:$(WEB_PORT) GIN_MODE=debug \
 	JWT_SECRET='$(JWT_SECRET)' GOOGLE_CLIENT_ID=$(GOOGLE_CLIENT_ID)
@@ -63,11 +63,11 @@ logs: ## Follow the logs (one service: make logs s=api)
 # --- Running api and web by hand ----------------------------------------------
 
 # The api and web containers are stopped so `make api` and `make web` can take
-# their ports. Garage creates the bucket on start, before it reports healthy, so
+# their ports. The storage (Garage) creates the bucket on start, before it reports healthy, so
 # --wait returns with the bucket in place: the api checks it and does not create it.
-infra: ## Start only the database and Garage, to run api and web by hand
+infra: ## Start only the database and the storage, to run api and web by hand
 	-@$(COMPOSE) stop api web 2>/dev/null
-	$(COMPOSE) up -d --wait database garage
+	$(COMPOSE) up -d --wait database storage
 
 api: ## Run the api with go run, against `make infra`
 	cd api && $(API_ENV) go run ./cmd/api

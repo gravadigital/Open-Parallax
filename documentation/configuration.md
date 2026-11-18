@@ -33,13 +33,13 @@ time.
 |---|---|---|
 | `WEB_PORT` / `API_PORT` | `3000` / `8080` | Published ports of the web and the api |
 | `POSTGRES_PORT` | `5432` | Published port of the database |
-| `GARAGE_S3_PORT` | `3900` | Published port of Garage's S3 API |
+| `STORAGE_PORT` | `3900` | Published port of the storage's S3 API |
 | `JWT_SECRET` | a fixed development value | Signs the session tokens |
 | `EMAIL_ENABLED` | `false` | Set to `true` to send email; needs the `SMTP_*` variables below |
 | `GIN_MODE` | `release` (`debug` with `make api`) | `debug` for verbose api logs |
 | `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | `telescope_db` / `telescope` / `telescope_password` | Database credentials |
 | `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` / `S3_BUCKET` | `GKtelescopelocal01` / a fixed development value / `telescope` | The api's storage key and bucket. Garage creates both on start. The ID needs 8 or more characters (`A-Z a-z 0-9 - _ .`) and the secret 16 or more |
-| `GARAGE_RPC_SECRET` / `GARAGE_ADMIN_TOKEN` | fixed development values | Garage's internal secret and its admin token |
+| `STORAGE_RPC_SECRET` / `STORAGE_ADMIN_TOKEN` | fixed development values | The storage's internal secret and its admin token (Garage's `rpc_secret` and `admin_token`) |
 
 Changing the database credentials after the first start has no effect on the existing
 database: PostgreSQL only reads them when it initialises an empty volume. The same goes for
@@ -62,7 +62,7 @@ anywhere: changing a value means recreating the container, not rebuilding the im
 | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` | The PostgreSQL connection |
 | `DB_SSLMODE` | `require` if the database is not on the same private network |
 | `STORAGE_PROVIDER` | `s3`. The other value, `local`, writes to the container's disk. `minio` no longer exists: the api refuses to start with it |
-| `S3_ENDPOINT` | The URL of the S3 API, with scheme: `http://garage:3900`, `https://s3.example.com` |
+| `S3_ENDPOINT` | The URL of the S3 API, with scheme: `http://storage:3900`, `https://storage.example.com` |
 | `S3_REGION` | Must match the server's `s3_region`. Garage's default is `garage`, which is also the api's default. A mismatch makes every request fail with 400 |
 | `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | The bucket and the api's own key, with `read` and `write` on it (never the admin credentials). **The bucket must exist**: the api checks it on start and does not create it, because a bucket created through the S3 API gets only a local alias in Garage |
 | `S3_PRESIGN_ENDPOINT` | Optional. The public URL presigned links are signed with, since the signature covers the host. Empty means `S3_ENDPOINT`. Today downloads go through the api, so no link reaches the browser |

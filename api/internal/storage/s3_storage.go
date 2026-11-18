@@ -24,7 +24,7 @@ const MaxPresignExpiry = 7 * 24 * time.Hour
 
 // S3Config is what S3Storage needs to reach the bucket.
 type S3Config struct {
-	// Endpoint is the URL the api uses, with scheme (http://garage:3900).
+	// Endpoint is the URL the api uses, with scheme (http://storage:3900).
 	Endpoint string
 	// PresignEndpoint is the URL presigned links are signed with. The signature covers the
 	// host, so it must be the one whoever opens the link uses. Empty means Endpoint.

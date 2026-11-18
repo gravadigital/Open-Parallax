@@ -12,8 +12,8 @@ name: telescope-local
 
 volumes:
   database:
-  garage-meta:
-  garage-data:
+  storage-meta:
+  storage-data:
 
 services:
   database:
@@ -40,15 +40,17 @@ services:
   # cuando /health responde, el bucket ya existe. La api no lo crea (en Garage quedaría con
   # alias local) y no hay contenedor de init porque el bucket es privado.
   #
+  # El servicio se llama storage, no por la herramienta: es el host que ve la api
+  # (http://storage:3900) y cambiar de proveedor no cambia la configuración de nadie.
   # La imagen no trae shell, curl ni wget: el healthcheck usa el propio binario.
-  garage:
+  storage:
     image: dxflrs/garage:v2.4.1
-    container_name: telescope-local-garage
+    container_name: telescope-local-storage
     restart: unless-stopped
     command: ["/garage", "server", "--single-node", "--default-bucket"]
     environment:
-      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:-4b1d2f8e0c7a9b3e5d6f1a2c4e8b0d7f9a1c3e5b7d9f0a2c4e6b8d0f2a4c6e8b}
-      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN:-telescope-local-admin-token}
+      GARAGE_RPC_SECRET: ${STORAGE_RPC_SECRET:-4b1d2f8e0c7a9b3e5d6f1a2c4e8b0d7f9a1c3e5b7d9f0a2c4e6b8d0f2a4c6e8b}
+      GARAGE_ADMIN_TOKEN: ${STORAGE_ADMIN_TOKEN:-telescope-local-admin-token}
       # ID: >= 8 caracteres [A-Za-z0-9-_.]; nunca se reutiliza, ni después de borrarlo.
       GARAGE_DEFAULT_ACCESS_KEY: ${S3_ACCESS_KEY_ID:-GKtelescopelocal01}
       # Secreto: >= 16 caracteres. Cambiarlo con el volumen ya creado impide arrancar
@@ -56,11 +58,11 @@ services:
       GARAGE_DEFAULT_SECRET_KEY: ${S3_SECRET_ACCESS_KEY:-telescope-local-secret-0123456789}
       GARAGE_DEFAULT_BUCKET: ${S3_BUCKET:-telescope}
     ports:
-      - "${GARAGE_S3_PORT:-3900}:3900"   # API S3; el 3903 (admin) queda en la red interna
+      - "${STORAGE_PORT:-3900}:3900"   # API S3; el 3903 (admin) queda en la red interna
     volumes:
-      - ./garage/garage.toml:/etc/garage.toml:ro
-      - garage-meta:/var/lib/garage/meta
-      - garage-data:/var/lib/garage/data
+      - ./storage/garage.toml:/etc/garage.toml:ro
+      - storage-meta:/var/lib/garage/meta
+      - storage-data:/var/lib/garage/data
     healthcheck:
       test: ["CMD", "/garage", "health", "-q"]
       interval: 5s
@@ -91,13 +93,13 @@ services:
       CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-*}
       FRONTEND_URL: http://localhost:${WEB_PORT:-3000}
       STORAGE_PROVIDER: s3
-      S3_ENDPOINT: http://garage:3900
+      S3_ENDPOINT: http://storage:3900
       S3_REGION: garage
       S3_BUCKET: ${S3_BUCKET:-telescope}
       S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-GKtelescopelocal01}
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-telescope-local-secret-0123456789}
       # Host con el que se firman las URLs prefirmadas: el que ve el navegador.
-      S3_PRESIGN_ENDPOINT: http://localhost:${GARAGE_S3_PORT:-3900}
+      S3_PRESIGN_ENDPOINT: http://localhost:${STORAGE_PORT:-3900}
       # Vacío = sólo login con email y contraseña.
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       # Con EMAIL_ENABLED=false no se manda ningún mail (recuperación de contraseña,
@@ -113,7 +115,7 @@ services:
     depends_on:
       database:
         condition: service_healthy
-      garage:
+      storage:
         condition: service_healthy
 
   # La configuración entra al arrancar, no al construir: el contenedor la escribe en

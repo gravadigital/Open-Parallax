@@ -38,11 +38,12 @@ make reset    # remove everything, data included
 make logs     # follow the logs; one service with: make logs s=api
 ```
 
-Garage has no web console. To look at the stored files, use its CLI inside the container:
+The storage service runs Garage, which has no web console. To look at the stored files, use
+its CLI inside the container:
 
 ```sh
-docker compose -f deploy/docker-compose.yml exec garage /garage bucket info telescope
-docker compose -f deploy/docker-compose.yml exec garage /garage key list
+docker compose -f deploy/docker-compose.yml exec storage /garage bucket info telescope
+docker compose -f deploy/docker-compose.yml exec storage /garage key list
 ```
 
 `make up` always rebuilds, so code changes are picked up. Configuration changes do not need a
@@ -88,7 +89,7 @@ in CI.
 [configuration.md](configuration.md).
 
 **The api does not start: `bucket "telescope" not reachable`** — the api checks the bucket on
-start and never creates it. Garage creates it when it starts, so `make logs s=garage` shows
+start and never creates it. Garage creates it when it starts, so `make logs s=storage` shows
 what happened. A `400` in that message means `S3_REGION` does not match Garage's `s3_region`
 (`garage`).
 

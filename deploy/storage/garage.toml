@@ -1,4 +1,4 @@
-# Garage de un solo nodo, para desarrollo. rpc_secret y admin_token entran por variables
+# Garage de un solo nodo, para desarrollo (servicio storage del compose). rpc_secret y admin_token entran por variables
 # de entorno (GARAGE_RPC_SECRET, GARAGE_ADMIN_TOKEN) desde deploy/docker-compose.yml.
 metadata_dir = "/var/lib/garage/meta"
 data_dir = "/var/lib/garage/data"

@@ -105,7 +105,7 @@ func migration005Up(db *gorm.DB) error {
 
 	comments := []string{
 		"COMMENT ON TABLE users IS 'System users (administrators and participants in voting events)'",
-		"COMMENT ON TABLE events IS 'Voting events for telescope time allocation and other distributed evaluation processes'",
+		"COMMENT ON TABLE events IS 'Voting events for scarce-resource allocation and other distributed evaluation processes'",
 		"COMMENT ON TABLE event_participants IS 'Many-to-many relationship between events and participating users'",
 		"COMMENT ON TABLE attachments IS 'Proposals/files submitted for evaluation (set F in mathematical notation)'",
 		"COMMENT ON TABLE voting_configurations IS 'Mathematical parameters: m (attachments per evaluator), Q_good, Q_bad, n (adjustment magnitude)'",

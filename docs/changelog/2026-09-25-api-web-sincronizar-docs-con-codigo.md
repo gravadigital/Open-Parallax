@@ -24,11 +24,11 @@ Al revisar el código aparecieron un defecto nuevo (D-15) y dos afirmaciones que
 | Documento | Cambio |
 |-----------|--------|
 | `docs/apis/api.yaml` | La descarga exige JWT, con permiso en el handler. Se agrega `DELETE /attachments/{id}`, el campo `description` en la carga y en el listado, y las validaciones de `aud` y email verificado en `/auth/google/verify` |
-| `docs/db-schemas/telescopio_db.md` | Columna `attachments.description` y migración 021. Se quita la nota sobre el SQL suelto que se borró |
+| `docs/db-schemas/openparallax_db.md` | Columna `attachments.description` y migración 021. Se quita la nota sobre el SQL suelto que se borró |
 | `docs/architectures/api/overview.md` | La deuda #1 pasa de "descarga sin auth" a "evaluadores sin descarga" (D-15). `DeleteAttachment` ya tiene ruta |
 | `docs/architectures/api/conventions/auth-jwt.md` | Google OAuth: verificación con `tokeninfo` (`aud`, email) y `userinfo` (`sub`) |
 | `docs/architectures/api/conventions/http-server.md`, `file-storage.md` | La descarga ya no es pública. Se agrega la limitación del borrado de archivos |
-| `docs/architectures/api/conventions/testing.md` | `make test` y `make test-integration` con la base `telescope_test` |
+| `docs/architectures/api/conventions/testing.md` | `make test` y `make test-integration` con la base `openparallax_test` |
 | `docs/architectures/web/conventions/testing.md`, `index.md`, `overview.md` | Cuatro suites que corren en CI, y el `moduleNameMapper` que las hace andar |
 | `docs/architectures/web/conventions/data-fetching.md` | La descarga ya está declarada y se hace con `downloadFile`. Queda la excepción de `RankingVotePanel` |
 | `docs/prd/requirements.md` | D-02 marcado como resuelto; nuevo D-15; se corrige la pregunta abierta #3 |

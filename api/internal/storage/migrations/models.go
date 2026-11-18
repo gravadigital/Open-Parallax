@@ -85,7 +85,7 @@ func (User) TableName() string {
 	return "users"
 }
 
-// Event represents voting events for telescope time allocation
+// Event represents voting events to allocate a scarce resource
 type Event struct {
 	ID          uuid.UUID  `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
 	Name        string     `gorm:"not null" json:"name"`

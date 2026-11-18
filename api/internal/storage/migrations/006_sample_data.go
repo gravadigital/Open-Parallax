@@ -2,7 +2,7 @@ package migrations
 
 import "gorm.io/gorm"
 
-// migration006Up used to insert a sample event ("Distributed Telescope Time Allocation"), seven
+// migration006Up used to insert a sample event ("Distributed Time Allocation"), seven
 // sample users and an admin user with no password into every database, production included. It
 // is now a no-op: the ID stays so the migration history of existing databases does not change,
 // and migration 026 removes the rows it left in databases where it already ran.

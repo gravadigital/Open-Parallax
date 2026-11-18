@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// Event represents a voting event for telescope time allocation
+// Event represents a voting event to allocate a scarce resource
 type Event struct {
 	ID                            uuid.UUID  `json:"id" gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
 	Name                          string     `json:"name" gorm:"not null"`

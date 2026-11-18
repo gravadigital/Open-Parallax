@@ -104,7 +104,7 @@ func TestCreateEvent_Success(t *testing.T) {
 
 	body := map[string]interface{}{
 		"name":        "Star Party",
-		"description": "An evening of telescope observation.",
+		"description": "An evening of stargazing.",
 		"start_date":  dateStr(time.Now().AddDate(0, 0, 5)),
 		"end_date":    dateStr(time.Now().AddDate(0, 0, 6)),
 		"organizer":   "Astro Club",
@@ -120,7 +120,7 @@ func TestCreateEvent_RejectsUnauthenticated(t *testing.T) {
 	s := newTestEventHandlerSet()
 	body := map[string]interface{}{
 		"name":        "Star Party",
-		"description": "An evening of telescope observation.",
+		"description": "An evening of stargazing.",
 		"start_date":  dateStr(time.Now().AddDate(0, 0, 5)),
 		"end_date":    dateStr(time.Now().AddDate(0, 0, 6)),
 	}
@@ -136,7 +136,7 @@ func TestCreateEvent_RejectsPastStartDate(t *testing.T) {
 
 	body := map[string]interface{}{
 		"name":        "Star Party",
-		"description": "An evening of telescope observation.",
+		"description": "An evening of stargazing.",
 		"start_date":  dateStr(time.Now().AddDate(0, 0, -1)),
 		"end_date":    dateStr(time.Now().AddDate(0, 0, 1)),
 	}
@@ -153,7 +153,7 @@ func TestCreateEvent_RejectsEndBeforeStart(t *testing.T) {
 
 	body := map[string]interface{}{
 		"name":        "Star Party",
-		"description": "An evening of telescope observation.",
+		"description": "An evening of stargazing.",
 		"start_date":  dateStr(time.Now().AddDate(0, 0, 5)),
 		"end_date":    dateStr(time.Now().AddDate(0, 0, 1)),
 	}
@@ -171,7 +171,7 @@ func TestCreateEvent_RejectsDurationTooShort(t *testing.T) {
 	sameDay := dateStr(time.Now().AddDate(0, 0, 3))
 	body := map[string]interface{}{
 		"name":        "Star Party",
-		"description": "An evening of telescope observation.",
+		"description": "An evening of stargazing.",
 		"start_date":  sameDay,
 		"end_date":    sameDay,
 	}
@@ -188,7 +188,7 @@ func TestCreateEvent_RejectsDurationTooLong(t *testing.T) {
 
 	body := map[string]interface{}{
 		"name":        "Star Party",
-		"description": "An evening of telescope observation.",
+		"description": "An evening of stargazing.",
 		"start_date":  dateStr(time.Now().AddDate(0, 0, 1)),
 		"end_date":    dateStr(time.Now().AddDate(2, 0, 0)),
 	}
@@ -207,7 +207,7 @@ func TestCreateEvent_RejectsDuplicateName(t *testing.T) {
 
 	body := map[string]interface{}{
 		"name":        "Star Party",
-		"description": "An evening of telescope observation.",
+		"description": "An evening of stargazing.",
 		"start_date":  dateStr(time.Now().AddDate(0, 0, 5)),
 		"end_date":    dateStr(time.Now().AddDate(0, 0, 6)),
 	}
@@ -224,7 +224,7 @@ func TestCreateEvent_RejectsMaxParticipantsBelowOne(t *testing.T) {
 
 	body := map[string]interface{}{
 		"name":             "Star Party",
-		"description":      "An evening of telescope observation.",
+		"description":      "An evening of stargazing.",
 		"start_date":       dateStr(time.Now().AddDate(0, 0, 5)),
 		"end_date":         dateStr(time.Now().AddDate(0, 0, 6)),
 		"max_participants": 0,
@@ -242,7 +242,7 @@ func TestCreateEvent_RejectsMaxParticipantsAboveLimit(t *testing.T) {
 
 	body := map[string]interface{}{
 		"name":             "Star Party",
-		"description":      "An evening of telescope observation.",
+		"description":      "An evening of stargazing.",
 		"start_date":       dateStr(time.Now().AddDate(0, 0, 5)),
 		"end_date":         dateStr(time.Now().AddDate(0, 0, 6)),
 		"max_participants": 101,
@@ -260,7 +260,7 @@ func TestCreateEvent_AcceptsValidMaxParticipants(t *testing.T) {
 
 	body := map[string]interface{}{
 		"name":             "Star Party",
-		"description":      "An evening of telescope observation.",
+		"description":      "An evening of stargazing.",
 		"start_date":       dateStr(time.Now().AddDate(0, 0, 5)),
 		"end_date":         dateStr(time.Now().AddDate(0, 0, 6)),
 		"max_participants": 50,

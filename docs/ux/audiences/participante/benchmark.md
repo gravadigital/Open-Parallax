@@ -35,11 +35,11 @@ concretos de pantalla. No se inventaron detalles visuales.
 - Desde el período P110 (oct 2022 – mar 2023), ESO usa DPR para asignar tiempo de telescopio a las
   propuestas por debajo de cierto umbral de horas. **Alrededor de la mitad de las propuestas a ESO
   se evalúan así.**
-- El principio es idéntico al de Telescopio: *"en lugar de que pocas personas revisen muchas
+- El principio es idéntico al de OpenParallax: *"en lugar de que pocas personas revisen muchas
   propuestas, muchas personas revisan unas pocas"*.
 - **Evaluar es condición para que tu propia propuesta sea considerada.** No es opcional.
 
-**Qué significa para el participante de Telescopio:** la obligación de evaluar no es una
+**Qué significa para el participante de OpenParallax:** la obligación de evaluar no es una
 particularidad rara del producto — es el estándar del modelo, y un participante que venga del
 mundo académico probablemente ya lo conoce. `[fuente: benchmark]`
 
@@ -49,7 +49,7 @@ mundo académico probablemente ya lo conoce. `[fuente: benchmark]`
 - **El proceso es doble ciego:** los evaluadores no conocen la identidad del equipo proponente, y
   los proponentes no conocen la de sus evaluadores.
 
-**Contraste relevante con Telescopio:** el producto actual **no es ciego en ninguna dirección**.
+**Contraste relevante con OpenParallax:** el producto actual **no es ciego en ninguna dirección**.
 Los resultados muestran `participant_name` junto a cada propuesta, y la asignación entrega el
 archivo con su nombre original. Un participante que venga de ALMA o ESO **va a esperar anonimato y
 no lo va a encontrar**. `[fuente: benchmark]`
@@ -84,12 +84,12 @@ usa en ningún lado. `[fuente: benchmark]`
 
 - Gratuito para conferencias académicas, muy usado en ciencias de la computación.
 
-**Diferencia estructural con Telescopio:** en los tres, **la asignación de revisores la hace el
+**Diferencia estructural con OpenParallax:** en los tres, **la asignación de revisores la hace el
 comité o un algoritmo de afinidad**, combinando las preferencias declaradas por el revisor
 (*bids*), la similitud de texto entre el paper y las publicaciones del revisor, y las áreas
 temáticas. El revisor **elige o influye sobre qué revisa**.
 
-En Telescopio, **la asignación es automática y el participante no elige nada**: recibe `m`
+En OpenParallax, **la asignación es automática y el participante no elige nada**: recibe `m`
 propuestas y las ordena. Es una diferencia de expectativa que conviene tener presente: alguien que
 viene de EasyChair puede buscar dónde declarar sus preferencias y no encontrarlo.
 `[fuente: benchmark]`
@@ -112,16 +112,16 @@ explícitamente en alcance.
 **Diferencia estructural:** todas resuelven el problema con **voto público** (cualquiera vota) o
 **jurado** (un panel designado). **Ninguna hace evaluar a los propios participantes entre sí.**
 
-**Qué significa para Telescopio:** en el mundo de los concursos, el modelo del producto **no tiene
+**Qué significa para OpenParallax:** en el mundo de los concursos, el modelo del producto **no tiene
 precedente conocido**. Un organizador que venga de ahí no va a reconocer el mecanismo, y el
 participante tampoco. La interfaz tiene que explicar el modelo, no asumirlo.
 `[fuente: benchmark]`
 
 Dos detalles que sí son transferibles:
 - **Woobox y Submittable ofrecen ocultar el nombre del autor durante la votación.** Es una función
-  esperable que Telescopio no tiene.
+  esperable que OpenParallax no tiene.
 - **Anti-fraude** (voto verificado por email, límites por IP) es una preocupación central en esa
-  familia. En Telescopio no aplica del mismo modo —solo vota quien tiene asignación— pero la
+  familia. En OpenParallax no aplica del mismo modo —solo vota quien tiene asignación— pero la
   equivalencia funcional es el sistema de calidad del evaluador.
 
 ---
@@ -130,7 +130,7 @@ Dos detalles que sí son transferibles:
 
 Derivadas de lo anterior. Cada una es una **hipótesis a validar**, no una conclusión.
 
-| # | Expectativa | Origen | Se cumple hoy en Telescopio |
+| # | Expectativa | Origen | Se cumple hoy en OpenParallax |
 |---|---|---|---|
 | E-01 | Evaluar es obligatorio y condiciona mi resultado | ESO/ALMA | **Sí**, y con más fuerza: afecta la posición de mi propuesta. **Pero la interfaz no lo explica en ningún lado** |
 | E-02 | El proceso es anónimo en ambas direcciones | ALMA (doble ciego) | **No.** Los resultados muestran el nombre del autor de cada propuesta |
@@ -140,7 +140,7 @@ Derivadas de lo anterior. Cada una es una **hipótesis a validar**, no una concl
 | E-06 | Puedo ver las propuestas que me tocaron antes de ordenarlas | Todas | ⚠️ **No verificable desde la interfaz:** el endpoint de descarga existe pero el frontend no lo consume |
 
 **E-06 es el hallazgo más importante de este benchmark.** En toda referencia de revisión por pares,
-el revisor **lee** lo que evalúa. En Telescopio, la pantalla de ranking presenta las propuestas
+el revisor **lee** lo que evalúa. En OpenParallax, la pantalla de ranking presenta las propuestas
 asignadas para ordenarlas, pero **el participante no puede abrirlas**: la descarga
 (`GET /api/v1/attachments/{id}/download`) exige un permiso que el evaluador no tiene, y el panel
 la abre con un link sin token (D-15). El participante está ordenando nombres de archivo. Ver

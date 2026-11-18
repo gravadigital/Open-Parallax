@@ -220,7 +220,7 @@ para participar sin tener que recordar otra contraseña.
 **Criterios de Aceptación:**
 
 - DADO que soy visitante sin cuenta
-  CUANDO me registro con `email: "ana@obs.org"` y `password: "telescopio2026"`
+  CUANDO me registro con `email: "ana@obs.org"` y `password: "openparallax2026"`
   ENTONCES se crea el usuario con `password_hash` bcrypt y `role` nulo
   Y puedo iniciar sesión con esas credenciales
 

@@ -39,7 +39,7 @@ git tag v1.2.3 && git push origin v1.2.3
 
 Pushear el tag es lo que publica. `release.yml` vuelve a verificar que el tag coincida
 con el árbol, corre la suite y sube dos imágenes a Docker Hub —
-`gravadigital/telescope-{api,web}`, cada una con los tags `1.2.3`, `1.2` y `latest`.
+`gravadigital/openparallax-{api,web}`, cada una con los tags `1.2.3`, `1.2` y `latest`.
 
 Un tag que no coincide con `VERSION` falla antes de construir nada, así que una imagen
 mal etiquetada nunca llega al registry.
@@ -54,7 +54,7 @@ Cada build publica además un tag inmutable `dev-<sha>`, para que una imagen dev
 siga siendo alcanzable después de que el tag `dev` se movió.
 
 Para correr un servidor contra él, su compose (en el repo de deploy) tiene que bajar
-`gravadigital/telescope-{api,web}:dev`.
+`gravadigital/openparallax-{api,web}:dev`.
 
 ---
 

@@ -21,7 +21,7 @@ func insertOldSampleData(t *testing.T, tx *gorm.DB) {
 	}
 	require.NoError(t, tx.Exec(
 		`INSERT INTO events (id, name, description, author_id, start_date, end_date, stage, shareable_link)
-		 VALUES (?, 'Distributed Telescope Time Allocation', 'Sample', ?, NOW(), NOW() + INTERVAL '6 months', 'participation', ?)`,
+		 VALUES (?, 'Distributed Time Allocation', 'Sample', ?, NOW(), NOW() + INTERVAL '6 months', 'participation', ?)`,
 		sampleEventID, sampleUserIDs[0], sampleEventID).Error)
 	for _, id := range sampleUserIDs[1:] {
 		require.NoError(t, tx.Exec(`INSERT INTO event_participants (event_id, user_id) VALUES (?, ?)`, sampleEventID, id).Error)

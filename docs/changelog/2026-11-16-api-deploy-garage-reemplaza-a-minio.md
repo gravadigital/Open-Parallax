@@ -8,7 +8,7 @@ service: api
 
 ## Requerimiento original
 
-> Migrar Telescope de MinIO a Garage siguiendo la guía base "Garage como reemplazo de MinIO"
+> Migrar OpenParallax de MinIO a Garage siguiendo la guía base "Garage como reemplazo de MinIO"
 > (Garage v2.4.1): MinIO ya no publica imágenes Docker y su repositorio está archivado.
 
 ## Resumen
@@ -30,27 +30,27 @@ S3. La API cambia de cliente (`minio-go` → `aws-sdk-go-v2`) y de configuració
 | Bucket | Lo creaba `minio-init`, y la API también si faltaba | Lo crea Garage con `--default-bucket`. La API solo hace `HeadBucket` y aborta si no existe |
 | URLs prefirmadas | Firmadas con el endpoint interno | Firmadas con `S3_PRESIGN_ENDPOINT` (host público) |
 | Healthcheck | `mc ready local` | `/garage health -q` |
-| Nombre del servicio | `minio` / `telescope-minio` | `storage` / `telescope-storage` |
+| Nombre del servicio | `minio` / `openparallax-minio` | `storage` / `openparallax-storage` |
 | Consola | Puerto 9001 | No hay. Se usa el CLI `garage` dentro del contenedor |
 | Tests | Sin tests del storage S3 | `s3_storage_integration_test.go` con testcontainers contra Garage |
 
 ## Nombre del servicio
 
 El servicio se llama **`storage`**, nunca por la herramienta: `storage` en el stack local
-(`http://storage:3900`), `telescope-storage` en los servidores, y las variables del compose son
+(`http://storage:3900`), `openparallax-storage` en los servidores, y las variables del compose son
 `STORAGE_*` y `S3_*`. Cambiar de proveedor no cambia el nombre que ve nadie. Si algún día se
 publica, el subdominio es `storage.${DOMAIN}`. Hoy no se publica: las descargas pasan por la API.
 
 ## Impacto en despliegue
 
-- **El repo de deploy (Telescopio-deploy) se migró en el mismo cambio.** `telescope-storage`
-  reemplaza a `telescope-minio` y `telescope-minio-init`, y los scripts de verificación pasan a
+- **El repo de deploy (OpenParallax-deploy) se migró en el mismo cambio.** `openparallax-storage`
+  reemplaza a `openparallax-minio` y `openparallax-minio-init`, y los scripts de verificación pasan a
   `verify-storage.sh` y `check-file-upload.sh`. La API rechaza `STORAGE_PROVIDER=minio`, así que
   la imagen nueva y el compose nuevo van juntos.
 - **Los servidores son de un solo nodo:** `--single-node --default-bucket`, `replication_factor
   = 1` y snapshots de la metadata cada 6 h. No hay redundancia: hacen falta backups del volumen
-  `telescope-<env>-storage-data`.
+  `openparallax-<env>-storage-data`.
 - **No se migraron datos de MinIO:** no había propuestas que conservar. El volumen
-  `telescope-<env>-minio` que quede en un servidor ya no lo usa nadie.
+  `openparallax-<env>-minio` que quede en un servidor ya no lo usa nadie.
 - **El subdominio `minio.${DOMAIN}`** que se dio de alta para que no fallara el certificado del
   ingress ya no se usa y se puede dar de baja.

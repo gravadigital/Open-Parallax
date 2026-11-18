@@ -38,14 +38,17 @@ escaso.
 
 ## Qué no cambia, a propósito
 
+El nombre anterior se reemplazó también en la documentación histórica (stories, planes,
+requests, changelogs). Solo quedan menciones a "telescope" / "telescopio" donde son un hecho y
+no el nombre del producto:
+
 - Citas y enlaces externos: el título del paper (*Telescope time without tears*) y los artículos
   sobre ESO.
-- Historia: `CHANGELOG.md` (entradas anteriores), `docs/changelog/`, `docs/stories/`,
-  `docs/story-plans/`, `docs/requests/` y `docs/.import-state.yaml`.
-- El título de los datos de ejemplo ("Distributed Telescope Time Allocation"): la migración 026
-  lo usa para encontrarlos y borrarlos.
-- Las frases sobre el origen del producto ("nace del problema del tiempo de telescopio").
-- El host real `api.telescope.dev.grava.io` citado en el changelog.
+- El dominio de origen del método ("tiempo de telescopio"), en la explicación del producto.
+- `docs/.import-state.yaml`, que registra de qué repos originales se importó la documentación
+  (`~/Documentos/Proyectos/Telescopio`).
+- El host real `api.telescope.dev.grava.io`, citado en una entrada vieja del changelog.
+- Este documento y su entrada en `CHANGELOG.md`, que registran el nombre anterior.
 
 ## Compatibilidad
 

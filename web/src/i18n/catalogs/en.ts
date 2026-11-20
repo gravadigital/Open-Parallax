@@ -1069,10 +1069,10 @@ export const en: Catalog = {
       }),
     },
     adjustmentNote:
-      'The final order includes an adjustment for how each author reviewed: the proposal of anyone who ranked in line with the community moves up a few places, and the proposal of anyone who didn\'t moves down. That is why the score doesn\'t always follow the order.',
+      'The final order includes an adjustment for how each author reviewed: the proposal of anyone who ranked in line with the community gains a few places over the others, and the proposal of anyone who didn\'t loses them. That is why the score doesn\'t always follow the order.',
     adjustment: {
-      up: plural({ one: 'Moved up {count} place', other: 'Moved up {count} places' }),
-      down: plural({ one: 'Moved down {count} place', other: 'Moved down {count} places' }),
+      up: plural({ one: 'Bonus of {count} place', other: 'Bonus of {count} places' }),
+      down: plural({ one: 'Penalty of {count} place', other: 'Penalty of {count} places' }),
       reasonGood: 'reviewed in line with the community',
       reasonBad: 'their review strayed from the community',
       reasonNonEvaluator: 'didn\'t complete their review',
@@ -1080,17 +1080,19 @@ export const en: Catalog = {
     yourAdjustment: {
       title: 'Adjustment to your proposal',
       up: plural({
-        one: 'Your proposal moved up {count} place because your ranking matched the community\'s.',
-        other: 'Your proposal moved up {count} places because your ranking matched the community\'s.',
+        one: 'Your proposal got a bonus of {count} place because your ranking matched the community\'s.',
+        other: 'Your proposal got a bonus of {count} places because your ranking matched the community\'s.',
       }),
       down: plural({
-        one: 'Your proposal moved down {count} place because your ranking strayed from the community\'s.',
-        other: 'Your proposal moved down {count} places because your ranking strayed from the community\'s.',
+        one: 'Your proposal got a penalty of {count} place because your ranking strayed from the community\'s.',
+        other: 'Your proposal got a penalty of {count} places because your ranking strayed from the community\'s.',
       }),
       downNonEvaluator: plural({
-        one: 'Your proposal moved down {count} place because you didn\'t complete your review.',
-        other: 'Your proposal moved down {count} places because you didn\'t complete your review.',
+        one: 'Your proposal got a penalty of {count} place because you didn\'t complete your review.',
+        other: 'Your proposal got a penalty of {count} places because you didn\'t complete your review.',
       }),
+      relative:
+        'The adjustment is measured against the proposals that didn\'t get one: if almost everyone got the same one, your position may not change.',
     },
     excluded: {
       title: 'Left out of the ranking',

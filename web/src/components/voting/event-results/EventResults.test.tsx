@@ -103,7 +103,7 @@ describe('EventResults', () => {
     getResults.mockResolvedValue(results);
     renderWithProviders(<EventResults eventId="e-1" currentUserId={null} />);
     expect(await screen.findByText(/El orden final incluye un ajuste por cómo evaluó cada autor/)).toBeInTheDocument();
-    expect(screen.queryByText(/Subió|Bajó/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Premio de|Castigo de/)).not.toBeInTheDocument();
   });
 
   it('muestra al participante el ajuste de su propia propuesta', async () => {
@@ -116,9 +116,9 @@ describe('EventResults', () => {
     renderWithProviders(<EventResults eventId="e-1" currentUserId="u-1" />);
     expect(await screen.findByText('Ajuste de tu propuesta')).toBeInTheDocument();
     expect(
-      screen.getByText('Tu propuesta subió 3 puestos porque tu ranking coincidió con el de la comunidad.')
+      screen.getByText(/^Tu propuesta recibió un premio de 3 puestos porque tu ranking coincidió con el de la comunidad\. El ajuste se mide/)
     ).toBeInTheDocument();
-    expect(screen.getByText('Subió 3 puestos')).toBeInTheDocument();
+    expect(screen.getByText('Premio de 3 puestos')).toBeInTheDocument();
   });
 
   it('avisa cuando la propuesta propia bajó por no completar la evaluación', async () => {
@@ -130,7 +130,7 @@ describe('EventResults', () => {
     });
     renderWithProviders(<EventResults eventId="e-1" currentUserId="u-1" />);
     expect(
-      await screen.findByText('Tu propuesta bajó 10 puestos porque no completaste tu evaluación.')
+      await screen.findByText(/^Tu propuesta recibió un castigo de 10 puestos porque no completaste tu evaluación\./)
     ).toBeInTheDocument();
   });
 
@@ -146,8 +146,8 @@ describe('EventResults', () => {
       ),
     });
     renderWithProviders(<EventResults eventId="e-1" currentUserId={null} />);
-    expect(await screen.findByText('Subió 3 puestos')).toBeInTheDocument();
-    expect(screen.getByText('Bajó 3 puestos')).toBeInTheDocument();
+    expect(await screen.findByText('Premio de 3 puestos')).toBeInTheDocument();
+    expect(screen.getByText('Castigo de 3 puestos')).toBeInTheDocument();
     expect(screen.getByText(/su evaluación se alejó de la comunidad/)).toBeInTheDocument();
     expect(screen.queryByText('Ajuste de tu propuesta')).not.toBeInTheDocument();
   });

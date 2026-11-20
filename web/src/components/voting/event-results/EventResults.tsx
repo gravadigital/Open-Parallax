@@ -149,7 +149,8 @@ const EventResults: React.FC<EventResultsProps> = ({
             ? t('results.yourAdjustment.up', { count: own.adjustment })
             : own.adjustment_reason === 'non_evaluator'
               ? t('results.yourAdjustment.downNonEvaluator', { count: -own.adjustment })
-              : t('results.yourAdjustment.down', { count: -own.adjustment })}
+              : t('results.yourAdjustment.down', { count: -own.adjustment })}{' '}
+          {t('results.yourAdjustment.relative')}
         </Callout>
       ) : null}
       <ol className="vt-event-results__list" aria-label={t('results.rankingFinal')}>

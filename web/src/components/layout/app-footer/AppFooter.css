@@ -102,8 +102,8 @@
     padding: 40px var(--layout-page-gutter);
   }
   .ly-footer__logo-mark {
-    width: 170px;
-    height: 45px;
+    width: auto;
+    height: 32px;
   }
   .ly-footer__github {
     padding-top: 21px;

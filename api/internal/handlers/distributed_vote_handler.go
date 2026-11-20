@@ -652,6 +652,39 @@ func (h *DistributedVoteHandler) SubmitRankingVotes(c *gin.Context) {
 		assignedMap[attachmentID] = true
 	}
 
+	// The ranking must be a permutation of the whole assignment: every assigned proposal exactly
+	// once. A partial list, or one that repeats a proposal, would let an evaluator leave a
+	// competitor unranked or give another two votes (Merrifield & Saari 2009: each evaluator
+	// ranks all m proposals they received).
+	if len(req.Rankings) != len(assignedAttachments) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":    "The ranking must include every assigned proposal exactly once",
+			"expected": len(assignedAttachments),
+			"received": len(req.Rankings),
+		})
+		return
+	}
+	// Compared as parsed UUIDs, so the same id in another letter case still counts as a repeat.
+	// Together with the length check and the assignment check below, this makes the ranking a
+	// permutation of the assignment.
+	seenAttachments := make(map[uuid.UUID]bool, len(req.Rankings))
+	for _, ranking := range req.Rankings {
+		attachmentUUID, err := uuid.Parse(ranking.AttachmentID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid attachment_id format: " + ranking.AttachmentID,
+			})
+			return
+		}
+		if seenAttachments[attachmentUUID] {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Duplicate attachment in ranking: " + ranking.AttachmentID,
+			})
+			return
+		}
+		seenAttachments[attachmentUUID] = true
+	}
+
 	// Validate rankings (should be consecutive integers starting from 1)
 	rankSet := make(map[int]bool)
 	for _, ranking := range req.Rankings {
@@ -743,7 +776,6 @@ func (h *DistributedVoteHandler) SubmitRankingVotes(c *gin.Context) {
 	})
 }
 
-// GetDistributedResults handles GET /api/events/{event_id}/distributed-results
 // calculateAndPersist computes the MBC ranking, fills in participant names and
 // upserts the row in voting_results. The names are stored together with the
 // ranking, so read-only consumers can serve them straight from the table.
@@ -806,8 +838,10 @@ func (h *DistributedVoteHandler) CalculateAndPersistResults(eventID string) (*vo
 	if err != nil {
 		return nil, fmt.Errorf("event not found: %w", err)
 	}
-	if eventObj.Stage != event.StageVoting && eventObj.Stage != event.StageResult {
-		return nil, fmt.Errorf("results can only be calculated during voting or results stage (current: %s)", eventObj.Stage.String())
+	// The consensus must stay hidden while people are still ranking (Merrifield & Saari 2009):
+	// an evaluator who could read G would copy it and get Q≈1.
+	if eventObj.Stage != event.StageResult {
+		return nil, fmt.Errorf("results can only be calculated in the results stage (current: %s)", eventObj.Stage.String())
 	}
 
 	config, err := h.configRepo.GetByEventID(eventID)
@@ -821,7 +855,8 @@ func (h *DistributedVoteHandler) CalculateAndPersistResults(eventID string) (*vo
 // GetStoredResults handles GET /api/events/{event_id}/distributed-results
 // Read-only counterpart of GetDistributedResults: it returns the ranking that
 // was stored when the event entered the results stage and never recalculates,
-// which is what makes it safe to expose without authentication.
+// which is what makes it safe to expose without authentication. Nothing is
+// served before the results stage, so voters cannot see the consensus.
 func (h *DistributedVoteHandler) GetStoredResults(c *gin.Context) {
 	eventID := c.Param("event_id")
 	if eventID == "" {
@@ -838,9 +873,9 @@ func (h *DistributedVoteHandler) GetStoredResults(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Event not found"})
 		return
 	}
-	if eventObj.Stage != event.StageVoting && eventObj.Stage != event.StageResult {
+	if eventObj.Stage != event.StageResult {
 		c.JSON(http.StatusForbidden, gin.H{
-			"error":         "Results can only be viewed during voting or results stage",
+			"error":         "Results can only be viewed in the results stage",
 			"current_stage": eventObj.Stage.String(),
 		})
 		return
@@ -857,12 +892,13 @@ func (h *DistributedVoteHandler) GetStoredResults(c *gin.Context) {
 		return
 	}
 
+	// Every participant's Q is left out: the endpoint is anonymous, and each evaluator's
+	// quality score is not public information.
 	resultData := gin.H{
 		"id":                        results.ID.String(),
 		"event_id":                  results.EventID.String(),
 		"global_ranking":            results.GlobalRanking,
 		"adjusted_ranking":          results.AdjustedRanking,
-		"participant_qualities":     results.ParticipantQualities,
 		"total_participants":        results.TotalParticipants,
 		"total_votes":               results.TotalVotes,
 		"attachments_per_evaluator": results.AttachmentsPerEvaluator,
@@ -879,6 +915,9 @@ func (h *DistributedVoteHandler) GetStoredResults(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": resultData})
 }
 
+// GetDistributedResults handles POST /api/events/{event_id}/distributed-results/recalculate.
+// The route only lets the event owner, organizers and admins in, and the handler only works in
+// the results stage.
 func (h *DistributedVoteHandler) GetDistributedResults(c *gin.Context) {
 	eventID := c.Param("event_id")
 	if eventID == "" {
@@ -900,9 +939,9 @@ func (h *DistributedVoteHandler) GetDistributedResults(c *gin.Context) {
 	}
 
 	// Check if event is in voting or results stage
-	if eventObj.Stage != event.StageVoting && eventObj.Stage != event.StageResult {
+	if eventObj.Stage != event.StageResult {
 		c.JSON(http.StatusForbidden, gin.H{
-			"error":         "Results can only be viewed during voting or results stage",
+			"error":         "Results can only be viewed in the results stage",
 			"current_stage": eventObj.Stage.String(),
 		})
 		return

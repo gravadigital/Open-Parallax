@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -508,11 +509,11 @@ func TestSubmitRankingVotes_CompletesAssignmentWhenAllAttachmentsRanked(t *testi
 	assert.NotNil(t, updated.CompletedAt)
 }
 
-func TestSubmitRankingVotes_DoesNotCompleteAssignmentOnPartialVote(t *testing.T) {
+func TestSubmitRankingVotes_RejectsPartialRanking(t *testing.T) {
 	s := newTestHandlerSet()
 	e, p, assignment, attachments := setupVotingScenario(t, s)
 
-	// Only rank one of the two assigned attachments.
+	// Only one of the two assigned attachments: the other would be left without a vote.
 	body := map[string]interface{}{
 		"assignment_id": assignment.ID.String(),
 		"rankings": []map[string]interface{}{
@@ -522,10 +523,39 @@ func TestSubmitRankingVotes_DoesNotCompleteAssignmentOnPartialVote(t *testing.T)
 	w := performRequest(t, http.MethodPost, s.handler.SubmitRankingVotes,
 		gin.Params{{Key: "event_id", Value: e.ID.String()}, {Key: "participant_id", Value: p.ID.String()}}, "", body)
 
-	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
-	updated, err := s.voteRepo.GetAssignmentByParticipant(e.ID.String(), p.ID.String())
-	require.NoError(t, err)
-	assert.False(t, updated.IsCompleted, "a partial vote must not mark the assignment completed")
+	require.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
+	resp := jsonBody(t, w)
+	assert.Equal(t, "The ranking must include every assigned proposal exactly once", resp["error"])
+	assert.EqualValues(t, 2, resp["expected"])
+	assert.EqualValues(t, 1, resp["received"])
+	assert.Empty(t, s.voteRepo.replaceCalls)
+	assert.False(t, assignment.IsCompleted)
+}
+
+func TestSubmitRankingVotes_RejectsRepeatedAttachment(t *testing.T) {
+	s := newTestHandlerSet()
+	e, p, assignment, attachments := setupVotingScenario(t, s)
+	id := attachments[1].ID.String()
+
+	// Audit example: one proposal twice and the other one left out. The second spelling differs
+	// only in letter case, which still names the same proposal.
+	for name, second := range map[string]string{"same spelling": id, "upper case": strings.ToUpper(id)} {
+		t.Run(name, func(t *testing.T) {
+			body := map[string]interface{}{
+				"assignment_id": assignment.ID.String(),
+				"rankings": []map[string]interface{}{
+					{"attachment_id": id, "rank": 1},
+					{"attachment_id": second, "rank": 2},
+				},
+			}
+			w := performRequest(t, http.MethodPost, s.handler.SubmitRankingVotes,
+				gin.Params{{Key: "event_id", Value: e.ID.String()}, {Key: "participant_id", Value: p.ID.String()}}, "", body)
+
+			require.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
+			assert.Contains(t, jsonBody(t, w)["error"], "Duplicate attachment in ranking")
+			assert.Empty(t, s.voteRepo.replaceCalls)
+		})
+	}
 }
 
 func TestSubmitRankingVotes_RejectsDuplicateRanks(t *testing.T) {
@@ -572,6 +602,7 @@ func TestSubmitRankingVotes_RejectsAttachmentNotInAssignment(t *testing.T) {
 		"assignment_id": assignment.ID.String(),
 		"rankings": []map[string]interface{}{
 			{"attachment_id": foreignAttachment.ID.String(), "rank": 1},
+			{"attachment_id": assignment.AttachmentIDs[0], "rank": 2},
 		},
 	}
 	w := performRequest(t, http.MethodPost, s.handler.SubmitRankingVotes,
@@ -603,7 +634,7 @@ func TestSubmitRankingVotes_RejectsMismatchedAssignmentID(t *testing.T) {
 
 func TestGetDistributedResults_SucceedsWithPartialVoting(t *testing.T) {
 	s := newTestHandlerSet()
-	e := newVotingEvent()
+	e := newResultsEvent()
 	s.eventRepo.addEvent(e)
 	users := addParticipants(s, e.ID, 3)
 	attachments := addAttachments(s, e.ID, users)
@@ -637,19 +668,25 @@ func TestGetDistributedResults_SucceedsWithPartialVoting(t *testing.T) {
 }
 
 func TestGetDistributedResults_RejectsWrongStage(t *testing.T) {
-	s := newTestHandlerSet()
-	e := newParticipationEvent()
-	s.eventRepo.addEvent(e)
+	// Voting included: recalculating while people still rank would show them the consensus.
+	for name, e := range map[string]*event.Event{"participation": newParticipationEvent(), "voting": newVotingEvent()} {
+		t.Run(name, func(t *testing.T) {
+			s := newTestHandlerSet()
+			s.eventRepo.addEvent(e)
+			s.configRepo.byEvent[e.ID.String()] = vote.NewVotingConfiguration(e.ID, 2)
 
-	w := performRequest(t, http.MethodGet, s.handler.GetDistributedResults,
-		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", nil)
+			w := performRequest(t, http.MethodPost, s.handler.GetDistributedResults,
+				gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", nil)
 
-	assert.Equal(t, http.StatusForbidden, w.Code)
+			assert.Equal(t, http.StatusForbidden, w.Code)
+			assert.Empty(t, s.resultsRepo.byEvent, "nothing may be calculated or stored before results")
+		})
+	}
 }
 
 func TestGetDistributedResults_RejectsMissingConfig(t *testing.T) {
 	s := newTestHandlerSet()
-	e := newVotingEvent()
+	e := newResultsEvent()
 	s.eventRepo.addEvent(e)
 
 	w := performRequest(t, http.MethodGet, s.handler.GetDistributedResults,
@@ -708,14 +745,38 @@ func TestGetStoredResults_NotCalculatedYetReturns404(t *testing.T) {
 }
 
 func TestGetStoredResults_RejectsWrongStage(t *testing.T) {
+	for name, e := range map[string]*event.Event{"participation": newParticipationEvent(), "voting": newVotingEvent()} {
+		t.Run(name, func(t *testing.T) {
+			s := newTestHandlerSet()
+			s.eventRepo.addEvent(e)
+			// Even with a stored row (e.g. from an older recalculation), voting must not see it.
+			s.resultsRepo.byEvent[e.ID.String()] = &vote.VotingResults{ID: uuid.New(), EventID: e.ID}
+
+			w := performRequest(t, http.MethodGet, s.handler.GetStoredResults,
+				gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", nil)
+
+			assert.Equal(t, http.StatusForbidden, w.Code)
+			assert.NotContains(t, w.Body.String(), "global_ranking")
+		})
+	}
+}
+
+func TestGetStoredResults_OmitsParticipantQualities(t *testing.T) {
 	s := newTestHandlerSet()
-	e := newParticipationEvent()
+	e := newResultsEvent()
 	s.eventRepo.addEvent(e)
+	s.resultsRepo.byEvent[e.ID.String()] = &vote.VotingResults{
+		ID:                   uuid.New(),
+		EventID:              e.ID,
+		ParticipantQualities: map[string]float64{uuid.NewString(): 0.42},
+	}
 
 	w := performRequest(t, http.MethodGet, s.handler.GetStoredResults,
 		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", nil)
 
-	assert.Equal(t, http.StatusForbidden, w.Code)
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	data := jsonBody(t, w)["data"].(map[string]interface{})
+	assert.NotContains(t, data, "participant_qualities")
 }
 
 // ---------------------------------------------------------------------------
@@ -725,7 +786,7 @@ func TestGetStoredResults_RejectsWrongStage(t *testing.T) {
 
 func TestCalculateAndPersistResults_StoresRankingForVisitors(t *testing.T) {
 	s := newTestHandlerSet()
-	e := newVotingEvent()
+	e := newResultsEvent()
 	s.eventRepo.addEvent(e)
 	users := addParticipants(s, e.ID, 3)
 	attachments := addAttachments(s, e.ID, users)
@@ -748,6 +809,18 @@ func TestCalculateAndPersistResults_StoresRankingForVisitors(t *testing.T) {
 	for _, item := range stored.GlobalRanking {
 		assert.NotEmpty(t, item.ParticipantName, "names must be persisted so the read-only endpoint can show authors")
 	}
+}
+
+func TestCalculateAndPersistResults_RejectsVotingStage(t *testing.T) {
+	s := newTestHandlerSet()
+	e := newVotingEvent()
+	s.eventRepo.addEvent(e)
+	s.configRepo.byEvent[e.ID.String()] = vote.NewVotingConfiguration(e.ID, 2)
+
+	_, err := s.handler.CalculateAndPersistResults(e.ID.String())
+
+	assert.Error(t, err)
+	assert.Empty(t, s.resultsRepo.byEvent)
 }
 
 func TestCalculateAndPersistResults_RejectsUnknownEvent(t *testing.T) {

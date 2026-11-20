@@ -753,6 +753,8 @@ var ErrAssignmentNotFound = errors.New("assignment not found")
 
 // ReplaceAssignmentVotes deletes the assignment's votes and inserts the new ones in a single
 // transaction. Completion flags and vote counts are maintained by DB triggers (ADR-002).
+// The assignment row is locked first, so two submissions of the same ranking run one after
+// the other: the second replaces the first instead of adding its votes next to them.
 func (r *PostgresVoteRepository) ReplaceAssignmentVotes(assignmentID string, votes []*vote.Vote) (bool, error) {
 	id, err := uuid.Parse(assignmentID)
 	if err != nil {
@@ -761,6 +763,15 @@ func (r *PostgresVoteRepository) ReplaceAssignmentVotes(assignmentID string, vot
 
 	replaced := false
 	err = r.db.Transaction(func(tx *gorm.DB) error {
+		var locked int64
+		lock := tx.Raw("SELECT 1 FROM assignments WHERE id = ? FOR UPDATE", id).Scan(&locked)
+		if lock.Error != nil {
+			return fmt.Errorf("replace votes: lock assignment: %w", lock.Error)
+		}
+		if lock.RowsAffected == 0 {
+			return ErrAssignmentNotFound
+		}
+
 		res := tx.Where("assignment_id = ?", id).Delete(&vote.Vote{})
 		if res.Error != nil {
 			return fmt.Errorf("replace votes: delete previous: %w", res.Error)

@@ -155,7 +155,7 @@ func main() {
 
 			// Results are public: visitors can see the final rankings of a
 			// finished event without signing up (U-03 / JTBD-03). Read-only —
-			// never recalculates.
+			// never recalculates, and only answers in the results stage.
 			eventsPublic.GET("/:event_id/distributed-results", distributedVoteHandler.GetStoredResults)
 			eventsPublic.GET("/:event_id/voting-statistics", distributedVoteHandler.GetVotingStatistics)
 		}
@@ -246,9 +246,12 @@ func main() {
 				auth.RequireParticipantOrOwner(eventRepo),
 				voteDraftHandler.GetDraft)
 
-			// Recalculate results - authenticated: recomputes the MBC ranking
-			// and overwrites the stored copy (the public GET never writes)
-			events.POST("/:event_id/distributed-results/recalculate", distributedVoteHandler.GetDistributedResults)
+			// Recalculate results - Only event owner/organizer/admin, and only in
+			// the results stage: recomputes the MBC ranking and overwrites the
+			// stored copy (the public GET never writes)
+			events.POST("/:event_id/distributed-results/recalculate",
+				auth.RequireEventOwnerOrOrganizer(eventRepo),
+				distributedVoteHandler.GetDistributedResults)
 		}
 
 		// Attachment download/delete - ownership checked in the handler

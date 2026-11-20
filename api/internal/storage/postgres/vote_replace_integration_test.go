@@ -100,3 +100,26 @@ func TestGetAssignmentByParticipant_ReturnsSentinelWhenMissing(t *testing.T) {
 	_, err := NewPostgresVoteRepository(tx).GetAssignmentByParticipant(f.eventID.String(), uuid.New().String())
 	require.True(t, errors.Is(err, ErrAssignmentNotFound))
 }
+
+func TestReplaceAssignmentVotes_RejectsRepeatedProposal(t *testing.T) {
+	tx, f, a, repo := seedSubmitted(t)
+
+	// Same proposal twice: the unique index (migration 027) rejects it and the previous ranking stays.
+	repeated := ranking(f, a, []uuid.UUID{f.attachments[1], f.attachments[1]}, []int{1, 2})
+	_, err := repo.ReplaceAssignmentVotes(a.ID.String(), repeated)
+	require.Error(t, err)
+
+	require.Equal(t, 1, rankOf(t, tx, a.ID, f.attachments[0]))
+	require.Equal(t, 2, rankOf(t, tx, a.ID, f.attachments[1]))
+	require.Equal(t, 2, count(t, tx, "SELECT COUNT(*) FROM votes WHERE assignment_id = ?", a.ID))
+}
+
+func TestReplaceAssignmentVotes_UnknownAssignmentReturnsSentinel(t *testing.T) {
+	tx := migratedTx(t)
+	f := seedVoting(t, tx, 2)
+	repo := NewPostgresVoteRepository(tx)
+	a := newAssignment(f, f.attachments) // never saved
+
+	_, err := repo.ReplaceAssignmentVotes(a.ID.String(), ranking(f, a, f.attachments, []int{1, 2}))
+	require.True(t, errors.Is(err, ErrAssignmentNotFound))
+}

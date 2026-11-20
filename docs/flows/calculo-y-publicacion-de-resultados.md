@@ -63,7 +63,7 @@ sequenceDiagram
     U->>WEB: abre el evento en etapa results (con o sin sesión)
     WEB->>API: GET /api/v1/events/{event_id}/distributed-results
     API->>DB: SELECT voting_results — solo lectura
-    API-->>WEB: 200 { data: { global_ranking, adjusted_ranking, participant_qualities } }
+    API-->>WEB: 200 { data: { global_ranking, adjusted_ranking } }
     WEB-->>U: podio (1–3) + ranking desde la 4.ª, puntaje 0–10, "Tú" resaltado
 ```
 
@@ -78,11 +78,15 @@ sequenceDiagram
 - **Auth:** ninguno — endpoint **público y de solo lectura**, para que un visitante anónimo
   pueda ver los resultados sin registrarse
 - **Query opcional:** `include_metrics=true` agrega `data.configuration`
-- **Disponible en:** etapas `voting` y `results`
+- **Disponible en:** solo la etapa `results`. Durante `voting` responde 403: el consenso tiene
+  que quedar oculto mientras se ordena, porque quien lo viera podría copiarlo y obtener Q≈1
+  (Merrifield & Saari 2009)
+- **No incluye** `participant_qualities`: el Q de cada evaluador no es público
 
 El ranking se calcula y persiste **una vez**, al pasar el evento a la etapa `results`
 (`UpdateEventStage` → `CalculateAndPersistResults`), o bajo demanda con
-`POST .../distributed-results/recalculate` (requiere sesión). El GET solo hace `SELECT` sobre
+`POST .../distributed-results/recalculate` (solo autor del evento, organizador o admin, y solo
+en la etapa `results`; su respuesta sí trae `participant_qualities`). El GET solo hace `SELECT` sobre
 `voting_results` — dejó de recalcular en cada llamada, por lo que ahora es seguro exponerlo
 (D-11 quedó aislado en el POST).
 
@@ -201,8 +205,8 @@ de la propuesta propia.
 }
 ```
 
-**Response (éxito) — 200:** envelope `data` con `global_ranking`, `adjusted_ranking` y
-`participant_qualities`.
+**Response (éxito) — 200:** envelope `data` con `global_ranking` y `adjusted_ranking`; el
+`POST .../recalculate` agrega `participant_qualities`.
 
 ⚠️ **Columnas huérfanas:** `voting_results` tiene además `statistical_metrics`, `algorithm_used`,
 `quality_adjustments_applied`, `overall_quality_score`, `good_evaluator_count`,

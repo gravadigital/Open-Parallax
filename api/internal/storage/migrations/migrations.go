@@ -174,6 +174,12 @@ func GetMigrations() []Migration {
 			Up:   migration026Up,
 			Down: migration026Down,
 		},
+		{
+			ID:   "027",
+			Name: "unique_vote_per_assignment_attachment",
+			Up:   migration027Up,
+			Down: migration027Down,
+		},
 	}
 }
 

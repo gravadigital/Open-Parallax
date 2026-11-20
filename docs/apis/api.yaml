@@ -1561,12 +1561,17 @@ paths:
       tags: [Votación distribuida]
       summary: Enviar el ranking de evaluación
       description: |
-        Envío definitivo. Los rangos tienen que ser enteros **consecutivos desde 1**, sin
-        duplicados, y cada propuesta tiene que pertenecer a la asignación del participante.
+        Envío definitivo. El ranking tiene que ser una **permutación exacta de la asignación**:
+        cada propuesta asignada aparece una sola vez (ni faltan ni se repiten) y los rangos son
+        enteros **consecutivos desde 1**, sin duplicados. Si falta alguna propuesta responde 400
+        con `expected` y `received`; si una se repite, 400 `Duplicate attachment in ranking`.
+        La base lo refuerza con un índice único `(assignment_id, attachment_id)` en `votes`.
 
         **Reenvío (S-007):** si la asignación ya está completa y el evento sigue en `voting`,
-        el ranking nuevo reemplaza al anterior (`DELETE` + `INSERT` en una transacción; los
-        triggers mantienen `is_completed` y `vote_count`) y la respuesta trae `replaced: true`.
+        el ranking nuevo reemplaza al anterior (`DELETE` + `INSERT` en una transacción que
+        primero bloquea la fila de la asignación, así dos envíos simultáneos se aplican uno
+        después del otro; los triggers mantienen `is_completed` y `vote_count`) y la respuesta
+        trae `replaced: true`.
         Fuera de `voting` responde 400.
 
         Efecto (S-009): notificación `ranking_submitted` al participante.
@@ -1729,14 +1734,18 @@ paths:
       summary: Resultados de la votación distribuida (solo lectura)
       description: |
         Devuelve el ranking global (`global_ranking`, por puntaje MBC) y el ranking ajustado
-        por el sistema de incentivos (`adjusted_ranking`), más la calidad de cada evaluador.
+        por el sistema de incentivos (`adjusted_ranking`). No incluye la calidad Q de los
+        evaluadores (`participant_qualities`): es un endpoint anónimo y el Q de cada persona no
+        es público.
 
         **Solo lectura:** devuelve la fila guardada en `voting_results` (calculada al entrar a
         la etapa `results`, o por `POST .../distributed-results/recalculate`). No escribe ni
         recalcula.
 
-        Disponible en las etapas `voting` y `results`. **Público (sin sesión)**: el detalle
-        del evento y sus resultados son visibles para visitantes anónimos.
+        Disponible **solo en la etapa `results`**: durante `voting` el consenso tiene que quedar
+        oculto, porque quien lo viera podría copiarlo en su propio ranking y obtener Q≈1.
+        **Público (sin sesión)**: el detalle del evento y sus resultados son visibles para
+        visitantes anónimos.
       security: []
       parameters:
         - $ref: '#/components/parameters/EventId'
@@ -1763,10 +1772,6 @@ paths:
                       adjusted_ranking:
                         type: array
                         items: { $ref: '#/components/schemas/AttachmentResult' }
-                      participant_qualities:
-                        type: object
-                        additionalProperties: { type: number, format: double }
-                        description: 'UUID del participante → Q_i en [0,1]'
                       total_participants: { type: integer }
                       total_votes: { type: integer }
                       attachments_per_evaluator: { type: integer }
@@ -1777,7 +1782,7 @@ paths:
           description: '`event_id` ausente o con formato inválido'
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
         '403':
-          description: Etapa incorrecta (+ `current_stage`). Semánticamente debería ser 400.
+          description: Etapa distinta de `results` (+ `current_stage`). Semánticamente debería ser 400.
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
         '404':
           description: Evento inexistente, o `RESULTS_NOT_CALCULATED` si todavía no se guardó el ranking
@@ -1794,7 +1799,10 @@ paths:
 
         Se ejecuta automáticamente cuando el organizador pasa el evento a la etapa `results`,
         y lo llama el frontend como fallback si un evento llegó a `results` sin ranking
-        guardado. La respuesta tiene el mismo shape que el GET de solo lectura.
+        guardado. Solo el autor del evento, organizadores y administradores
+        (`RequireEventOwnerOrOrganizer`), y **solo en la etapa `results`**. A diferencia del
+        GET público, la respuesta incluye `participant_qualities` (UUID del participante → Q_i
+        en [0,1]).
       parameters:
         - $ref: '#/components/parameters/EventId'
         - name: include_metrics
@@ -1810,7 +1818,7 @@ paths:
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
         '401': { $ref: '#/components/responses/MiddlewareUnauthorized' }
         '403':
-          description: Etapa incorrecta (+ `current_stage`)
+          description: Sin permiso sobre el evento, o etapa distinta de `results` (+ `current_stage`)
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
         '404':
           description: Evento o configuración de votación inexistente

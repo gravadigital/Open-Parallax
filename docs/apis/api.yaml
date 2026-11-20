@@ -1740,7 +1740,10 @@ paths:
       summary: Resultados de la votación distribuida (solo lectura)
       description: |
         Devuelve el ranking global (`global_ranking`, por puntaje MBC) y el ranking ajustado
-        por el sistema de incentivos (`adjusted_ranking`). No incluye la calidad Q de los
+        por el sistema de incentivos (`adjusted_ranking`), que es **el ranking oficial** (ADR-001).
+        El ajuste de cada propuesta (`adjustment`, `adjustment_reason`, `non_evaluator`) deja ver
+        cómo evaluó su autor, así que solo se incluye para la propuesta del usuario autenticado,
+        o para todas si quien pide es el autor del evento o un admin (token opcional). No incluye la calidad Q de los
         evaluadores (`participant_qualities`): es un endpoint anónimo y el Q de cada persona no
         es público.
 
@@ -2335,6 +2338,17 @@ components:
         non_evaluator:
           type: boolean
           description: Su autor no completó su ranking (se omite si es false)
+        adjustment:
+          type: integer
+          description: |
+            Puestos que el incentivo movió la propuesta en G' (positivo sube, negativo baja),
+            relativo a las propuestas de evaluadores neutros. En el GET público solo llega para la
+            propuesta del usuario autenticado, o para todas si es el autor del evento o un admin;
+            el POST de recálculo (organizador) siempre lo trae. Se omite si es 0.
+        adjustment_reason:
+          type: string
+          enum: [good_evaluator, bad_evaluator, non_evaluator]
+          description: Motivo del ajuste. Misma visibilidad que `adjustment`
         excluded:
           type: boolean
           description: |

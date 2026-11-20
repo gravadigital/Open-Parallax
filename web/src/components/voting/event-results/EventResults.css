@@ -90,3 +90,20 @@
   margin: var(--space-stack-sm) 0 0;
   padding-left: var(--space-inline-md);
 }
+
+/* Explicación del ajuste: G′ es el ranking oficial y el puntaje no siempre sigue su orden. */
+.vt-event-results__note {
+  margin: 0;
+  font-size: var(--ref-font-size-xs);
+  color: var(--text-secondary);
+  max-width: 68ch;
+}
+
+/* Ajuste de una propuesta: solo llega para la propia o para el organizador. */
+.vt-event-results__adjustment {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--ref-font-size-2xs);
+  font-weight: 500;
+  color: var(--text-secondary);
+}

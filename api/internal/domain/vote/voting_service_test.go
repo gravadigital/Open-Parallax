@@ -876,3 +876,137 @@ func TestGenerateAssignments_EvaluatorsAreProposalOwners(t *testing.T) {
 		assert.Equal(t, k*m, total, "k=%d", k)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// applyIncentiveSystem: exact shift of n places relative to neutral evaluators
+// (audit finding C5: the old version moved n−1 places or fewer)
+// ---------------------------------------------------------------------------
+
+// incentiveTable builds a G of size k where every owner is a neutral evaluator (Q=0.45), and
+// returns it with the qualities map so a test can turn some owners good or bad.
+func incentiveTable(k int) ([]AttachmentResult, map[string]float64) {
+	results := make([]AttachmentResult, k)
+	qualities := make(map[string]float64, k)
+	for i := range results {
+		owner := uuid.New()
+		results[i] = AttachmentResult{AttachmentID: uuid.New(), ParticipantID: owner, GlobalRank: i + 1}
+		qualities[owner.String()] = 0.45
+	}
+	return results, qualities
+}
+
+func positionOf(adjusted []AttachmentResult, id uuid.UUID) int {
+	for _, r := range adjusted {
+		if r.AttachmentID == id {
+			return r.AdjustedRank
+		}
+	}
+	return 0
+}
+
+func TestApplyIncentiveSystem_GoodEvaluatorMovesUpExactlyN(t *testing.T) {
+	vs, _, _, _ := newTestService()
+	config := defaultConfig(uuid.New(), 2)
+	for _, n := range []int{1, 2, 3, 5} {
+		config.AdjustmentMagnitude = n
+		results, qualities := incentiveTable(10)
+		qualities[results[6].ParticipantID.String()] = 0.9 // 7th in G
+
+		adjusted := vs.applyIncentiveSystem(results, qualities, nil, config)
+
+		assert.Equal(t, 7-n, positionOf(adjusted, results[6].AttachmentID), "n=%d", n)
+		assert.Equal(t, n, adjusted[7-n-1].Adjustment)
+		assert.Equal(t, AdjustmentGoodEvaluator, adjusted[7-n-1].AdjustmentReason)
+	}
+}
+
+func TestApplyIncentiveSystem_BadEvaluatorMovesDownExactlyN(t *testing.T) {
+	vs, _, _, _ := newTestService()
+	config := defaultConfig(uuid.New(), 2)
+	for _, n := range []int{1, 2, 3, 5} {
+		config.AdjustmentMagnitude = n
+		results, qualities := incentiveTable(10)
+		qualities[results[1].ParticipantID.String()] = 0.1 // 2nd in G
+
+		adjusted := vs.applyIncentiveSystem(results, qualities, nil, config)
+
+		assert.Equal(t, 2+n, positionOf(adjusted, results[1].AttachmentID), "n=%d", n)
+		assert.Equal(t, -n, adjusted[2+n-1].Adjustment)
+		assert.Equal(t, AdjustmentBadEvaluator, adjusted[2+n-1].AdjustmentReason)
+	}
+}
+
+func TestApplyIncentiveSystem_NeutralOrderIsKept(t *testing.T) {
+	vs, _, _, _ := newTestService()
+	config := defaultConfig(uuid.New(), 2)
+	results, qualities := incentiveTable(10)
+	qualities[results[6].ParticipantID.String()] = 0.9
+	qualities[results[1].ParticipantID.String()] = 0.1
+
+	adjusted := vs.applyIncentiveSystem(results, qualities, nil, config)
+
+	// The neutral proposals keep their relative order: they are the frame.
+	last := 0
+	for _, r := range adjusted {
+		if r.Adjustment != 0 {
+			continue
+		}
+		assert.Greater(t, r.GlobalRank, last, "neutral proposals must not swap among themselves")
+		last = r.GlobalRank
+		assert.Empty(t, r.AdjustmentReason)
+	}
+}
+
+func TestApplyIncentiveSystem_OnlyTheEndsCutTheShiftShort(t *testing.T) {
+	vs, _, _, _ := newTestService()
+	config := defaultConfig(uuid.New(), 2) // n = 3
+	results, qualities := incentiveTable(6)
+	qualities[results[1].ParticipantID.String()] = 0.9 // 2nd, good: can only reach 1st
+	qualities[results[4].ParticipantID.String()] = 0.1 // 5th, bad: can only reach 6th
+
+	adjusted := vs.applyIncentiveSystem(results, qualities, nil, config)
+
+	assert.Equal(t, 1, positionOf(adjusted, results[1].AttachmentID))
+	assert.Equal(t, 6, positionOf(adjusted, results[4].AttachmentID))
+}
+
+func TestApplyIncentiveSystem_AllGoodKeepsTheOrder(t *testing.T) {
+	vs, _, _, _ := newTestService()
+	config := defaultConfig(uuid.New(), 2)
+	results, qualities := incentiveTable(8)
+	for owner := range qualities {
+		qualities[owner] = 0.9
+	}
+
+	adjusted := vs.applyIncentiveSystem(results, qualities, nil, config)
+
+	for i, r := range adjusted {
+		assert.Equal(t, i+1, r.GlobalRank, "everyone moving up by n is no change relative to each other")
+	}
+}
+
+func TestApplyIncentiveSystem_PenaltyUsesItsOwnMagnitude(t *testing.T) {
+	vs, _, _, _ := newTestService()
+	config := defaultConfig(uuid.New(), 2)
+	config.NonEvaluatorSanction = SanctionPenalty
+	config.NonEvaluatorPenalty = 4
+	results, qualities := incentiveTable(10)
+	nonEvaluator := results[0].ParticipantID
+	delete(qualities, nonEvaluator.String())
+
+	adjusted := vs.applyIncentiveSystem(results, qualities, map[uuid.UUID]bool{nonEvaluator: true}, config)
+
+	assert.Equal(t, 5, positionOf(adjusted, results[0].AttachmentID))
+	assert.Equal(t, -4, adjusted[4].Adjustment)
+	assert.Equal(t, AdjustmentNonEvaluator, adjusted[4].AdjustmentReason)
+}
+
+func TestAttachmentResult_WithoutEvaluatorDetail(t *testing.T) {
+	r := AttachmentResult{Adjustment: 3, AdjustmentReason: AdjustmentGoodEvaluator, NonEvaluator: true, Excluded: true, AdjustedRank: 2}
+	clean := r.WithoutEvaluatorDetail()
+	assert.Zero(t, clean.Adjustment)
+	assert.Empty(t, clean.AdjustmentReason)
+	assert.False(t, clean.NonEvaluator)
+	assert.True(t, clean.Excluded, "exclusion is public: the proposal is out of the ranking")
+	assert.Equal(t, 2, clean.AdjustedRank)
+}

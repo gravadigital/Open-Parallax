@@ -4,7 +4,7 @@ import { getErrorCode } from '../../../config/api';
 import { splitResults } from '../../../domain/eventDetail';
 import { useT } from '../../../i18n';
 import { DistributedVotingService } from '../../../services/api';
-import type { VotingResults } from '../../../types';
+import type { AttachmentResult, VotingResults } from '../../../types';
 import './EventResults.css';
 
 export interface EventResultsProps {
@@ -107,6 +107,30 @@ const EventResults: React.FC<EventResultsProps> = ({
 
   const { podium, rest, unevaluated, excluded } = splitResults(state.results.adjusted_ranking);
   const allEntries = [...podium, ...rest];
+  const own =
+    currentUserId !== null
+      ? allEntries.find((entry) => entry.participant_id === currentUserId && entry.adjustment_reason)
+      : undefined;
+
+  const adjustmentLabel = (entry: AttachmentResult): string | null => {
+    if (!entry.adjustment) return null;
+    const places = Math.abs(entry.adjustment);
+    return entry.adjustment > 0
+      ? t('results.adjustment.up', { count: places })
+      : t('results.adjustment.down', { count: places });
+  };
+  const adjustmentReason = (entry: AttachmentResult): string | null => {
+    switch (entry.adjustment_reason) {
+      case 'good_evaluator':
+        return t('results.adjustment.reasonGood');
+      case 'bad_evaluator':
+        return t('results.adjustment.reasonBad');
+      case 'non_evaluator':
+        return t('results.adjustment.reasonNonEvaluator');
+      default:
+        return null;
+    }
+  };
   return (
     <Card as="article" padding="compact" className="vt-event-results">
       <div className="vt-event-results__header">
@@ -118,6 +142,16 @@ const EventResults: React.FC<EventResultsProps> = ({
           })}
         </p>
       </div>
+      <p className="vt-event-results__note">{t('results.adjustmentNote')}</p>
+      {own && own.adjustment ? (
+        <Callout tone={own.adjustment > 0 ? 'success' : 'warning'} title={t('results.yourAdjustment.title')}>
+          {own.adjustment > 0
+            ? t('results.yourAdjustment.up', { count: own.adjustment })
+            : own.adjustment_reason === 'non_evaluator'
+              ? t('results.yourAdjustment.downNonEvaluator', { count: -own.adjustment })
+              : t('results.yourAdjustment.down', { count: -own.adjustment })}
+        </Callout>
+      ) : null}
       <ol className="vt-event-results__list" aria-label={t('results.rankingFinal')}>
         {allEntries.map((entry, index) => {
           const position = index + 1;
@@ -131,6 +165,12 @@ const EventResults: React.FC<EventResultsProps> = ({
                   <StatusPill tone="action" size="sm">
                     {t('results.you')}
                   </StatusPill>
+                )}
+                {adjustmentLabel(entry) && (
+                  <span className="vt-event-results__adjustment">
+                    {adjustmentLabel(entry)}
+                    <span className="vt-event-results__adjustment-reason"> · {adjustmentReason(entry)}</span>
+                  </span>
                 )}
               </span>
               <span className="vt-event-results__score">{t('common.points', { score: fmt.score(entry.mbc_score) })}</span>

@@ -252,7 +252,16 @@ export interface AttachmentResult {
   unevaluated?: boolean;                     // No votes: no position (ranks are 0), listed apart
   non_evaluator?: boolean;                   // Its owner did not complete their ranking
   excluded?: boolean;                        // Left out of the ranking because its owner did not evaluate
+  /**
+   * Puestos que el incentivo movió la propuesta en el ranking final (positivo sube, negativo baja),
+   * relativo a las de evaluadores neutros, y por qué. La API solo los manda al autor de la
+   * propuesta y al organizador del evento.
+   */
+  adjustment?: number;
+  adjustment_reason?: AdjustmentReason;
 }
+
+export type AdjustmentReason = 'good_evaluator' | 'bad_evaluator' | 'non_evaluator';
 
 export interface VotingResults {
   id: string;

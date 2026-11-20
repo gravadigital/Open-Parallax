@@ -300,6 +300,7 @@ func (vs *VotingService) CalculateModifiedBordaCount(eventID uuid.UUID, config *
 		if exclude && result.NonEvaluator {
 			result.Excluded = true
 			result.AdjustedRank = 0
+			result.AdjustmentReason = AdjustmentNonEvaluator
 			excluded = append(excluded, result)
 			continue
 		}
@@ -309,6 +310,7 @@ func (vs *VotingService) CalculateModifiedBordaCount(eventID uuid.UUID, config *
 	for _, result := range unevaluated {
 		if exclude && result.NonEvaluator {
 			result.Excluded = true
+			result.AdjustmentReason = AdjustmentNonEvaluator
 			excluded = append(excluded, result)
 			continue
 		}
@@ -449,56 +451,67 @@ func (vs *VotingService) calculateRelativeRanks(assignedAttachments []uuid.UUID,
 	return relativeRanks
 }
 
-// applyIncentiveSystem implements the adjustment Δ(owner(f_j)). Under SanctionPenalty the
-// proposal of a non-evaluator drops NonEvaluatorPenalty places instead of the quality adjustment.
+// applyIncentiveSystem builds the adjusted ranking G' from G, the official ranking (ADR-001).
+//
+// Merrifield & Saari (2009) move the proposal of a good evaluator up n places, and that of a bad
+// one down n, "relative to the middle-ranking referees": the proposals of neutral evaluators are
+// the frame that stays put. Each proposal gets a key, its position in G minus its shift, and G'
+// is the order of those keys. On equal keys a proposal moving up goes before the neutral one it
+// lands on, and one moving down goes after it, so the shift is exactly n places past neutral
+// proposals; only the ends of the table can cut it short. Positions are counted over results,
+// which no longer contains the excluded proposals, so an exclusion leaves no gap to skip.
+//
+// Under SanctionPenalty the proposal of a non-evaluator moves NonEvaluatorPenalty places down
+// instead of the quality adjustment.
 func (vs *VotingService) applyIncentiveSystem(results []AttachmentResult, qualities map[string]float64, nonEvaluators map[uuid.UUID]bool, config *VotingConfiguration) []AttachmentResult {
-	adjustedResults := make([]AttachmentResult, len(results))
-	copy(adjustedResults, results)
-
-	for i := range adjustedResults {
-		if nonEvaluators[adjustedResults[i].ParticipantID] {
-			adjustedResults[i].AdjustedRank = min(adjustedResults[i].GlobalRank+config.NonEvaluatorPenalty, len(results))
-			continue
-		}
-
-		participantID := adjustedResults[i].ParticipantID.String()
-		quality, exists := qualities[participantID]
-
-		if !exists {
-			adjustedResults[i].AdjustedRank = adjustedResults[i].GlobalRank
-			continue
-		}
-
-		adjustment := 0
-		if quality >= config.QualityGoodThreshold {
-			// Good evaluator: bonus (negative adjustment improves rank)
-			adjustment = -config.AdjustmentMagnitude
-		} else if quality <= config.QualityBadThreshold {
-			// Bad evaluator: penalty (positive adjustment worsens rank)
-			adjustment = config.AdjustmentMagnitude
-		}
-
-		// Apply adjustment (with bounds checking)
-		adjustedRank := min(max(adjustedResults[i].GlobalRank+adjustment, 1), len(results))
-
-		adjustedResults[i].AdjustedRank = adjustedRank
+	type keyed struct {
+		result    AttachmentResult
+		key       int
+		direction int // 0 up, 1 neutral, 2 down: order among equal keys
+		position  int
 	}
 
-	// Sort by adjusted rank
-	sort.Slice(adjustedResults, func(i, j int) bool {
-		if adjustedResults[i].AdjustedRank == adjustedResults[j].AdjustedRank {
-			// Tiebreaker: use MBC score
-			return adjustedResults[i].MBCScore > adjustedResults[j].MBCScore
+	items := make([]keyed, len(results))
+	for i, result := range results {
+		shift, reason := 0, ""
+		quality, hasQuality := qualities[result.ParticipantID.String()]
+		switch {
+		case nonEvaluators[result.ParticipantID]:
+			shift, reason = -config.NonEvaluatorPenalty, AdjustmentNonEvaluator
+		case hasQuality && quality >= config.QualityGoodThreshold:
+			shift, reason = config.AdjustmentMagnitude, AdjustmentGoodEvaluator
+		case hasQuality && quality <= config.QualityBadThreshold:
+			shift, reason = -config.AdjustmentMagnitude, AdjustmentBadEvaluator
 		}
-		return adjustedResults[i].AdjustedRank < adjustedResults[j].AdjustedRank
+		result.Adjustment = shift
+		result.AdjustmentReason = reason
+
+		direction := 1
+		if shift > 0 {
+			direction = 0
+		} else if shift < 0 {
+			direction = 2
+		}
+		position := i + 1
+		items[i] = keyed{result: result, key: position - shift, direction: direction, position: position}
+	}
+
+	sort.SliceStable(items, func(i, j int) bool {
+		if items[i].key != items[j].key {
+			return items[i].key < items[j].key
+		}
+		if items[i].direction != items[j].direction {
+			return items[i].direction < items[j].direction
+		}
+		return items[i].position < items[j].position
 	})
 
-	// Reassign consecutive ranks after sorting
-	for i := range adjustedResults {
-		adjustedResults[i].AdjustedRank = i + 1
+	adjusted := make([]AttachmentResult, len(items))
+	for i, item := range items {
+		item.result.AdjustedRank = i + 1
+		adjusted[i] = item.result
 	}
-
-	return adjustedResults
+	return adjusted
 }
 
 // ValidateVotingConfiguration ensures the mathematical parameters are valid

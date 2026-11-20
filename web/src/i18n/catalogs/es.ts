@@ -1068,6 +1068,30 @@ export const es = {
         other: 'Estas propuestas no recibieron ninguna evaluación, así que no tienen posición en el ranking.',
       }),
     },
+    adjustmentNote:
+      'El orden final incluye un ajuste por cómo evaluó cada autor: la propuesta de quien ordenó en línea con la comunidad sube unos puestos y la de quien no, baja. Por eso el puntaje no siempre sigue el orden.',
+    adjustment: {
+      up: plural({ one: 'Subió {count} puesto', other: 'Subió {count} puestos' }),
+      down: plural({ one: 'Bajó {count} puesto', other: 'Bajó {count} puestos' }),
+      reasonGood: 'evaluó en línea con la comunidad',
+      reasonBad: 'su evaluación se alejó de la comunidad',
+      reasonNonEvaluator: 'no completó su evaluación',
+    },
+    yourAdjustment: {
+      title: 'Ajuste de tu propuesta',
+      up: plural({
+        one: 'Tu propuesta subió {count} puesto porque tu ranking coincidió con el de la comunidad.',
+        other: 'Tu propuesta subió {count} puestos porque tu ranking coincidió con el de la comunidad.',
+      }),
+      down: plural({
+        one: 'Tu propuesta bajó {count} puesto porque tu ranking se alejó del de la comunidad.',
+        other: 'Tu propuesta bajó {count} puestos porque tu ranking se alejó del de la comunidad.',
+      }),
+      downNonEvaluator: plural({
+        one: 'Tu propuesta bajó {count} puesto porque no completaste tu evaluación.',
+        other: 'Tu propuesta bajó {count} puestos porque no completaste tu evaluación.',
+      }),
+    },
     excluded: {
       title: 'Fuera del ranking',
       text: plural({

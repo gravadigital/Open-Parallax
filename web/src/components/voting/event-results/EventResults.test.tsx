@@ -99,6 +99,59 @@ describe('EventResults', () => {
     expect(screen.getByText(new RegExp(`· ${out.filename} \\(Tú\\)$`))).toBeInTheDocument();
   });
 
+  it('explica que el orden final incluye el ajuste por cómo evaluó cada autor', async () => {
+    getResults.mockResolvedValue(results);
+    renderWithProviders(<EventResults eventId="e-1" currentUserId={null} />);
+    expect(await screen.findByText(/El orden final incluye un ajuste por cómo evaluó cada autor/)).toBeInTheDocument();
+    expect(screen.queryByText(/Subió|Bajó/)).not.toBeInTheDocument();
+  });
+
+  it('muestra al participante el ajuste de su propia propuesta', async () => {
+    getResults.mockResolvedValue({
+      ...results,
+      adjusted_ranking: results.adjusted_ranking.map((x) =>
+        x.attachment_id === 'a-1' ? { ...x, adjustment: 3, adjustment_reason: 'good_evaluator' as const } : x
+      ),
+    });
+    renderWithProviders(<EventResults eventId="e-1" currentUserId="u-1" />);
+    expect(await screen.findByText('Ajuste de tu propuesta')).toBeInTheDocument();
+    expect(
+      screen.getByText('Tu propuesta subió 3 puestos porque tu ranking coincidió con el de la comunidad.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Subió 3 puestos')).toBeInTheDocument();
+  });
+
+  it('avisa cuando la propuesta propia bajó por no completar la evaluación', async () => {
+    getResults.mockResolvedValue({
+      ...results,
+      adjusted_ranking: results.adjusted_ranking.map((x) =>
+        x.attachment_id === 'a-1' ? { ...x, adjustment: -10, adjustment_reason: 'non_evaluator' as const } : x
+      ),
+    });
+    renderWithProviders(<EventResults eventId="e-1" currentUserId="u-1" />);
+    expect(
+      await screen.findByText('Tu propuesta bajó 10 puestos porque no completaste tu evaluación.')
+    ).toBeInTheDocument();
+  });
+
+  it('al organizador le muestra el ajuste de cada propuesta que lo tuvo', async () => {
+    getResults.mockResolvedValue({
+      ...results,
+      adjusted_ranking: results.adjusted_ranking.map((x) =>
+        x.attachment_id === 'a-2'
+          ? { ...x, adjustment: 3, adjustment_reason: 'good_evaluator' as const }
+          : x.attachment_id === 'a-5'
+            ? { ...x, adjustment: -3, adjustment_reason: 'bad_evaluator' as const }
+            : x
+      ),
+    });
+    renderWithProviders(<EventResults eventId="e-1" currentUserId={null} />);
+    expect(await screen.findByText('Subió 3 puestos')).toBeInTheDocument();
+    expect(screen.getByText('Bajó 3 puestos')).toBeInTheDocument();
+    expect(screen.getByText(/su evaluación se alejó de la comunidad/)).toBeInTheDocument();
+    expect(screen.queryByText('Ajuste de tu propuesta')).not.toBeInTheDocument();
+  });
+
   it('TS-47: sin resultados no es un error y nunca recalcula', async () => {
     getResults.mockRejectedValueOnce(
       new ApiError({ status: 404, body: { error: 'RESULTS_NOT_CALCULATED', message: 'x' } })

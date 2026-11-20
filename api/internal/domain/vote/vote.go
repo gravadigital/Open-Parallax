@@ -118,6 +118,28 @@ type AttachmentResult struct {
 	// not evaluate (SanctionExclusion): AdjustedRank is 0 and it comes last. Its GlobalRank in
 	// G is kept, since the votes it received are valid.
 	Excluded bool `json:"excluded,omitempty"`
+	// Adjustment is the shift the incentive applied to this proposal in G', in places relative
+	// to the proposals of neutral evaluators: positive moves it up, negative down, 0 none.
+	// AdjustmentReason says why (AdjustmentGoodEvaluator, AdjustmentBadEvaluator,
+	// AdjustmentNonEvaluator). Both reveal how its author evaluated, so the public results
+	// only show them to the author and to the event's organizer.
+	Adjustment       int    `json:"adjustment,omitempty"`
+	AdjustmentReason string `json:"adjustment_reason,omitempty"`
+}
+
+// Reasons for the adjustment of a proposal in G'.
+const (
+	AdjustmentGoodEvaluator = "good_evaluator" // its author's Q reached the good threshold
+	AdjustmentBadEvaluator  = "bad_evaluator"  // its author's Q fell to the bad threshold
+	AdjustmentNonEvaluator  = "non_evaluator"  // its author did not complete their ranking
+)
+
+// WithoutEvaluatorDetail returns the result without what reveals how its author evaluated.
+func (r AttachmentResult) WithoutEvaluatorDetail() AttachmentResult {
+	r.Adjustment = 0
+	r.AdjustmentReason = ""
+	r.NonEvaluator = false
+	return r
 }
 
 // HasAdjustedPosition reports whether the attachment has a place in the adjusted ranking G'.

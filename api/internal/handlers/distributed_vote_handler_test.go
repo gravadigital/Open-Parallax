@@ -732,6 +732,84 @@ func TestGetStoredResults_ReturnsStoredRankingWithoutRecalculating(t *testing.T)
 	assert.Equal(t, "winner.pdf", ranking[0].(map[string]interface{})["filename"])
 }
 
+// storedWithAdjustments stores results where two authors got an adjustment.
+func storedWithAdjustments(s *testHandlerSet, e *event.Event) (good, bad uuid.UUID) {
+	good, bad = uuid.New(), uuid.New()
+	ranking := vote.AttachmentResultSlice{
+		{AttachmentID: uuid.New(), ParticipantID: good, AdjustedRank: 1, Adjustment: 3, AdjustmentReason: vote.AdjustmentGoodEvaluator},
+		{AttachmentID: uuid.New(), ParticipantID: bad, AdjustedRank: 2, Adjustment: -10, AdjustmentReason: vote.AdjustmentNonEvaluator, NonEvaluator: true},
+	}
+	s.resultsRepo.byEvent[e.ID.String()] = &vote.VotingResults{ID: uuid.New(), EventID: e.ID, GlobalRanking: ranking, AdjustedRanking: ranking}
+	return good, bad
+}
+
+// getStoredAs calls GetStoredResults with an optional signed-in user (as OptionalJWTAuthMiddleware sets it).
+func getStoredAs(t *testing.T, s *testHandlerSet, e *event.Event, userID uuid.UUID, role string) []interface{} {
+	t.Helper()
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/test", nil)
+	c.Params = gin.Params{{Key: "event_id", Value: e.ID.String()}}
+	if userID != uuid.Nil {
+		c.Set("user_id", userID.String())
+	}
+	if role != "" {
+		c.Set("user_role", participant.Role(role))
+	}
+	s.handler.GetStoredResults(c)
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	return jsonBody(t, w)["data"].(map[string]interface{})["adjusted_ranking"].([]interface{})
+}
+
+func TestGetStoredResults_HidesAdjustmentsFromVisitors(t *testing.T) {
+	s := newTestHandlerSet()
+	e := newResultsEvent()
+	s.eventRepo.addEvent(e)
+	storedWithAdjustments(s, e)
+
+	for _, item := range getStoredAs(t, s, e, uuid.Nil, "") {
+		entry := item.(map[string]interface{})
+		assert.NotContains(t, entry, "adjustment")
+		assert.NotContains(t, entry, "adjustment_reason")
+		assert.NotContains(t, entry, "non_evaluator")
+	}
+}
+
+func TestGetStoredResults_ShowsEachParticipantOnlyTheirOwnAdjustment(t *testing.T) {
+	s := newTestHandlerSet()
+	e := newResultsEvent()
+	s.eventRepo.addEvent(e)
+	good, _ := storedWithAdjustments(s, e)
+
+	ranking := getStoredAs(t, s, e, good, "participant")
+	own := ranking[0].(map[string]interface{})
+	other := ranking[1].(map[string]interface{})
+	assert.EqualValues(t, 3, own["adjustment"])
+	assert.Equal(t, "good_evaluator", own["adjustment_reason"])
+	assert.NotContains(t, other, "adjustment")
+	assert.NotContains(t, other, "adjustment_reason")
+	assert.NotContains(t, other, "non_evaluator")
+}
+
+func TestGetStoredResults_ShowsTheEventAuthorEveryAdjustment(t *testing.T) {
+	s := newTestHandlerSet()
+	e := newResultsEvent()
+	s.eventRepo.addEvent(e)
+	storedWithAdjustments(s, e)
+
+	for name, viewer := range map[string]struct {
+		id   uuid.UUID
+		role string
+	}{"author": {e.AuthorID, "participant"}, "admin": {uuid.New(), "admin"}} {
+		t.Run(name, func(t *testing.T) {
+			ranking := getStoredAs(t, s, e, viewer.id, viewer.role)
+			assert.EqualValues(t, 3, ranking[0].(map[string]interface{})["adjustment"])
+			assert.EqualValues(t, -10, ranking[1].(map[string]interface{})["adjustment"])
+			assert.Equal(t, "non_evaluator", ranking[1].(map[string]interface{})["adjustment_reason"])
+		})
+	}
+}
+
 func TestGetStoredResults_NotCalculatedYetReturns404(t *testing.T) {
 	s := newTestHandlerSet()
 	e := newResultsEvent()

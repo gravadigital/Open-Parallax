@@ -172,6 +172,18 @@ El ranking global `G` se ajusta a `G'`:
 
 donde `n` = `adjustment_magnitude` (default 3).
 
+**Ajuste exacto.** El desplazamiento es relativo a las propuestas de evaluadores neutros, que
+quedan quietas (así lo plantea el paper). Cada propuesta recibe una clave = su posición en `G`
+menos su desplazamiento, y `G'` es el orden de esas claves; ante la misma clave, la que sube va
+antes de la neutral y la que baja, después. Así se mueve exactamente `n` puestos, salvo en los
+extremos de la tabla. Antes el empate lo ganaba la que ya estaba, y el movimiento real era `n−1`
+o menos (hallazgo C5 de la auditoría).
+
+**`G'` es el ranking oficial** (ADR-001). Cada propuesta guarda `adjustment` (puestos, positivo
+sube) y `adjustment_reason` (`good_evaluator`, `bad_evaluator`, `non_evaluator`). Como revelan cómo
+evaluó su autor, el GET público solo los muestra al propio autor y al organizador del evento; la
+web explica en general que el orden incluye el ajuste y a cada autor le muestra el suyo.
+
 **Quien no completó su ranking** no pasa por esa tabla: se le aplica la sanción configurada en
 `voting_configurations.non_evaluator_sanction` (migración 028):
 

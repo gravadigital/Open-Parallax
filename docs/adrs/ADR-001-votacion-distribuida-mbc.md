@@ -1,7 +1,7 @@
 # ADR-001: Votación distribuida por pares con Modified Borda Count
 
 **Estado:** Aceptado (implementado)
-**Fecha:** 2026-09-18 (documentado retroactivamente)
+**Fecha:** 2026-09-18 (documentado retroactivamente) · actualizado 2026-11-20 (auditoría contra el paper: asignación regular, sanción por no evaluar, `G'` oficial)
 **Detectado desde:** `api`
 **Tags:** dominio, algoritmo, núcleo-del-producto
 
@@ -31,7 +31,8 @@ Modified Borda Count, en `internal/domain/vote/voting_service.go`.
 El modelo tiene cuatro piezas:
 
 1. **Asignación** — Cada uno de los `n` participantes recibe `m` propuestas de las `k` totales.
-   Nadie recibe la propia (`m ≤ k−1`). Se exige `m ≥ 2·log₂(k)` como condición de convergencia,
+   Nadie recibe la propia (`m ≤ k−1`). La asignación es **regular**: como hay un evaluador por
+   propuesta (`n = k`), cada propuesta recibe exactamente `m` evaluaciones. Se exige `m ≥ 2·log₂(k)` como condición de convergencia,
    relajada al 60% del máximo posible cuando `k ≤ 10` (la fórmula está pensada para volúmenes
    grandes).
 
@@ -46,11 +47,19 @@ El modelo tiene cuatro piezas:
 3. **Calidad del evaluador** — `Q_i = 1 − (1/⌊m²/2⌋) · Σ|R_i(f_j) − RelativeRank_G(f_j, A(p_i))|`,
    la normalización del paper: `⌊m²/2⌋` es el desvío de un orden exactamente invertido, que da
    `Q_i = 0`; coincidir con el consenso da `Q_i = 1`. Mide cuánto se aparta un evaluador del consenso, **restringido al subconjunto que le tocó**.
-   Quien no completa su asignación recibe `Q_i = 0`.
+   Quien no completa su asignación no tiene `Q_i`: sus votos parciales se descartan y a su
+   propuesta se le aplica la sanción configurada por evento (`exclusion`, la del paper y por
+   defecto: sale de `G'`; o `penalty`: baja `non_evaluator_penalty` puestos).
 
 4. **Incentivos** — El ranking `G` se ajusta a `G'`: la propuesta de un evaluador con
    `Q_i ≥ quality_good_threshold` sube `n` posiciones; la de uno con `Q_i ≤ quality_bad_threshold`
-   baja `n`. **Evaluar bien mejora la posición de tu propia propuesta.**
+   baja `n`. **Evaluar bien mejora la posición de tu propia propuesta.** Como en el paper, el
+   desplazamiento es **relativo a las propuestas de evaluadores neutros**, que no se mueven: la
+   que sube queda delante de la neutral sobre la que cae y la que baja, detrás, así el movimiento
+   es exactamente `n` puestos salvo en los extremos de la tabla.
+
+**`G'` es el ranking oficial.** Es el que se publica como "Ranking final" y el que dan las
+notificaciones. `G` se conserva como dato (mérito puro) y mide el `Q_i` de cada evaluador.
 
 Los parámetros (`m`, umbrales, magnitud del ajuste, mínimo de evaluaciones) se configuran por
 evento en `voting_configurations`.
@@ -81,9 +90,11 @@ evento en `voting_configurations`.
   opinión mayoritaria es penalizado igual que uno que evalúa al azar. El modelo asume que el
   consenso aproxima la calidad — un supuesto del paper, heredado.
 - **Es difícil de explicar.** Un participante tiene que entender que evaluar mal lo perjudica, o
-  el incentivo no opera. Hoy la interfaz no lo explica en ningún lado.
-- **`min_evaluations_per_file` puede no alcanzarse en silencio** (ver D-10 en requirements): la
-  fase 1 respeta el tope `m` por participante y saltea a quien ya llegó.
+  el incentivo no opera. Los resultados explican que el orden incluye el ajuste, y cada autor ve
+  el suyo; las instrucciones de votación todavía no lo explican (crítico C6 de la auditoría).
+- **El puntaje no siempre sigue el orden de `G'`.** El MBC que se muestra es el mérito sin ajuste.
+- **El ajuste revela cómo evaluó cada autor.** Por eso la API solo muestra el ajuste de una
+  propuesta (`adjustment`, `adjustment_reason`) a su autor y al organizador del evento.
 
 ## Alternativas Consideradas
 
@@ -99,11 +110,13 @@ para el problema, no las que consta que se evaluaron.
 - **Revisión por pares sin incentivos** — Es el modelo académico tradicional, y su problema
   conocido es exactamente el que el sistema de incentivos ataca.
 
-## Decisión Pendiente
+## Decisiones tomadas (2026-11-20)
 
-⚠️ **No está definido cuál de los dos rankings es el oficial: `G` o `G'`.** El sistema calcula y
-persiste ambos. Si el oficial es `G`, las piezas 3 y 4 de este ADR no tienen efecto sobre el
-resultado. Ver Feature Group 5.
+- **`G'` es el ranking oficial** (antes "Decisión Pendiente"). Sin eso, las piezas 3 y 4 no
+  tenían efecto sobre el resultado.
+- **Sanción por no evaluar configurable por evento**, exclusión por defecto.
+- **Visibilidad de los ajustes:** el público ve `G'` y una explicación general; cada participante
+  ve el ajuste de su propuesta; el organizador ve todos.
 
 ## Referencias
 

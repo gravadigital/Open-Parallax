@@ -910,13 +910,15 @@ func (h *DistributedVoteHandler) GetStoredResults(c *gin.Context) {
 		return
 	}
 
-	// Every participant's Q is left out: the endpoint is anonymous, and each evaluator's
-	// quality score is not public information.
+	// Every participant's Q is left out: each evaluator's quality score is not public. The
+	// adjustment of each proposal (how many places and why) reveals it roughly, so it is only
+	// shown to its author, and all of them to the event's author.
+	seeAll, viewer := resultsDetailFor(c, eventObj)
 	resultData := gin.H{
 		"id":                        results.ID.String(),
 		"event_id":                  results.EventID.String(),
-		"global_ranking":            results.GlobalRanking,
-		"adjusted_ranking":          results.AdjustedRanking,
+		"global_ranking":            filterResultsDetail(results.GlobalRanking, seeAll, viewer),
+		"adjusted_ranking":          filterResultsDetail(results.AdjustedRanking, seeAll, viewer),
 		"total_participants":        results.TotalParticipants,
 		"total_votes":               results.TotalVotes,
 		"attachments_per_evaluator": results.AttachmentsPerEvaluator,

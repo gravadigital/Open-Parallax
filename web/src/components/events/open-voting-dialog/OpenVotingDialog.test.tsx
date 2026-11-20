@@ -108,23 +108,23 @@ describe('OpenVotingDialog', () => {
     expect(screen.getByRole('button', { name: 'Una propuesta menos por evaluador' })).toBeDisabled();
   });
 
-  it('TS-37: evaluaciones mínimas siguen a m mientras no se toquen; si se tocaron se acotan', async () => {
+  it('ya no ofrece evaluaciones mínimas: cada propuesta recibe exactamente m', async () => {
+    updateEventStage.mockResolvedValue({ stage: 'voting' });
     getVotingConfigPreview.mockResolvedValue({ ...preview, participants_count: 6, participants_with_proposal: 6, max_m: 5, recommended_m: 4 });
     setup();
     await screen.findByText('Propuestas');
     openAdvanced();
-    const minEval = () => screen.getByRole('spinbutton', { name: 'Evaluaciones mínimas por archivo' });
-    expect(minEval()).toHaveValue(3);
+    expect(screen.queryByRole('spinbutton', { name: 'Evaluaciones mínimas por archivo' })).not.toBeInTheDocument();
     clickTimes('Una propuesta menos por evaluador', 2);
-    expect(minEval()).toHaveValue(2);
-    clickTimes('Una propuesta más por evaluador', 3);
-    expect(minEval()).toHaveValue(3);
-    fireEvent.change(minEval(), { target: { value: '5' } });
-    expect(minEval()).toHaveValue(5);
-    clickTimes('Una propuesta menos por evaluador', 2);
-    expect(minEval()).toHaveValue(3);
-    clickTimes('Una propuesta más por evaluador', 1);
-    expect(minEval()).toHaveValue(3);
+    expect(tile('Evaluaciones por archivo', 2)).toBeInTheDocument();
+    userEvent.click(confirmButton());
+    // Se sigue enviando el mínimo recomendado, min(3, m), solo por compatibilidad con la API.
+    expect(updateEventStage).toHaveBeenCalledWith(
+      'e-1',
+      'voting',
+      '2026-10-12',
+      expect.objectContaining({ attachments_per_evaluator: 2, min_evaluations_per_file: 2 })
+    );
   });
 
   it('TS-38: menos de 3 propuestas bloquea y oculta los campos', async () => {

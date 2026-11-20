@@ -113,7 +113,7 @@ recalcula el cliente (`recommendedMinEvaluations`). La respuesta no depende de l
 **Uso en la `web` (D-09 resuelta en S-016).** El front ya no calcula `m`: `OpenVotingDialog` pide
 este endpoint al abrirse, precarga `m` con `recommended_m` (editable entre `min_m` y `max_m`) y los
 umbrales y el peso del ajuste con `defaults`. Si `can_open_voting` es `false` explica que faltan
-propuestas y no permite confirmar. Los "Ajustes avanzados" (evaluaciones mínimas, peso del ajuste,
+propuestas y no permite confirmar. Los "Ajustes avanzados" (peso del ajuste,
 umbrales) usan `NumberStepper`; los umbrales se validan en el cliente con `validateThresholds`
 (mismas reglas que `INVALID_THRESHOLDS`). Se borró `VotingConfigurationPanel` con su fórmula propia.
 
@@ -153,17 +153,26 @@ Los umbrales inválidos ya no llegan al CHECK `valid_quality_thresholds` (que an
 **Evaluadores = participantes con propuesta** (`n = k`): un inscripto sin propuesta no evalúa ni
 es evaluado, y no tiene fila en `assignments`.
 
-**El algoritmo, en dos fases** (`voting_service.go:GenerateAssignments`):
+**El algoritmo: asignación regular** (`voting_service.go:GenerateAssignments` y
+`regularAssignment`). Cada evaluador revisa exactamente `m` propuestas y **cada propuesta recibe
+exactamente `m` evaluaciones**, nunca de su autor. Es posible porque hay tantos evaluadores como
+propuestas (una por persona).
 
-1. **Cobertura mínima con tope por participante.** Se recorre buscando que cada propuesta alcance
-   `min_evaluations_per_file` evaluaciones. Se lleva un contador `assignmentsPerParticipant` y
-   **se saltea a quien ya llegó a `m`**.
-2. **Completar hasta `m`.** A cada participante que no llegó a `m` se le asignan propuestas
-   restantes, excluyendo siempre la propia.
+1. **Círculo al azar.** Se ordena a los evaluadores en un círculo aleatorio y cada uno revisa las
+   propuestas de los `m` siguientes. Eso ya es regular: la propuesta de quien está en la posición
+   `t` la revisan los `m` anteriores, y nadie se revisa a sí mismo porque `m < k`.
+2. **Mezcla.** Se hacen `20·k·m` intercambios al azar: dos revisiones `(a→x, b→y)` pasan a
+   `(a→y, b→x)` si nadie queda con su propia propuesta ni con una repetida. Cada intercambio
+   conserva `m` por evaluador y `m` por propuesta, y deshace la estructura de "vecinos del
+   círculo", así dos corridas dan asignaciones distintas.
+3. **Orden.** La lista de cada evaluador se baraja, para que el orden en que las ve no diga nada.
 
-⚠️ **Consecuencia deliberada (D-10):** una propuesta puede quedar **por debajo de
-`min_evaluations_per_file`** si no hay evaluadores elegibles bajo el tope. Es un trade-off:
-exceder `m` haría fallar el trigger. **El sistema no avisa cuando esto ocurre.**
+Con `m` evaluaciones fijas por propuesta, el promedio del código y la suma del paper dan el mismo
+MBC, y ninguna propuesta queda rankeada con menos opiniones que el resto por azar (hallazgo C4 de
+la auditoría; antes, con 100 propuestas y `m = 14`, recibían entre 4 y 29).
+
+`min_evaluations_per_file` **ya no interviene en la asignación**: la API lo sigue aceptando y
+validando (`m ≥ min_evaluations_per_file`) por compatibilidad, y la web dejó de ofrecerlo.
 
 **Transacción** (`VotingSetupRepository.OpenVoting`), en este orden:
 1. `UPDATE events` — `stage = voting` y `voting_estimated_end_date`.

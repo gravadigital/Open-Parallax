@@ -668,7 +668,6 @@ const ManageEventPage: React.FC = () => {
         <p className="mep-config__line">
           {t('manage.config.text', {
             count: applied.attachments_per_evaluator,
-            min: applied.min_evaluations_per_file,
             quality: isRecommendedConfig(applied) ? t('manage.config.recommended') : t('manage.config.custom'),
           })}
         </p>

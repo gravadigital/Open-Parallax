@@ -662,7 +662,7 @@ export const es = {
     },
     config: {
       title: 'Configuración aplicada',
-      text: plural({ one: '{count} propuesta por evaluador · mínimo {min} evaluaciones por archivo · ajustes de calidad {quality}', other: '{count} propuestas por evaluador · mínimo {min} evaluaciones por archivo · ajustes de calidad {quality}' }),
+      text: plural({ one: 'Cada evaluador revisa {count} propuesta y cada propuesta recibe {count} evaluación · ajustes de calidad {quality}', other: 'Cada evaluador revisa {count} propuestas y cada propuesta recibe {count} evaluaciones · ajustes de calidad {quality}' }),
       recommended: 'recomendados',
       custom: 'personalizados',
       sanctionExclusion: 'Quien no envíe su ranking queda fuera del ranking.',
@@ -761,7 +761,6 @@ export const es = {
       advancedHint: 'Valores recomendados · funcionan bien para la mayoría de los eventos',
       advancedShow: 'Mostrar',
       advancedHide: 'Ocultar',
-      minEvaluations: 'Evaluaciones mínimas por archivo',
       adjustment: 'Peso del ajuste por calidad',
       adjustmentUnit: 'posiciones',
       adjustmentRange: 'Elige un valor entre 1 y 10.',

@@ -26,7 +26,15 @@ func NewVotingService(voteRepo VoteRepository, attachmentRepo AttachmentReposito
 	}
 }
 
-// GenerateAssignments implements the assignment algorithm A: P → 2^F
+// GenerateAssignments implements the assignment algorithm A: P → 2^F.
+//
+// The assignment is regular: every evaluator reviews exactly m proposals and every proposal is
+// reviewed by exactly m evaluators, never by its own author. With a fixed number of reviews per
+// proposal, the average of the code and the sum of Merrifield & Saari (2009) give the same MBC,
+// and no proposal is ranked on fewer opinions than the rest by chance.
+//
+// It requires that participants[i] are exactly the owners of the proposals, one each, which is
+// how the voting stage opens: the evaluators are the participants who uploaded a proposal.
 func (vs *VotingService) GenerateAssignments(eventID uuid.UUID, participants []uuid.UUID, attachments []uuid.UUID, config *VotingConfiguration) ([]*Assignment, error) {
 	n := len(participants)
 	k := len(attachments)
@@ -42,73 +50,99 @@ func (vs *VotingService) GenerateAssignments(eventID uuid.UUID, participants []u
 		return nil, fmt.Errorf("recommended minimum attachments per evaluator is %d for %d total attachments (max possible: %d)", minM, k, maxPossibleM)
 	}
 
-	assignments := make([]*Assignment, n)
-	assignmentMatrix := make([][]bool, n)
-	for i := range assignmentMatrix {
-		assignmentMatrix[i] = make([]bool, k)
+	if n != k {
+		return nil, fmt.Errorf("a regular assignment needs one evaluator per proposal: %d evaluators, %d proposals", n, k)
 	}
 
-	evaluationsPerAttachment := make([]int, k)
-	assignmentsPerParticipant := make([]int, n)
+	// ownProposal[e] is the index of the proposal written by evaluator e.
+	evaluatorIndex := make(map[uuid.UUID]int, n)
+	for i, p := range participants {
+		if _, dup := evaluatorIndex[p]; dup {
+			return nil, fmt.Errorf("participant %s appears twice among the evaluators", p)
+		}
+		evaluatorIndex[p] = i
+	}
+	ownProposal := make([]int, n)
+	for i := range ownProposal {
+		ownProposal[i] = -1
+	}
+	for j, attachmentID := range attachments {
+		attachment, err := vs.attachmentRepo.GetByID(attachmentID.String())
+		if err != nil {
+			return nil, fmt.Errorf("failed to get attachment %s: %w", attachmentID, err)
+		}
+		e, ok := evaluatorIndex[attachment.GetParticipantID()]
+		if !ok {
+			return nil, fmt.Errorf("the author of attachment %s is not among the evaluators", attachmentID)
+		}
+		if ownProposal[e] != -1 {
+			return nil, fmt.Errorf("participant %s has more than one proposal", participants[e])
+		}
+		ownProposal[e] = j
+	}
 
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	reviews := regularAssignment(ownProposal, m, rng)
 
-	// Phase 1: Ensure minimum evaluations per file, without ever pushing a
-	// participant past m assignments. Candidates already at m (or in
-	// conflict of interest) are skipped in favor of the next one in the
-	// shuffled order, so a file may end up below MinEvaluationsPerFile when
-	// there aren't enough eligible participants left under the m cap.
-	for attachmentIdx := range k {
-		participantIndices := rng.Perm(n)
-		assigned := 0
-		for _, participantIdx := range participantIndices {
-			if assigned >= config.MinEvaluationsPerFile {
-				break
-			}
-
-			if assignmentsPerParticipant[participantIdx] >= m {
-				continue
-			}
-
-			// Check if participant can evaluate this attachment (conflict of interest)
-			if !vs.hasConflictOfInterest(participants[participantIdx], attachments[attachmentIdx]) {
-				assignmentMatrix[participantIdx][attachmentIdx] = true
-				evaluationsPerAttachment[attachmentIdx]++
-				assignmentsPerParticipant[participantIdx]++
-				assigned++
-			}
+	assignments := make([]*Assignment, n)
+	for e := range n {
+		assigned := make([]uuid.UUID, len(reviews[e]))
+		for i, j := range reviews[e] {
+			assigned[i] = attachments[j]
 		}
+		assignments[e] = NewAssignment(eventID, participants[e], assigned)
 	}
-
-	// Phase 2: Complete assignments to reach exactly m attachments per participant
-	for participantIdx := range n {
-		currentAssignments := assignmentsPerParticipant[participantIdx]
-
-		attachmentIndices := rng.Perm(k)
-		for _, attachmentIdx := range attachmentIndices {
-			if currentAssignments >= m {
-				break
-			}
-
-			if !assignmentMatrix[participantIdx][attachmentIdx] &&
-				!vs.hasConflictOfInterest(participants[participantIdx], attachments[attachmentIdx]) {
-				assignmentMatrix[participantIdx][attachmentIdx] = true
-				evaluationsPerAttachment[attachmentIdx]++
-				currentAssignments++
-			}
-		}
-
-		var assignedAttachments []uuid.UUID
-		for attachmentIdx := range k {
-			if assignmentMatrix[participantIdx][attachmentIdx] {
-				assignedAttachments = append(assignedAttachments, attachments[attachmentIdx])
-			}
-		}
-
-		assignments[participantIdx] = NewAssignment(eventID, participants[participantIdx], assignedAttachments)
-	}
-
 	return assignments, nil
+}
+
+// regularAssignment returns, for each evaluator e, the indices of the m proposals they review.
+// ownProposal[e] is the proposal written by e, and it is a bijection over 0..n-1, with 1 ≤ m < n.
+//
+// It starts from a circular arrangement in random order, where each evaluator reviews the
+// proposals of the next m evaluators in the circle: that is regular by construction (the
+// proposal of the evaluator at position t is reviewed by the m evaluators before it) and never
+// includes one's own. Then random switches mix it: two reviews (a→x, b→y) become (a→y, b→x)
+// when neither evaluator ends up with their own proposal or a repeated one. A switch keeps
+// every evaluator at m reviews and every proposal at m reviewers, so the result stays regular
+// while losing the "neighbours in the circle" structure. Each evaluator's list is shuffled at
+// the end, so the order they see says nothing.
+func regularAssignment(ownProposal []int, m int, rng *rand.Rand) [][]int {
+	n := len(ownProposal)
+	circle := rng.Perm(n)
+
+	reviews := make([][]int, n)
+	has := make([]map[int]bool, n)
+	for pos, e := range circle {
+		has[e] = make(map[int]bool, m)
+		for d := 1; d <= m; d++ {
+			j := ownProposal[circle[(pos+d)%n]]
+			reviews[e] = append(reviews[e], j)
+			has[e][j] = true
+		}
+	}
+
+	switches := 20 * n * m
+	for range switches {
+		a, b := rng.Intn(n), rng.Intn(n)
+		if a == b {
+			continue
+		}
+		ia, ib := rng.Intn(m), rng.Intn(m)
+		x, y := reviews[a][ia], reviews[b][ib]
+		if x == y || has[a][y] || has[b][x] || ownProposal[a] == y || ownProposal[b] == x {
+			continue
+		}
+		reviews[a][ia], reviews[b][ib] = y, x
+		delete(has[a], x)
+		delete(has[b], y)
+		has[a][y] = true
+		has[b][x] = true
+	}
+
+	for e := range reviews {
+		rng.Shuffle(len(reviews[e]), func(i, j int) { reviews[e][i], reviews[e][j] = reviews[e][j], reviews[e][i] })
+	}
+	return reviews
 }
 
 // CalculateModifiedBordaCount implements the MBC formula
@@ -465,16 +499,6 @@ func (vs *VotingService) applyIncentiveSystem(results []AttachmentResult, qualit
 	}
 
 	return adjustedResults
-}
-
-// hasConflictOfInterest checks if a participant has a conflict with an attachment
-func (vs *VotingService) hasConflictOfInterest(participantID, attachmentID uuid.UUID) bool {
-	attachment, err := vs.attachmentRepo.GetByID(attachmentID.String())
-	if err != nil {
-		return true // Err on the side of caution
-	}
-
-	return attachment.GetParticipantID() == participantID
 }
 
 // ValidateVotingConfiguration ensures the mathematical parameters are valid

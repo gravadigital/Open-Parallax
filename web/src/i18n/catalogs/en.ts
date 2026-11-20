@@ -662,7 +662,7 @@ export const en: Catalog = {
     },
     config: {
       title: 'Applied settings',
-      text: plural({ one: '{count} proposal per reviewer · at least {min} reviews per file · {quality} quality settings', other: '{count} proposals per reviewer · at least {min} reviews per file · {quality} quality settings' }),
+      text: plural({ one: 'Each reviewer reviews {count} proposal and each proposal gets {count} review · {quality} quality settings', other: 'Each reviewer reviews {count} proposals and each proposal gets {count} reviews · {quality} quality settings' }),
       recommended: 'recommended',
       custom: 'custom',
       sanctionExclusion: 'Anyone who doesn\'t send their ranking is left out of the ranking.',
@@ -761,7 +761,6 @@ export const en: Catalog = {
       advancedHint: 'Recommended values · they work well for most events',
       advancedShow: 'Show',
       advancedHide: 'Hide',
-      minEvaluations: 'Minimum reviews per file',
       adjustment: 'Quality adjustment weight',
       adjustmentUnit: 'positions',
       adjustmentRange: 'Choose a value between 1 and 10.',

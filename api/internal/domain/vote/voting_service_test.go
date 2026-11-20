@@ -1,6 +1,8 @@
 package vote
 
 import (
+	"fmt"
+	"math/rand"
 	"testing"
 
 	"github.com/google/uuid"
@@ -61,18 +63,9 @@ func TestGenerateAssignments_ValidConfiguration(t *testing.T) {
 	}
 }
 
-// TestGenerateAssignments_NeverExceedsMEvenWithHighMinEvaluationsPerFile is a
-// regression test for a bug found while writing this suite: Phase 1 of
-// GenerateAssignments (voting_service.go) used to distribute
-// MinEvaluationsPerFile evaluators per attachment WITHOUT checking each
-// participant's running total against m, and Phase 2 only ever ADDED
-// assignments to reach m, never removing the surplus Phase 1 produced. With
-// MinEvaluationsPerFile large relative to n, a participant could end up
-// assigned MORE than AttachmentsPerEvaluator (m) attachments.
-//
-// Phase 1 now skips any candidate already at m assignments, so this same
-// scenario (MinEvaluationsPerFile = n, forcing every eligible participant to
-// evaluate every attachment) must no longer push anyone past m.
+// MinEvaluationsPerFile no longer drives the assignment (every proposal gets exactly m), so even
+// an extreme value must not push anyone past m. Kept from the earlier two-phase algorithm, which
+// once did.
 func TestGenerateAssignments_NeverExceedsMEvenWithHighMinEvaluationsPerFile(t *testing.T) {
 	vs, _, attachmentRepo, _ := newTestService()
 	eventID := uuid.New()
@@ -98,6 +91,102 @@ func TestGenerateAssignments_NeverExceedsMEvenWithHighMinEvaluationsPerFile(t *t
 			assert.LessOrEqualf(t, len(a.AttachmentIDs), config.AttachmentsPerEvaluator,
 				"attempt %d: participant assigned more than m=%d attachments", attempt, config.AttachmentsPerEvaluator)
 		}
+	}
+}
+
+// ownersSetup registers k proposals, one per participant, and returns both lists aligned.
+func ownersSetup(t *testing.T, k int) (*VotingService, uuid.UUID, []uuid.UUID, []uuid.UUID, map[uuid.UUID]uuid.UUID) {
+	t.Helper()
+	vs, _, attachmentRepo, _ := newTestService()
+	eventID := uuid.New()
+	participants := make([]uuid.UUID, k)
+	attachments := make([]uuid.UUID, k)
+	owner := make(map[uuid.UUID]uuid.UUID, k)
+	for i := range participants {
+		participants[i], attachments[i] = uuid.New(), uuid.New()
+		owner[attachments[i]] = participants[i]
+		attachmentRepo.add(eventID, &fakeAttachment{id: attachments[i], participantID: participants[i]})
+	}
+	return vs, eventID, participants, attachments, owner
+}
+
+// Audit finding C4: every proposal must get exactly m reviews, not "between 4 and 29".
+func TestGenerateAssignments_IsRegular(t *testing.T) {
+	for _, k := range []int{3, 4, 5, 10, 20, 100} {
+		_, maxM, recommended := VotingBounds(k)
+		for _, m := range []int{recommended, maxM} {
+			vs, eventID, participants, attachments, owner := ownersSetup(t, k)
+			for run := 0; run < 20; run++ {
+				assignments, err := vs.GenerateAssignments(eventID, participants, attachments, defaultConfig(eventID, m))
+				require.NoError(t, err, "k=%d m=%d", k, m)
+				require.Len(t, assignments, k)
+
+				received := make(map[uuid.UUID]int, k)
+				for i, a := range assignments {
+					require.Equal(t, participants[i], a.ParticipantID, "assignments keep the order of the evaluators")
+					ids := a.GetAttachmentUUIDs()
+					require.Len(t, ids, m, "k=%d m=%d: each evaluator reviews exactly m", k, m)
+					seen := map[uuid.UUID]bool{}
+					for _, id := range ids {
+						require.NotEqual(t, a.ParticipantID, owner[id], "k=%d m=%d: own proposal assigned", k, m)
+						require.False(t, seen[id], "k=%d m=%d: proposal repeated in one assignment", k, m)
+						seen[id] = true
+						received[id]++
+					}
+				}
+				for _, id := range attachments {
+					require.Equal(t, m, received[id], "k=%d m=%d: each proposal is reviewed exactly m times", k, m)
+				}
+			}
+		}
+	}
+}
+
+// The circle is only the starting point: the switches must leave assignments that differ
+// between runs and that do not always pair the same reviewers.
+func TestGenerateAssignments_IsRandomized(t *testing.T) {
+	const k, m = 20, 9
+	vs, eventID, participants, attachments, _ := ownersSetup(t, k)
+
+	distinct := map[string]bool{}
+	pairCount := map[[2]uuid.UUID]int{}
+	const runs = 30
+	for run := 0; run < runs; run++ {
+		assignments, err := vs.GenerateAssignments(eventID, participants, attachments, defaultConfig(eventID, m))
+		require.NoError(t, err)
+		key := ""
+		for _, a := range assignments {
+			ids := a.GetAttachmentUUIDs()
+			key += fmt.Sprint(ids)
+			for _, id := range ids {
+				pairCount[[2]uuid.UUID{a.ParticipantID, id}]++
+			}
+		}
+		distinct[key] = true
+	}
+	assert.Equal(t, runs, len(distinct), "every run should produce a different assignment")
+	for pair, c := range pairCount {
+		assert.Less(t, c, runs, "pair %v appeared in every run", pair)
+	}
+}
+
+func TestGenerateAssignments_RejectsEvaluatorsThatAreNotTheOwners(t *testing.T) {
+	vs, eventID, participants, attachments, _ := ownersSetup(t, 4)
+
+	_, err := vs.GenerateAssignments(eventID, participants[:3], attachments, defaultConfig(eventID, 2))
+	assert.ErrorContains(t, err, "one evaluator per proposal")
+
+	stranger := append([]uuid.UUID{uuid.New()}, participants[1:]...)
+	_, err = vs.GenerateAssignments(eventID, stranger, attachments, defaultConfig(eventID, 2))
+	assert.ErrorContains(t, err, "not among the evaluators")
+}
+
+func TestRegularAssignment_SmallestCase(t *testing.T) {
+	// k=3, m=2: the only valid assignment is "everyone reviews the other two".
+	own := []int{0, 1, 2}
+	reviews := regularAssignment(own, 2, rand.New(rand.NewSource(1)))
+	for e, list := range reviews {
+		assert.ElementsMatch(t, []int{(e + 1) % 3, (e + 2) % 3}, list)
 	}
 }
 

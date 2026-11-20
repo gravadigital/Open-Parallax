@@ -5,7 +5,6 @@ import {
   ADJUSTMENT_MAX,
   ADJUSTMENT_MIN,
   DEFAULT_DURATION_DAYS,
-  MIN_EVALUATIONS_MAX,
   PENALTY_MAX,
   PENALTY_MIN,
   THRESHOLD_STEP,
@@ -65,7 +64,6 @@ const OpenVotingContent: React.FC<ContentProps> = ({ eventId, today, onClose, on
   const [attempt, setAttempt] = useState(0);
   const [date, setDate] = useState(() => addDays(base, DEFAULT_DURATION_DAYS));
   const [draft, setDraft] = useState<VotingConfigDraft | null>(null);
-  const [minTouched, setMinTouched] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<TranslationKey | null>(null);
@@ -78,7 +76,6 @@ const OpenVotingContent: React.FC<ContentProps> = ({ eventId, today, onClose, on
         if (!active) return;
         setPreview({ status: 'ready', data });
         setDraft(initialVotingDraft(data));
-        setMinTouched(false);
       },
       () => {
         if (active) setPreview({ status: 'error' });
@@ -116,10 +113,8 @@ const OpenVotingContent: React.FC<ContentProps> = ({ eventId, today, onClose, on
 
   const changePerReviewer = (m: number): void => {
     if (!draft) return;
-    const minEvaluations = minTouched
-      ? Math.min(draft.min_evaluations_per_file, m)
-      : recommendedMinEvaluations(m);
-    updateDraft({ attachments_per_evaluator: m, min_evaluations_per_file: minEvaluations });
+    // Cada propuesta recibe exactamente m evaluaciones; el mínimo se envía solo por compatibilidad.
+    updateDraft({ attachments_per_evaluator: m, min_evaluations_per_file: recommendedMinEvaluations(m) });
   };
 
   const handleConfirm = async (): Promise<void> => {
@@ -330,18 +325,6 @@ const OpenVotingContent: React.FC<ContentProps> = ({ eventId, today, onClose, on
             </button>
             {advancedOpen && (
               <div id={advancedId} className="ev-open-voting__advanced-grid">
-                <NumberStepper
-                  variant="field"
-                  {...stepperLabels(t('manage.openVoting.minEvaluations'))}
-                  value={draft.min_evaluations_per_file}
-                  min={1}
-                  max={Math.min(MIN_EVALUATIONS_MAX, draft.attachments_per_evaluator)}
-                  disabled={submitting}
-                  onChange={(value) => {
-                    setMinTouched(true);
-                    updateDraft({ min_evaluations_per_file: value });
-                  }}
-                />
                 <NumberStepper
                   variant="field"
                   {...stepperLabels(t('manage.openVoting.adjustment'))}

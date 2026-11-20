@@ -843,7 +843,7 @@ paths:
                       type: integer
                       minimum: 1
                       maximum: 20
-                      description: 'Default min(3, attachments_per_evaluator)'
+                      description: 'Default min(3, attachments_per_evaluator). Ya no afecta la asignación, que es regular (cada propuesta recibe exactamente attachments_per_evaluator evaluaciones); se acepta por compatibilidad'
                     non_evaluator_sanction:
                       type: string
                       enum: [exclusion, penalty]
@@ -2216,7 +2216,7 @@ components:
         quality_good_threshold: { type: number, format: double }
         quality_bad_threshold: { type: number, format: double }
         adjustment_magnitude: { type: integer, description: 'Parámetro n' }
-        min_evaluations_per_file: { type: integer }
+        min_evaluations_per_file: { type: integer, description: 'Sin efecto desde la asignación regular: cada propuesta recibe exactamente m evaluaciones' }
         non_evaluator_sanction:
           type: string
           enum: [exclusion, penalty]

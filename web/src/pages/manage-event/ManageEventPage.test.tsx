@@ -323,7 +323,7 @@ describe('ManageEventPage', () => {
       const appliedConfig = screen.getByText('Configuración aplicada').closest<HTMLElement>('.mep-item--voting-config')!;
       expect(appliedConfig.previousElementSibling).toHaveClass('mep-item--next');
       expect(appliedConfig).toHaveTextContent(
-        '2 propuestas por evaluador · mínimo 2 evaluaciones por archivo · ajustes de calidad recomendados'
+        'Cada evaluador revisa 2 propuestas y cada propuesta recibe 2 evaluaciones · ajustes de calidad recomendados'
       );
       expect(screen.getByRole('button', { name: 'Cerrar votación y publicar' })).toHaveClass('ui-button--primary');
       expect(screen.queryByText('Faltan 3 de 4 rankings.')).toBeNull();
@@ -902,7 +902,7 @@ describe('ManageEventPage', () => {
       const ranking = await screen.findByRole('list', { name: 'Ranking final' });
       expect(within(ranking).getAllByRole('listitem')).toHaveLength(3);
       expect(await screen.findAllByText('Bruno Ríos')).not.toHaveLength(0);
-      expect(await screen.findByText(/2 propuestas por evaluador/)).toBeInTheDocument();
+      expect(await screen.findByText(/revisa 2 propuestas/)).toBeInTheDocument();
       expect(screen.queryByText('Próximo paso')).toBeNull();
       expect(screen.queryByRole('button', { name: 'Pausar evento' })).toBeNull();
       expect(screen.queryByRole('button', { name: /Recordar|recordatorio/ })).toBeNull();

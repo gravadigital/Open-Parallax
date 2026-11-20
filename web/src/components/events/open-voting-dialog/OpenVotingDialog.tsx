@@ -6,6 +6,8 @@ import {
   ADJUSTMENT_MIN,
   DEFAULT_DURATION_DAYS,
   MIN_EVALUATIONS_MAX,
+  PENALTY_MAX,
+  PENALTY_MIN,
   THRESHOLD_STEP,
   addDays,
   formatDateCompact,
@@ -16,6 +18,7 @@ import {
   validateVotingDraft,
 } from '../../../domain';
 import type { VotingConfigDraft, VotingConfigPreview } from '../../../domain';
+import type { NonEvaluatorSanction } from '../../../types';
 import { scopedMessageKeyForError, useT } from '../../../i18n';
 import type { TranslationKey } from '../../../i18n';
 import { DistributedVotingService, EventService } from '../../../services/api';
@@ -35,6 +38,7 @@ const ERROR_CODES = [
   'INSUFFICIENT_ATTACHMENTS',
   'M_EXCEEDS_EVALUABLE',
   'INVALID_THRESHOLDS',
+  'INVALID_SANCTION',
   'MATH_CONSTRAINT_VIOLATION',
   'INVALID_ESTIMATED_DATE',
   'INVALID_TRANSITION',
@@ -91,6 +95,7 @@ const OpenVotingContent: React.FC<ContentProps> = ({ eventId, today, onClose, on
   const dateId = React.useId();
   const dateErrorId = `${dateId}-error`;
   const advancedId = React.useId();
+  const sanctionName = React.useId();
 
   const dateIssue = validateNewDeadline(date, base);
   const draftIssue = draft ? validateVotingDraft(draft) : null;
@@ -100,6 +105,8 @@ const OpenVotingContent: React.FC<ContentProps> = ({ eventId, today, onClose, on
       : undefined;
   const adjustmentError =
     draftIssue === 'adjustment_out_of_range' ? t('manage.openVoting.adjustmentRange') : undefined;
+  const penaltyError =
+    draftIssue === 'penalty_out_of_range' ? t('manage.openVoting.penaltyRange') : undefined;
   const confirmDisabled = !canOpen || Boolean(dateIssue) || Boolean(draftIssue);
 
   const updateDraft = (patch: Partial<VotingConfigDraft>): void => {
@@ -126,6 +133,8 @@ const OpenVotingContent: React.FC<ContentProps> = ({ eventId, today, onClose, on
         adjustment_magnitude: draft.adjustment_magnitude,
         quality_good_threshold: draft.quality_good_threshold,
         quality_bad_threshold: draft.quality_bad_threshold,
+        non_evaluator_sanction: draft.non_evaluator_sanction,
+        non_evaluator_penalty: draft.non_evaluator_penalty,
       });
       onDone();
     } catch (err) {
@@ -369,6 +378,47 @@ const OpenVotingContent: React.FC<ContentProps> = ({ eventId, today, onClose, on
                   disabled={submitting}
                   onChange={(value) => updateDraft({ quality_bad_threshold: value })}
                 />
+                <fieldset className="ev-open-voting__sanction" disabled={submitting}>
+                  <legend className="ev-open-voting__label">{t('manage.openVoting.sanctionLegend')}</legend>
+                  {(['exclusion', 'penalty'] as NonEvaluatorSanction[]).map((option) => (
+                    <label key={option} className="ev-open-voting__sanction-option">
+                      <input
+                        type="radio"
+                        name={sanctionName}
+                        value={option}
+                        checked={draft.non_evaluator_sanction === option}
+                        onChange={() => updateDraft({ non_evaluator_sanction: option })}
+                      />
+                      <span className="ev-open-voting__sanction-copy">
+                        <span className="ev-open-voting__sanction-title">
+                          {option === 'exclusion'
+                            ? t('manage.openVoting.sanctionExclusion')
+                            : t('manage.openVoting.sanctionPenalty')}
+                        </span>
+                        <span className="ev-open-voting__sanction-help">
+                          {option === 'exclusion'
+                            ? t('manage.openVoting.sanctionExclusionHelp')
+                            : t('manage.openVoting.sanctionPenaltyHelp')}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                  <p className="ev-open-voting__sanction-note">{t('manage.openVoting.sanctionNote')}</p>
+                </fieldset>
+                {draft.non_evaluator_sanction === 'penalty' && (
+                  <NumberStepper
+                    variant="field"
+                    {...stepperLabels(t('manage.openVoting.penalty'))}
+                    value={draft.non_evaluator_penalty}
+                    min={PENALTY_MIN}
+                    max={PENALTY_MAX}
+                    unit={t('manage.openVoting.adjustmentUnit')}
+                    error={penaltyError}
+                    rangeError={t('manage.openVoting.penaltyRange')}
+                    disabled={submitting}
+                    onChange={(value) => updateDraft({ non_evaluator_penalty: value })}
+                  />
+                )}
               </div>
             )}
           </div>

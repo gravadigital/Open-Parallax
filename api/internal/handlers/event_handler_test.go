@@ -573,6 +573,49 @@ func TestUpdateEventStage_IgnoresVotingConfigOutsideVoting(t *testing.T) {
 	assert.Equal(t, 1, s.eventRepo.stageUpdates)
 }
 
+func TestUpdateEventStage_OpensVotingWithExclusionByDefault(t *testing.T) {
+	s := newTestEventHandlerSet()
+	f := seedOpenVoting(s, 3, 3)
+
+	w := patchStage(t, s, f.event.ID, votingBody(dateStr(time.Now().AddDate(0, 0, 3)), map[string]interface{}{"attachments_per_evaluator": 2}))
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	require.NotNil(t, s.setupRepo.config)
+	assert.Equal(t, vote.SanctionExclusion, s.setupRepo.config.NonEvaluatorSanction)
+	assert.Equal(t, vote.DefaultNonEvaluatorPenalty, s.setupRepo.config.NonEvaluatorPenalty)
+}
+
+func TestUpdateEventStage_OpensVotingWithPenalty(t *testing.T) {
+	s := newTestEventHandlerSet()
+	f := seedOpenVoting(s, 3, 3)
+
+	w := patchStage(t, s, f.event.ID, votingBody(dateStr(time.Now().AddDate(0, 0, 3)), map[string]interface{}{
+		"attachments_per_evaluator": 2, "non_evaluator_sanction": "penalty", "non_evaluator_penalty": 7,
+	}))
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.Equal(t, vote.SanctionPenalty, s.setupRepo.config.NonEvaluatorSanction)
+	assert.Equal(t, 7, s.setupRepo.config.NonEvaluatorPenalty)
+}
+
+func TestUpdateEventStage_RejectsInvalidSanction(t *testing.T) {
+	for name, cfg := range map[string]map[string]interface{}{
+		"unknown sanction": {"attachments_per_evaluator": 2, "non_evaluator_sanction": "warning"},
+		"penalty of zero":  {"attachments_per_evaluator": 2, "non_evaluator_sanction": "penalty", "non_evaluator_penalty": 0},
+	} {
+		t.Run(name, func(t *testing.T) {
+			s := newTestEventHandlerSet()
+			f := seedOpenVoting(s, 3, 3)
+
+			w := patchStage(t, s, f.event.ID, votingBody(dateStr(time.Now().AddDate(0, 0, 3)), cfg))
+
+			require.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
+			assert.Equal(t, "INVALID_SANCTION", jsonBody(t, w)["code"])
+			assert.Zero(t, s.setupRepo.calls)
+		})
+	}
+}
+
 // The preview and the opening must agree on which m is acceptable.
 func TestUpdateEventStage_AcceptsRecommendedMAndRejectsBelowMinimum(t *testing.T) {
 	tests := []struct{ k, recommended, belowMin int }{{3, 2, 1}, {4, 3, 1}, {10, 7, 5}}
@@ -1122,6 +1165,7 @@ func TestUpdateEventStage_StoresResultsWithMissingRankings(t *testing.T) {
 		if i != 0 {
 			continue
 		}
+		a.MarkCompleted()
 		for rank, id := range a.GetAttachmentUUIDs() {
 			s.voteRepo.votes = append(s.voteRepo.votes, &vote.Vote{
 				ID: uuid.New(), EventID: e.ID, AssignmentID: a.ID, VoterID: u.ID,

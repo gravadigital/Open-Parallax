@@ -161,6 +161,8 @@ type VotingConfiguration struct {
 	QualityGoodThreshold    float64   `gorm:"type:decimal(3,2);not null;default:0.65" json:"quality_good_threshold"` // Q_good
 	QualityBadThreshold     float64   `gorm:"type:decimal(3,2);not null;default:0.35" json:"quality_bad_threshold"`  // Q_bad
 	AdjustmentMagnitude     int       `gorm:"not null;default:3" json:"adjustment_magnitude"`                        // n parameter
+	NonEvaluatorSanction    string    `gorm:"size:20;not null;default:'exclusion'" json:"non_evaluator_sanction"`
+	NonEvaluatorPenalty     int       `gorm:"not null;default:10" json:"non_evaluator_penalty"`
 	UseExpertiseMatching    bool      `gorm:"default:false" json:"use_expertise_matching"`
 	EnableCOIDetection      bool      `gorm:"column:enable_co_idetection;default:true" json:"enable_coi_detection"`
 	RandomizationSeed       *int      `json:"randomization_seed"`

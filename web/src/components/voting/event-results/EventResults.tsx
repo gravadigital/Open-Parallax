@@ -105,7 +105,7 @@ const EventResults: React.FC<EventResultsProps> = ({
     return <p className="vt-event-results__message">{t('errors.RESULTS_NOT_CALCULATED')}</p>;
   }
 
-  const { podium, rest, unevaluated } = splitResults(state.results.adjusted_ranking);
+  const { podium, rest, unevaluated, excluded } = splitResults(state.results.adjusted_ranking);
   const allEntries = [...podium, ...rest];
   return (
     <Card as="article" padding="compact" className="vt-event-results">
@@ -145,6 +145,21 @@ const EventResults: React.FC<EventResultsProps> = ({
           </p>
           <ul className="vt-event-results__unevaluated">
             {unevaluated.map((entry) => (
+              <li key={entry.attachment_id}>
+                {entry.participant_name || '—'} · {entry.filename}
+                {currentUserId !== null && entry.participant_id === currentUserId && ` (${t('results.you')})`}
+              </li>
+            ))}
+          </ul>
+        </Callout>
+      )}
+      {excluded.length > 0 && (
+        <Callout tone="info" title={t('results.excluded.title')}>
+          <p className="vt-event-results__unevaluated-text">
+            {t('results.excluded.text', { count: excluded.length })}
+          </p>
+          <ul className="vt-event-results__unevaluated">
+            {excluded.map((entry) => (
               <li key={entry.attachment_id}>
                 {entry.participant_name || '—'} · {entry.filename}
                 {currentUserId !== null && entry.participant_id === currentUserId && ` (${t('results.you')})`}

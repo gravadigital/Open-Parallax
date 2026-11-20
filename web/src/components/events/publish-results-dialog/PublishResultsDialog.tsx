@@ -3,6 +3,7 @@ import { Button, Callout, Dialog, ProgressBar } from '../../ui';
 import Countdown from '../countdown/Countdown';
 import { endOfDay } from '../../../domain/dates';
 import type { VotingProgress } from '../../../domain';
+import type { NonEvaluatorSanction } from '../../../types';
 import { scopedMessageKeyForError, useT } from '../../../i18n';
 import type { TranslationKey } from '../../../i18n';
 import { EventService } from '../../../services/api';
@@ -15,6 +16,8 @@ export interface PublishResultsDialogProps {
   votingDeadline: string | null;
   /** Propuestas que todavía no tienen ningún voto: si se publica, quedan sin posición. */
   unevaluated?: number;
+  /** Sanción configurada para quien no envió su ranking; sin dato se asume exclusión. */
+  sanction?: NonEvaluatorSanction;
   onClose: () => void;
   onDone: () => void;
 }
@@ -27,6 +30,7 @@ const PublishResultsDialog: React.FC<PublishResultsDialogProps> = ({
   progress,
   votingDeadline,
   unevaluated = 0,
+  sanction = 'exclusion',
   onClose,
   onDone,
 }) => {
@@ -119,7 +123,7 @@ const PublishResultsDialog: React.FC<PublishResultsDialogProps> = ({
               tone="warning"
               valueText={t('manage.metrics.rankingsA11y', { sent: progress.sent, total: progress.total })}
             />
-            <p className="ev-publish-results__missing-text">{t('manage.publish.missingText')}</p>
+            <p className="ev-publish-results__missing-text">{sanction === 'penalty' ? t('manage.publish.missingTextPenalty') : t('manage.publish.missingText')}</p>
           </div>
         </Callout>
       )}

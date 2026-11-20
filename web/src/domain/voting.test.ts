@@ -52,6 +52,8 @@ describe('voting', () => {
       adjustment_magnitude: 3,
       quality_good_threshold: 0.6,
       quality_bad_threshold: 0.3,
+      non_evaluator_sanction: 'exclusion',
+      non_evaluator_penalty: 10,
     });
     expect(initialVotingDraft({ ...preview, recommended_m: 5, max_m: 7 }).min_evaluations_per_file).toBe(3);
     expect([ADJUSTMENT_MIN, ADJUSTMENT_MAX, MIN_EVALUATIONS_MAX, THRESHOLD_STEP]).toEqual([1, 10, 20, 0.05]);
@@ -66,6 +68,14 @@ describe('voting', () => {
     );
     expect(validateVotingDraft({ ...draft, quality_good_threshold: 0.7, quality_bad_threshold: 0.6 })).toBeNull();
     expect(validateVotingDraft({ ...draft, adjustment_magnitude: 11 })).toBe('adjustment_out_of_range');
+    expect(validateVotingDraft({ ...draft, non_evaluator_sanction: 'penalty', non_evaluator_penalty: 0 })).toBe(
+      'penalty_out_of_range'
+    );
+    expect(validateVotingDraft({ ...draft, non_evaluator_sanction: 'penalty', non_evaluator_penalty: 101 })).toBe(
+      'penalty_out_of_range'
+    );
+    // Con exclusión, la cantidad de posiciones no se usa y no se valida.
+    expect(validateVotingDraft({ ...draft, non_evaluator_sanction: 'exclusion', non_evaluator_penalty: 0 })).toBeNull();
     expect(validateVotingDraft(draft)).toBeNull();
   });
 

@@ -147,8 +147,26 @@ func (vs *VotingService) CalculateModifiedBordaCount(eventID uuid.UUID, config *
 		return nil, fmt.Errorf("attachments per evaluator must be at least 2, got %d", m)
 	}
 
+	assignments, err := vs.voteRepo.GetAssignmentsByEventID(eventID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get assignments: %w", err)
+	}
+
+	// Whoever did not complete their ranking is a non-evaluator: their partial votes are
+	// discarded, so they neither help nor hurt anyone, and their own proposal is sanctioned
+	// below (Merrifield & Saari 2009).
+	nonEvaluators := make(map[uuid.UUID]bool)
+	for _, a := range assignments {
+		if !a.IsCompleted {
+			nonEvaluators[a.ParticipantID] = true
+		}
+	}
+
 	votesByAttachment := make(map[uuid.UUID][]*Vote)
 	for _, vote := range votes {
+		if nonEvaluators[vote.VoterID] {
+			continue
+		}
 		votesByAttachment[vote.AttachmentID] = append(votesByAttachment[vote.AttachmentID], vote)
 	}
 
@@ -191,6 +209,7 @@ func (vs *VotingService) CalculateModifiedBordaCount(eventID uuid.UUID, config *
 			MBCScore:        mbcScore,
 			VoteCount:       voteCount,
 			AverageRank:     averageRank,
+			NonEvaluator:    nonEvaluators[attachment.GetParticipantID()],
 		})
 	}
 
@@ -224,8 +243,8 @@ func (vs *VotingService) CalculateModifiedBordaCount(eventID uuid.UUID, config *
 		ranked[i].GlobalRank = i + 1
 	}
 
-	// Calculate participant quality scores Q_i
-	participantQualities, err := vs.calculateParticipantQualities(eventID, ranked, m)
+	// Calculate participant quality scores Q_i (only for whoever completed their ranking)
+	participantQualities, err := vs.calculateParticipantQualities(eventID, assignments, ranked, m)
 	if err != nil {
 		return nil, fmt.Errorf("failed to calculate participant qualities: %w", err)
 	}
@@ -236,17 +255,46 @@ func (vs *VotingService) CalculateModifiedBordaCount(eventID uuid.UUID, config *
 		totalVotes += result.VoteCount
 	}
 
+	// G keeps every evaluated proposal, excluded ones included: the votes they received are
+	// valid and the Q of the people who ranked them is measured against that order.
+	globalRanking := append(append([]AttachmentResult{}, ranked...), unevaluated...)
+
+	// Under exclusion, the non-evaluators' proposals leave G' and are listed last.
+	exclude := config.NonEvaluatorSanction != SanctionPenalty
+	var candidates, excluded []AttachmentResult
+	for _, result := range ranked {
+		if exclude && result.NonEvaluator {
+			result.Excluded = true
+			result.AdjustedRank = 0
+			excluded = append(excluded, result)
+			continue
+		}
+		candidates = append(candidates, result)
+	}
+	var unevaluatedKept []AttachmentResult
+	for _, result := range unevaluated {
+		if exclude && result.NonEvaluator {
+			result.Excluded = true
+			excluded = append(excluded, result)
+			continue
+		}
+		unevaluatedKept = append(unevaluatedKept, result)
+	}
+
 	// Apply incentive system to create adjusted ranking G'
-	adjustedResults := vs.applyIncentiveSystem(ranked, participantQualities, config)
+	adjustedResults := vs.applyIncentiveSystem(candidates, participantQualities, nonEvaluators, config)
+
+	adjustedRanking := append(adjustedResults, unevaluatedKept...)
+	adjustedRanking = append(adjustedRanking, excluded...)
 
 	// Create voting results object
 	votingResults := &VotingResults{
 		ID:                      uuid.New(),
 		EventID:                 eventID,
-		GlobalRanking:           append(ranked, unevaluated...),
+		GlobalRanking:           globalRanking,
 		ParticipantQualities:    participantQualities,
-		AdjustedRanking:         append(adjustedResults, unevaluated...),
-		TotalParticipants:       len(participantQualities),
+		AdjustedRanking:         adjustedRanking,
+		TotalParticipants:       len(assignments),
 		TotalVotes:              totalVotes,
 		AttachmentsPerEvaluator: m,
 		CalculatedAt:            time.Now(),
@@ -258,12 +306,9 @@ func (vs *VotingService) CalculateModifiedBordaCount(eventID uuid.UUID, config *
 // calculateParticipantQualities implements Q_i = 1 - (1/⌊m²/2⌋) * Σ|R_i(f_j) - RelativeRank_G(f_j, A(p_i))|
 // (Merrifield & Saari 2009). ⌊m²/2⌋ is the largest possible deviation, reached by ranking the
 // subset in exactly the reverse order, so Q_i spans [0,1] without clamping.
-func (vs *VotingService) calculateParticipantQualities(eventID uuid.UUID, globalResults []AttachmentResult, m int) (map[string]float64, error) {
-	assignments, err := vs.voteRepo.GetAssignmentsByEventID(eventID.String())
-	if err != nil {
-		return nil, fmt.Errorf("failed to get assignments: %w", err)
-	}
-
+// Only participants who completed their ranking get a Q: a non-evaluator has nothing to measure
+// and is handled by the sanction instead.
+func (vs *VotingService) calculateParticipantQualities(eventID uuid.UUID, assignments []*Assignment, globalResults []AttachmentResult, m int) (map[string]float64, error) {
 	globalRankMap := make(map[uuid.UUID]int)
 	for _, result := range globalResults {
 		globalRankMap[result.AttachmentID] = result.GlobalRank
@@ -272,12 +317,9 @@ func (vs *VotingService) calculateParticipantQualities(eventID uuid.UUID, global
 	qualities := make(map[string]float64)
 
 	for _, assignment := range assignments {
-		// Include all participants, even if not completed
-		// Incomplete assignments get quality score of 0
 		participantID := assignment.ParticipantID.String()
 
 		if !assignment.IsCompleted {
-			qualities[participantID] = 0.0
 			continue
 		}
 
@@ -373,12 +415,18 @@ func (vs *VotingService) calculateRelativeRanks(assignedAttachments []uuid.UUID,
 	return relativeRanks
 }
 
-// applyIncentiveSystem implements the adjustment Δ(owner(f_j))
-func (vs *VotingService) applyIncentiveSystem(results []AttachmentResult, qualities map[string]float64, config *VotingConfiguration) []AttachmentResult {
+// applyIncentiveSystem implements the adjustment Δ(owner(f_j)). Under SanctionPenalty the
+// proposal of a non-evaluator drops NonEvaluatorPenalty places instead of the quality adjustment.
+func (vs *VotingService) applyIncentiveSystem(results []AttachmentResult, qualities map[string]float64, nonEvaluators map[uuid.UUID]bool, config *VotingConfiguration) []AttachmentResult {
 	adjustedResults := make([]AttachmentResult, len(results))
 	copy(adjustedResults, results)
 
 	for i := range adjustedResults {
+		if nonEvaluators[adjustedResults[i].ParticipantID] {
+			adjustedResults[i].AdjustedRank = min(adjustedResults[i].GlobalRank+config.NonEvaluatorPenalty, len(results))
+			continue
+		}
+
 		participantID := adjustedResults[i].ParticipantID.String()
 		quality, exists := qualities[participantID]
 

@@ -219,6 +219,15 @@ func (r *PostgresVotingConfigurationRepository) ValidateConfiguration(config *vo
 		return fmt.Errorf("adjustment magnitude must be between 1 and 10, got %d", config.AdjustmentMagnitude)
 	}
 
+	if !vote.IsValidSanction(config.NonEvaluatorSanction) {
+		return fmt.Errorf("non-evaluator sanction must be %q or %q, got %q",
+			vote.SanctionExclusion, vote.SanctionPenalty, config.NonEvaluatorSanction)
+	}
+	if config.NonEvaluatorPenalty < vote.MinNonEvaluatorPenalty || config.NonEvaluatorPenalty > vote.MaxNonEvaluatorPenalty {
+		return fmt.Errorf("non-evaluator penalty must be between %d and %d, got %d",
+			vote.MinNonEvaluatorPenalty, vote.MaxNonEvaluatorPenalty, config.NonEvaluatorPenalty)
+	}
+
 	r.log.Debug("voting configuration validation successful", "config_id", config.ID)
 	return nil
 }

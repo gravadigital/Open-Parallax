@@ -665,11 +665,18 @@ const ManageEventPage: React.FC = () => {
     const applied = config.data;
     return (
       <Callout tone="info" title={t('manage.config.title')}>
-        {t('manage.config.text', {
-          count: applied.attachments_per_evaluator,
-          min: applied.min_evaluations_per_file,
-          quality: isRecommendedConfig(applied) ? t('manage.config.recommended') : t('manage.config.custom'),
-        })}
+        <p className="mep-config__line">
+          {t('manage.config.text', {
+            count: applied.attachments_per_evaluator,
+            min: applied.min_evaluations_per_file,
+            quality: isRecommendedConfig(applied) ? t('manage.config.recommended') : t('manage.config.custom'),
+          })}
+        </p>
+        <p className="mep-config__line">
+          {applied.non_evaluator_sanction === 'penalty'
+            ? t('manage.config.sanctionPenalty', { count: applied.non_evaluator_penalty ?? 0 })
+            : t('manage.config.sanctionExclusion')}
+        </p>
       </Callout>
     );
   })();
@@ -897,6 +904,7 @@ const ManageEventPage: React.FC = () => {
           progress={progress}
           votingDeadline={event.voting_estimated_end_date ?? null}
           unevaluated={rosterReady && stats.data ? unevaluatedProposals(proposals.length, stats.data) : 0}
+          sanction={config.data?.non_evaluator_sanction}
           onClose={closeDialog}
           onDone={() => finishDialog('manage.success.resultsPublished', undefined, true)}
         />

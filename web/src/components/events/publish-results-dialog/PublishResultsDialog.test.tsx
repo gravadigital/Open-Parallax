@@ -14,7 +14,7 @@ const apiErr = (status: number, code: string) => new ApiError({ status, body: { 
 const missing: VotingProgress = { sent: 1, total: 4, missing: 3, complete: false };
 const complete: VotingProgress = { sent: 4, total: 4, missing: 0, complete: true };
 
-const setup = (progress: VotingProgress = missing, unevaluated?: number) => {
+const setup = (progress: VotingProgress = missing, unevaluated?: number, sanction?: 'exclusion' | 'penalty') => {
   const onClose = jest.fn();
   const onDone = jest.fn();
   renderWithProviders(
@@ -24,6 +24,7 @@ const setup = (progress: VotingProgress = missing, unevaluated?: number) => {
       progress={progress}
       votingDeadline="2026-12-27"
       unevaluated={unevaluated}
+      sanction={sanction}
       onClose={onClose}
       onDone={onDone}
     />
@@ -53,6 +54,16 @@ describe('PublishResultsDialog', () => {
     expect(screen.getByRole('button', { name: 'Publicar igual' })).toBeInTheDocument();
     // describedby = explicación + aviso
     expect(dialog).toHaveAccessibleDescription(/^Se calcula el ranking final.*Faltan 3 de 4 rankings/);
+  });
+
+  it('explica la sanción configurada para quien no envió su ranking', () => {
+    setup(missing, 0, 'exclusion');
+    expect(screen.getByText(/La propuesta de quien no envió su ranking queda fuera del ranking/)).toBeInTheDocument();
+  });
+
+  it('con penalización avisa que la propuesta baja posiciones', () => {
+    setup(missing, 0, 'penalty');
+    expect(screen.getByText(/La propuesta de quien no envió su ranking baja posiciones/)).toBeInTheDocument();
   });
 
   it('TS-44: seguir esperando cierra sin publicar', () => {

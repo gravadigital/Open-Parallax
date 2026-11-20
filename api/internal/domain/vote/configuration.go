@@ -14,6 +14,12 @@ const (
 	DefaultAdjustmentMagnitude   = 3
 	DefaultMinEvaluationsPerFile = 3
 
+	// DefaultNonEvaluatorPenalty is the drop under SanctionPenalty: well above the ±3 of the
+	// quality incentive, so not evaluating always costs more than evaluating badly.
+	DefaultNonEvaluatorPenalty = 10
+	MinNonEvaluatorPenalty     = 1
+	MaxNonEvaluatorPenalty     = 100
+
 	// minThresholdGapCents mirrors the valid_quality_thresholds CHECK (0.1),
 	// compared in hundredths because the column is decimal(3,2).
 	minThresholdGapCents = 10
@@ -23,6 +29,7 @@ var (
 	ErrInvalidThresholds = errors.New("invalid quality thresholds")
 	ErrMExceedsEvaluable = errors.New("attachments per evaluator exceeds evaluable proposals")
 	ErrMathConstraint    = errors.New("voting configuration violates mathematical constraints")
+	ErrInvalidSanction   = errors.New("invalid non-evaluator sanction")
 )
 
 // ConfigInput carries the organizer's choices; nil fields take the default.
@@ -32,6 +39,8 @@ type ConfigInput struct {
 	QualityBadThreshold     *float64
 	AdjustmentMagnitude     *int
 	MinEvaluationsPerFile   *int
+	NonEvaluatorSanction    *string
+	NonEvaluatorPenalty     *int
 }
 
 // VotingBounds returns the accepted range for m given k proposals, where
@@ -61,6 +70,8 @@ func BuildVotingConfiguration(eventID uuid.UUID, in ConfigInput, k int) (*Voting
 		QualityBadThreshold:     DefaultQualityBadThreshold,
 		AdjustmentMagnitude:     DefaultAdjustmentMagnitude,
 		MinEvaluationsPerFile:   min(DefaultMinEvaluationsPerFile, m),
+		NonEvaluatorSanction:    SanctionExclusion,
+		NonEvaluatorPenalty:     DefaultNonEvaluatorPenalty,
 	}
 	if in.QualityGoodThreshold != nil {
 		cfg.QualityGoodThreshold = *in.QualityGoodThreshold
@@ -73,6 +84,20 @@ func BuildVotingConfiguration(eventID uuid.UUID, in ConfigInput, k int) (*Voting
 	}
 	if in.MinEvaluationsPerFile != nil {
 		cfg.MinEvaluationsPerFile = *in.MinEvaluationsPerFile
+	}
+	if in.NonEvaluatorSanction != nil {
+		cfg.NonEvaluatorSanction = *in.NonEvaluatorSanction
+	}
+	if in.NonEvaluatorPenalty != nil {
+		cfg.NonEvaluatorPenalty = *in.NonEvaluatorPenalty
+	}
+	if !IsValidSanction(cfg.NonEvaluatorSanction) {
+		return nil, fmt.Errorf("%w: %q (expected %q or %q)",
+			ErrInvalidSanction, cfg.NonEvaluatorSanction, SanctionExclusion, SanctionPenalty)
+	}
+	if cfg.NonEvaluatorPenalty < MinNonEvaluatorPenalty || cfg.NonEvaluatorPenalty > MaxNonEvaluatorPenalty {
+		return nil, fmt.Errorf("%w: penalty %d (expected %d to %d places)",
+			ErrInvalidSanction, cfg.NonEvaluatorPenalty, MinNonEvaluatorPenalty, MaxNonEvaluatorPenalty)
 	}
 
 	good := int(math.Round(cfg.QualityGoodThreshold * 100))

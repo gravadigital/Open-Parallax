@@ -182,7 +182,7 @@ describe('splitResults', () => {
     const two = splitResults([r('a-3', 'u-3', 'C', 'l.pdf', 0.6, 2), r('a-2', 'u-2', 'B', 's.png', 0.7, 1)]);
     expect(two.podium).toHaveLength(2);
     expect(two.rest).toEqual([]);
-    expect(splitResults([])).toEqual({ podium: [], rest: [], unevaluated: [] });
+    expect(splitResults([])).toEqual({ podium: [], rest: [], unevaluated: [], excluded: [] });
   });
 
   it('las propuestas sin evaluaciones no entran al podio ni al resto', () => {
@@ -191,6 +191,16 @@ describe('splitResults', () => {
     expect(podium.map(x => x.attachment_id)).toEqual(['a-2', 'a-3', 'a-4']);
     expect(rest.map(x => x.attachment_id)).toEqual(['a-1', 'a-5']);
     expect(unevaluated.map(x => x.attachment_id)).toEqual(['a-9']);
+  });
+
+  it('las propuestas excluidas por no evaluar van aparte, aunque tampoco tengan votos', () => {
+    const out = { ...r('a-8', 'u-8', 'Eva Paz', 'mar.pdf', 0.9, 0), adjusted_rank: 0, excluded: true, non_evaluator: true };
+    const outNoVotes = { ...r('a-7', 'u-7', 'Leo Sol', 'sol.pdf', 0, 0), vote_count: 0, unevaluated: true, excluded: true };
+    const { podium, rest, unevaluated, excluded } = splitResults([out, outNoVotes, ...ranking]);
+    expect(podium.map(x => x.attachment_id)).toEqual(['a-2', 'a-3', 'a-4']);
+    expect(rest.map(x => x.attachment_id)).toEqual(['a-1', 'a-5']);
+    expect(unevaluated).toEqual([]);
+    expect(excluded.map(x => x.attachment_id)).toEqual(['a-8', 'a-7']);
   });
 });
 

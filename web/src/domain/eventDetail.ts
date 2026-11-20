@@ -200,9 +200,21 @@ export const progressSteps = (
  */
 export const splitResults = (
   ranking: AttachmentResult[]
-): { podium: AttachmentResult[]; rest: AttachmentResult[]; unevaluated: AttachmentResult[] } => {
-  const sorted = ranking.filter((r) => !r.unevaluated).sort((a, b) => a.adjusted_rank - b.adjusted_rank);
-  return { podium: sorted.slice(0, 3), rest: sorted.slice(3), unevaluated: ranking.filter((r) => r.unevaluated) };
+): {
+  podium: AttachmentResult[];
+  rest: AttachmentResult[];
+  unevaluated: AttachmentResult[];
+  excluded: AttachmentResult[];
+} => {
+  const sorted = ranking
+    .filter((r) => !r.unevaluated && !r.excluded)
+    .sort((a, b) => a.adjusted_rank - b.adjusted_rank);
+  return {
+    podium: sorted.slice(0, 3),
+    rest: sorted.slice(3),
+    unevaluated: ranking.filter((r) => r.unevaluated && !r.excluded),
+    excluded: ranking.filter((r) => r.excluded),
+  };
 };
 
 export const shareUrl = (origin: string, eventId: string): string => `${origin}/events/${eventId}`;

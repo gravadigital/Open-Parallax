@@ -90,3 +90,36 @@ func TestBuildVotingConfiguration_ExplicitZeroIsRespected(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 0.0, cfg.QualityBadThreshold)
 }
+
+func TestBuildVotingConfiguration_SanctionDefaultsToExclusion(t *testing.T) {
+	cfg, err := BuildVotingConfiguration(uuid.New(), ConfigInput{AttachmentsPerEvaluator: 2}, 3)
+	require.NoError(t, err)
+
+	assert.Equal(t, SanctionExclusion, cfg.NonEvaluatorSanction)
+	assert.Equal(t, DefaultNonEvaluatorPenalty, cfg.NonEvaluatorPenalty)
+}
+
+func TestBuildVotingConfiguration_AcceptsPenalty(t *testing.T) {
+	cfg, err := BuildVotingConfiguration(uuid.New(), ConfigInput{
+		AttachmentsPerEvaluator: 2,
+		NonEvaluatorSanction:    ptr(SanctionPenalty),
+		NonEvaluatorPenalty:     ptr(25),
+	}, 3)
+	require.NoError(t, err)
+
+	assert.Equal(t, SanctionPenalty, cfg.NonEvaluatorSanction)
+	assert.Equal(t, 25, cfg.NonEvaluatorPenalty)
+}
+
+func TestBuildVotingConfiguration_RejectsInvalidSanction(t *testing.T) {
+	for name, in := range map[string]ConfigInput{
+		"unknown sanction": {AttachmentsPerEvaluator: 2, NonEvaluatorSanction: ptr("warning")},
+		"penalty of zero":  {AttachmentsPerEvaluator: 2, NonEvaluatorPenalty: ptr(0)},
+		"penalty too big":  {AttachmentsPerEvaluator: 2, NonEvaluatorPenalty: ptr(MaxNonEvaluatorPenalty + 1)},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := BuildVotingConfiguration(uuid.New(), in, 3)
+			assert.True(t, errors.Is(err, ErrInvalidSanction), "got %v", err)
+		})
+	}
+}

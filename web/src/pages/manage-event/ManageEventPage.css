@@ -481,3 +481,8 @@
     min-width: 0;
   }
 }
+
+/* Configuración aplicada: una línea por idea dentro del aviso. */
+.mep-config__line {
+  margin: 0;
+}

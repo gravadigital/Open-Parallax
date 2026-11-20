@@ -73,10 +73,29 @@ type VotingConfiguration struct {
 	QualityBadThreshold     float64   `json:"quality_bad_threshold"`     // Q_bad
 	AdjustmentMagnitude     int       `json:"adjustment_magnitude"`      // n parameter
 	MinEvaluationsPerFile   int       `json:"min_evaluations_per_file"`
-	CreatedAt               time.Time `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt               time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+	// NonEvaluatorSanction is what happens to the proposal of someone who did not complete
+	// their ranking: SanctionExclusion (Merrifield & Saari 2009) or SanctionPenalty.
+	NonEvaluatorSanction string `json:"non_evaluator_sanction" gorm:"size:20;not null;default:'exclusion'"`
+	// NonEvaluatorPenalty is how many places that proposal drops under SanctionPenalty.
+	NonEvaluatorPenalty int       `json:"non_evaluator_penalty" gorm:"not null;default:10"`
+	CreatedAt           time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt           time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 
 	// Relations - loaded through repositories when needed to avoid circular imports
+}
+
+// Sanctions for a participant who did not complete their ranking by the end of voting. In both
+// cases their partial votes are discarded.
+const (
+	// SanctionExclusion removes their proposal from the adjusted ranking G', as the paper says.
+	SanctionExclusion = "exclusion"
+	// SanctionPenalty keeps their proposal in G' but moves it NonEvaluatorPenalty places down.
+	SanctionPenalty = "penalty"
+)
+
+// IsValidSanction reports whether s is one of the supported sanctions.
+func IsValidSanction(s string) bool {
+	return s == SanctionExclusion || s == SanctionPenalty
 }
 
 // AttachmentResult represents the MBC score and ranking for an attachment
@@ -93,6 +112,17 @@ type AttachmentResult struct {
 	// Unevaluated marks an attachment that received no votes: it has no position
 	// (GlobalRank and AdjustedRank are 0) and comes after the ranked ones.
 	Unevaluated bool `json:"unevaluated,omitempty"`
+	// NonEvaluator marks an attachment whose owner did not complete their ranking.
+	NonEvaluator bool `json:"non_evaluator,omitempty"`
+	// Excluded marks an attachment left out of the adjusted ranking G' because its owner did
+	// not evaluate (SanctionExclusion): AdjustedRank is 0 and it comes last. Its GlobalRank in
+	// G is kept, since the votes it received are valid.
+	Excluded bool `json:"excluded,omitempty"`
+}
+
+// HasAdjustedPosition reports whether the attachment has a place in the adjusted ranking G'.
+func (r AttachmentResult) HasAdjustedPosition() bool {
+	return !r.Unevaluated && !r.Excluded
 }
 
 // AttachmentResultSlice is a custom type for JSONB serialization
@@ -310,6 +340,8 @@ func NewVotingConfiguration(eventID uuid.UUID, m int) *VotingConfiguration {
 		QualityBadThreshold:     0.3,
 		AdjustmentMagnitude:     3,
 		MinEvaluationsPerFile:   3,
+		NonEvaluatorSanction:    SanctionExclusion,
+		NonEvaluatorPenalty:     DefaultNonEvaluatorPenalty,
 		CreatedAt:               time.Now(),
 	}
 }
@@ -333,6 +365,12 @@ func (vc *VotingConfiguration) Validate() error {
 	}
 	if vc.MinEvaluationsPerFile <= 0 {
 		return fmt.Errorf("min_evaluations_per_file must be positive")
+	}
+	if !IsValidSanction(vc.NonEvaluatorSanction) {
+		return fmt.Errorf("non_evaluator_sanction must be %q or %q", SanctionExclusion, SanctionPenalty)
+	}
+	if vc.NonEvaluatorPenalty < MinNonEvaluatorPenalty || vc.NonEvaluatorPenalty > MaxNonEvaluatorPenalty {
+		return fmt.Errorf("non_evaluator_penalty must be between %d and %d", MinNonEvaluatorPenalty, MaxNonEvaluatorPenalty)
 	}
 	return nil
 }

@@ -86,6 +86,11 @@ type VotingConfigRequest struct {
 	QualityBadThreshold     *float64 `json:"quality_bad_threshold" binding:"omitempty,min=0,max=1"`
 	AdjustmentMagnitude     *int     `json:"adjustment_magnitude" binding:"omitempty,min=1,max=10"`
 	MinEvaluationsPerFile   *int     `json:"min_evaluations_per_file" binding:"omitempty,min=1,max=20"`
+	// NonEvaluatorSanction is "exclusion" (default) or "penalty"; NonEvaluatorPenalty is the
+	// number of places the proposal drops under "penalty". Both are checked by
+	// vote.BuildVotingConfiguration.
+	NonEvaluatorSanction *string `json:"non_evaluator_sanction"`
+	NonEvaluatorPenalty  *int    `json:"non_evaluator_penalty"`
 }
 
 func (r VotingConfigRequest) input() vote.ConfigInput {
@@ -95,7 +100,18 @@ func (r VotingConfigRequest) input() vote.ConfigInput {
 		QualityBadThreshold:     r.QualityBadThreshold,
 		AdjustmentMagnitude:     r.AdjustmentMagnitude,
 		MinEvaluationsPerFile:   r.MinEvaluationsPerFile,
+		NonEvaluatorSanction:    r.NonEvaluatorSanction,
+		NonEvaluatorPenalty:     r.NonEvaluatorPenalty,
 	}
+}
+
+// sanctionOrDefault reports the sanction a configuration applies: one stored before the
+// sanction existed has none, and the engine treats it as exclusion.
+func sanctionOrDefault(s string) string {
+	if s == "" {
+		return vote.SanctionExclusion
+	}
+	return s
 }
 
 func respondInsufficientProposals(c *gin.Context, count int) {
@@ -255,6 +271,8 @@ func (h *DistributedVoteHandler) CreateVotingConfiguration(c *gin.Context) {
 			"quality_bad_threshold":     config.QualityBadThreshold,
 			"adjustment_magnitude":      config.AdjustmentMagnitude,
 			"min_evaluations_per_file":  config.MinEvaluationsPerFile,
+			"non_evaluator_sanction":    sanctionOrDefault(config.NonEvaluatorSanction),
+			"non_evaluator_penalty":     config.NonEvaluatorPenalty,
 			"created_at":                config.CreatedAt,
 		},
 		"message": "Voting configuration created successfully",
@@ -1146,6 +1164,8 @@ func (h *DistributedVoteHandler) GetVotingConfiguration(c *gin.Context) {
 			"quality_bad_threshold":     config.QualityBadThreshold,
 			"adjustment_magnitude":      config.AdjustmentMagnitude,
 			"min_evaluations_per_file":  config.MinEvaluationsPerFile,
+			"non_evaluator_sanction":    sanctionOrDefault(config.NonEvaluatorSanction),
+			"non_evaluator_penalty":     config.NonEvaluatorPenalty,
 			"created_at":                config.CreatedAt,
 		},
 	})
@@ -1214,6 +1234,9 @@ func (h *DistributedVoteHandler) UpdateVotingConfiguration(c *gin.Context) {
 		QualityBadThreshold     float64 `json:"quality_bad_threshold" binding:"min=0,max=1"`
 		AdjustmentMagnitude     int     `json:"adjustment_magnitude" binding:"min=1,max=10"`
 		MinEvaluationsPerFile   int     `json:"min_evaluations_per_file" binding:"min=1,max=20"`
+		// Optional: an omitted value keeps the one already configured.
+		NonEvaluatorSanction *string `json:"non_evaluator_sanction"`
+		NonEvaluatorPenalty  *int    `json:"non_evaluator_penalty"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -1231,6 +1254,24 @@ func (h *DistributedVoteHandler) UpdateVotingConfiguration(c *gin.Context) {
 	config.QualityBadThreshold = req.QualityBadThreshold
 	config.AdjustmentMagnitude = req.AdjustmentMagnitude
 	config.MinEvaluationsPerFile = req.MinEvaluationsPerFile
+	config.NonEvaluatorSanction = sanctionOrDefault(config.NonEvaluatorSanction)
+	if config.NonEvaluatorPenalty == 0 {
+		config.NonEvaluatorPenalty = vote.DefaultNonEvaluatorPenalty
+	}
+	if req.NonEvaluatorSanction != nil {
+		config.NonEvaluatorSanction = *req.NonEvaluatorSanction
+	}
+	if req.NonEvaluatorPenalty != nil {
+		config.NonEvaluatorPenalty = *req.NonEvaluatorPenalty
+	}
+	if err := config.Validate(); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid voting configuration",
+			"code":    "VALIDATION_FAILED",
+			"details": err.Error(),
+		})
+		return
+	}
 
 	// Re-validate configuration
 	participants, _ := h.userRepo.GetEventParticipants(eventID)
@@ -1266,6 +1307,8 @@ func (h *DistributedVoteHandler) UpdateVotingConfiguration(c *gin.Context) {
 			"quality_bad_threshold":     config.QualityBadThreshold,
 			"adjustment_magnitude":      config.AdjustmentMagnitude,
 			"min_evaluations_per_file":  config.MinEvaluationsPerFile,
+			"non_evaluator_sanction":    sanctionOrDefault(config.NonEvaluatorSanction),
+			"non_evaluator_penalty":     config.NonEvaluatorPenalty,
 			"updated_at":                time.Now(),
 		},
 		"message": "Voting configuration updated successfully",
@@ -1429,6 +1472,8 @@ func (h *DistributedVoteHandler) PreviewVotingConfiguration(c *gin.Context) {
 				"quality_good_threshold": vote.DefaultQualityGoodThreshold,
 				"quality_bad_threshold":  vote.DefaultQualityBadThreshold,
 				"adjustment_magnitude":   vote.DefaultAdjustmentMagnitude,
+				"non_evaluator_sanction": vote.SanctionExclusion,
+				"non_evaluator_penalty":  vote.DefaultNonEvaluatorPenalty,
 			},
 		},
 	})

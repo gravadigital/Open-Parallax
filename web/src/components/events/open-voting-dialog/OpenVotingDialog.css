@@ -348,3 +348,48 @@
     justify-content: flex-end;
   }
 }
+
+/* Sanción para quien no evalúa: dos opciones de radio con su explicación. */
+.ev-open-voting__sanction {
+  display: grid;
+  gap: var(--ref-space-sm);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ev-open-voting__sanction-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ref-space-sm);
+  cursor: pointer;
+}
+
+.ev-open-voting__sanction-option input {
+  margin: 3px 0 0;
+  accent-color: var(--border-focus);
+}
+
+.ev-open-voting__sanction-option input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.ev-open-voting__sanction-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ev-open-voting__sanction-title {
+  font: var(--type-ui);
+  color: var(--text-primary);
+}
+
+.ev-open-voting__sanction-help,
+.ev-open-voting__sanction-note {
+  margin: 0;
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}

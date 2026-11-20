@@ -33,7 +33,7 @@ la pregunta abierta #1 del PRD.
 | Paso | Cambio | Story |
 |---|---|---|
 | — | Sin cambio de cálculo | — |
-| Disparador | Se puede publicar con rankings faltantes (confirmación explícita en el diálogo de la gestión); quien no completó queda con `Q_i = 0` | S-016 |
+| Disparador | Se puede publicar con rankings faltantes (confirmación explícita en el diálogo de la gestión); la propuesta de quien no completó queda fuera de `G'` o baja posiciones, según la sanción configurada | S-016 |
 
 ## Servicios Involucrados
 
@@ -123,6 +123,9 @@ donde `R_i(f_j)` es la posición que el evaluador `i` le asignó (**1 = mejor**)
 votos que recibió. Promediar por `v_j(m−1)` deja el resultado en `[0,1]` sin que dependa de cuántas
 evaluaciones tuvo la propuesta.
 
+**Votos parciales:** antes de calcular se descartan todos los votos de quien no completó su
+asignación (`is_completed = false`). Así un ranking a medias no favorece ni perjudica a nadie.
+
 Una propuesta **sin ningún voto** no tiene puntaje con qué ordenarla: queda fuera de `G` y de `G'`
 (`unevaluated: true`, posiciones en 0), listada al final y sin posición en las notificaciones.
 
@@ -146,8 +149,9 @@ Mide cuánto se aparta el ranking del evaluador `i` del ranking global **restrin
 que le tocó evaluar** (`A(p_i)`). Un evaluador que coincide con el consenso tiene `Q_i` cercano a
 1; uno que invierte el orden exacto, 0 (`⌊m²/2⌋` es ese desvío máximo, como en el paper).
 
-**Regla explícita:** quien **no completó su asignación recibe `Q_i = 0`**
-(`voting_service.go:278-281`).
+**Regla explícita:** quien **no completó su asignación no tiene `Q_i`** (no figura en
+`participant_qualities`): no hay ranking que medir, y lo que le pasa a su propuesta lo decide la
+sanción del paso 4.
 
 **Operación de BD:** `UPDATE` sobre `assignments.quality_score` (decimal(5,4), CHECK en `[0,1]`).
 
@@ -167,6 +171,17 @@ El ranking global `G` se ajusta a `G'`:
 | `Q_i ≤ quality_bad_threshold` (default 0.3) | **Baja `n` posiciones** |
 
 donde `n` = `adjustment_magnitude` (default 3).
+
+**Quien no completó su ranking** no pasa por esa tabla: se le aplica la sanción configurada en
+`voting_configurations.non_evaluator_sanction` (migración 028):
+
+| Sanción | Efecto sobre su propuesta |
+|---|---|
+| `exclusion` (default, lo que dice el paper) | Sale de `G'`: va al final con `excluded: true` y `adjusted_rank = 0`. En `G` conserva su posición, porque los votos que recibió son válidos y miden el `Q_i` de quienes la evaluaron |
+| `penalty` | Baja `non_evaluator_penalty` posiciones (default 10, entre 1 y 100) |
+
+El organizador la elige al abrir la votación, en los ajustes avanzados. Las notificaciones y el
+"estado" del participante no le dan posición a una propuesta excluida.
 
 **Este es el mecanismo que hace que convenga evaluar en serio**: evaluar bien mejora la posición
 de la propuesta propia.

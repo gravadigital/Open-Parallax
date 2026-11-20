@@ -17,6 +17,8 @@ func defaultConfig(eventID uuid.UUID, m int) *VotingConfiguration {
 		QualityBadThreshold:     0.3,
 		AdjustmentMagnitude:     3,
 		MinEvaluationsPerFile:   1,
+		NonEvaluatorSanction:    SanctionExclusion,
+		NonEvaluatorPenalty:     DefaultNonEvaluatorPenalty,
 	}
 }
 
@@ -364,6 +366,8 @@ func TestCalculateModifiedBordaCount_ScoreDoesNotDependOnVoteCount(t *testing.T)
 
 func TestCalculateModifiedBordaCount_AttachmentWithNoVotesHasNoPosition(t *testing.T) {
 	vs, voteRepo, eventID, participants, attachments, config := setupThreeWayVoting(t)
+	// Penalty keeps the non-evaluators' proposals in G', so this test only sees "unevaluated".
+	config.NonEvaluatorSanction = SanctionPenalty
 
 	// Only participants[0] votes, and only on attachments[1]. attachments[0] and
 	// attachments[2] receive zero votes each.
@@ -407,63 +411,121 @@ func TestCalculateModifiedBordaCount_AttachmentWithNoVotesHasNoPosition(t *testi
 }
 
 // ---------------------------------------------------------------------------
-// Participant who never votes: quality score and ranking impact
-// (mirrors the "what happens if one participant doesn't vote" scenario)
+// Participant who does not complete their ranking (Merrifield & Saari 2009:
+// the proposal of whoever does not referee is removed from the ranking)
 // ---------------------------------------------------------------------------
 
-func TestCalculateModifiedBordaCount_NonVotingParticipantGetsZeroQualityAndPenalizedRanking(t *testing.T) {
+// setupOneNonEvaluator: participants[0] and participants[1] complete their rankings;
+// participants[2] only ranks one of their two proposals (a partial, incomplete ranking).
+func setupOneNonEvaluator(t *testing.T) (*VotingService, uuid.UUID, []uuid.UUID, []uuid.UUID, *VotingConfiguration) {
+	t.Helper()
 	vs, voteRepo, eventID, participants, attachments, config := setupThreeWayVoting(t)
-	config.AdjustmentMagnitude = 1 // small, deterministic shift for this 3-item ranking
-
-	// participants[0] and participants[1] vote as expected; participants[2] never votes.
 	votes := []*Vote{
 		{EventID: eventID, VoterID: participants[0], AttachmentID: attachments[1], RankPosition: 1},
 		{EventID: eventID, VoterID: participants[0], AttachmentID: attachments[2], RankPosition: 2},
-		{EventID: eventID, VoterID: participants[1], AttachmentID: attachments[0], RankPosition: 1},
-		{EventID: eventID, VoterID: participants[1], AttachmentID: attachments[2], RankPosition: 2},
+		{EventID: eventID, VoterID: participants[1], AttachmentID: attachments[2], RankPosition: 1},
+		{EventID: eventID, VoterID: participants[1], AttachmentID: attachments[0], RankPosition: 2},
+		// Partial vote of the non-evaluator: must be discarded.
+		{EventID: eventID, VoterID: participants[2], AttachmentID: attachments[0], RankPosition: 1},
 	}
 	for _, v := range votes {
 		v.ID = uuid.New()
 		voteRepo.votes = append(voteRepo.votes, v)
 	}
-
 	addAssignment(voteRepo, eventID, participants[0], []uuid.UUID{attachments[1], attachments[2]}, true)
-	addAssignment(voteRepo, eventID, participants[1], []uuid.UUID{attachments[0], attachments[2]}, true)
-	// participants[2] has an assignment but never completed it.
-	incomplete := addAssignment(voteRepo, eventID, participants[2], []uuid.UUID{attachments[0], attachments[1]}, false)
-	require.False(t, incomplete.IsCompleted)
+	addAssignment(voteRepo, eventID, participants[1], []uuid.UUID{attachments[2], attachments[0]}, true)
+	addAssignment(voteRepo, eventID, participants[2], []uuid.UUID{attachments[0], attachments[1]}, false)
+	return vs, eventID, participants, attachments, config
+}
+
+func byAttachment(ranking []AttachmentResult) map[uuid.UUID]AttachmentResult {
+	out := map[uuid.UUID]AttachmentResult{}
+	for _, r := range ranking {
+		out[r.AttachmentID] = r
+	}
+	return out
+}
+
+func TestCalculateModifiedBordaCount_DiscardsPartialVotesOfNonEvaluator(t *testing.T) {
+	vs, eventID, _, attachments, config := setupOneNonEvaluator(t)
 
 	results, err := vs.CalculateModifiedBordaCount(eventID, config)
 	require.NoError(t, err)
 
-	// The non-voting participant's quality score must be exactly 0.
-	quality, ok := results.ParticipantQualities[participants[2].String()]
-	require.True(t, ok, "non-voting participant should still appear in the quality map")
-	assert.Equal(t, 0.0, quality)
+	global := byAttachment(results.GlobalRanking)
+	// attachments[0] only counts the vote of participants[1] (last of 2 → 0 points); the
+	// non-evaluator's first place is ignored.
+	assert.Equal(t, 1, global[attachments[0]].VoteCount)
+	assert.InDelta(t, 0.0, global[attachments[0]].MBCScore, 1e-9)
+	assert.Equal(t, 4, results.TotalVotes)
+}
 
-	// The calculation must still succeed and produce a full ranking despite the
-	// missing votes: nothing crashes or gets silently dropped.
-	assert.Len(t, results.GlobalRanking, 3)
+func TestCalculateModifiedBordaCount_NonEvaluatorHasNoQuality(t *testing.T) {
+	vs, eventID, participants, _, config := setupOneNonEvaluator(t)
+
+	results, err := vs.CalculateModifiedBordaCount(eventID, config)
+	require.NoError(t, err)
+
+	assert.NotContains(t, results.ParticipantQualities, participants[2].String())
+	assert.Contains(t, results.ParticipantQualities, participants[0].String())
 	assert.Equal(t, 3, results.TotalParticipants)
+}
 
-	// Because quality 0.0 <= QualityBadThreshold (0.3), the non-voter's own
-	// attachment (attachments[2]) must be penalized in the adjusted ranking
-	// relative to its unadjusted global rank.
-	var globalRankOfNonVoterAttachment, adjustedRankOfNonVoterAttachment int
-	for _, r := range results.GlobalRanking {
-		if r.ParticipantID == participants[2] {
-			globalRankOfNonVoterAttachment = r.GlobalRank
-		}
+func TestCalculateModifiedBordaCount_ExclusionRemovesNonEvaluatorFromAdjustedRanking(t *testing.T) {
+	vs, eventID, participants, attachments, config := setupOneNonEvaluator(t)
+	config.NonEvaluatorSanction = SanctionExclusion
+
+	results, err := vs.CalculateModifiedBordaCount(eventID, config)
+	require.NoError(t, err)
+
+	// G keeps it: the votes it received are valid.
+	global := byAttachment(results.GlobalRanking)
+	require.Len(t, results.GlobalRanking, 3)
+	assert.NotZero(t, global[attachments[2]].GlobalRank)
+	assert.True(t, global[attachments[2]].NonEvaluator)
+
+	// G' lists it last, without a position.
+	require.Len(t, results.AdjustedRanking, 3)
+	last := results.AdjustedRanking[2]
+	assert.Equal(t, participants[2], last.ParticipantID)
+	assert.True(t, last.Excluded)
+	assert.Equal(t, 0, last.AdjustedRank)
+	assert.False(t, last.HasAdjustedPosition())
+	for i, r := range results.AdjustedRanking[:2] {
+		assert.False(t, r.Excluded)
+		assert.Equal(t, i+1, r.AdjustedRank, "the others keep consecutive positions")
 	}
+}
+
+func TestCalculateModifiedBordaCount_EmptySanctionMeansExclusion(t *testing.T) {
+	vs, eventID, participants, _, config := setupOneNonEvaluator(t)
+	config.NonEvaluatorSanction = "" // configuration stored before the sanction existed
+
+	results, err := vs.CalculateModifiedBordaCount(eventID, config)
+	require.NoError(t, err)
+
+	last := results.AdjustedRanking[len(results.AdjustedRanking)-1]
+	assert.Equal(t, participants[2], last.ParticipantID)
+	assert.True(t, last.Excluded)
+}
+
+func TestCalculateModifiedBordaCount_PenaltyMovesNonEvaluatorDown(t *testing.T) {
+	vs, eventID, participants, _, config := setupOneNonEvaluator(t)
+	config.NonEvaluatorSanction = SanctionPenalty
+	config.NonEvaluatorPenalty = 10 // larger than the table: it ends last
+
+	results, err := vs.CalculateModifiedBordaCount(eventID, config)
+	require.NoError(t, err)
+
+	require.Len(t, results.AdjustedRanking, 3)
 	for _, r := range results.AdjustedRanking {
-		if r.ParticipantID == participants[2] {
-			adjustedRankOfNonVoterAttachment = r.AdjustedRank
-		}
+		assert.False(t, r.Excluded)
+		assert.NotZero(t, r.AdjustedRank)
 	}
-	require.NotZero(t, globalRankOfNonVoterAttachment)
-	require.NotZero(t, adjustedRankOfNonVoterAttachment)
-	assert.GreaterOrEqual(t, adjustedRankOfNonVoterAttachment, globalRankOfNonVoterAttachment,
-		"a bad/absent evaluator's own submission should never improve rank after adjustment")
+	last := results.AdjustedRanking[2]
+	assert.Equal(t, participants[2], last.ParticipantID)
+	assert.True(t, last.NonEvaluator)
+	assert.Equal(t, 3, last.AdjustedRank)
 }
 
 func TestCalculateModifiedBordaCount_AllParticipantsAbsentExceptOneStillProducesResult(t *testing.T) {
@@ -481,8 +543,17 @@ func TestCalculateModifiedBordaCount_AllParticipantsAbsentExceptOneStillProduces
 	results, err := vs.CalculateModifiedBordaCount(eventID, config)
 	require.NoError(t, err, "a single completed vote must be enough to calculate results without error")
 
-	assert.Equal(t, 0.0, results.ParticipantQualities[participants[1].String()])
-	assert.Equal(t, 0.0, results.ParticipantQualities[participants[2].String()])
+	assert.NotContains(t, results.ParticipantQualities, participants[1].String())
+	assert.NotContains(t, results.ParticipantQualities, participants[2].String())
+	// Only participants[0]'s proposal stays in G' (it got no votes, so it is unevaluated);
+	// the other two are excluded.
+	excluded := 0
+	for _, r := range results.AdjustedRanking {
+		if r.Excluded {
+			excluded++
+		}
+	}
+	assert.Equal(t, 2, excluded)
 }
 
 // ---------------------------------------------------------------------------
@@ -527,7 +598,7 @@ func TestCalculateParticipantQualities_SpansZeroToOne(t *testing.T) {
 			}
 			addAssignment(voteRepo, eventID, evaluator, attachments, true)
 
-			qualities, err := vs.calculateParticipantQualities(eventID, global, 3)
+			qualities, err := vs.calculateParticipantQualities(eventID, voteRepo.assignments, global, 3)
 			require.NoError(t, err)
 			assert.InDelta(t, tc.want, qualities[evaluator.String()], 1e-9)
 		})

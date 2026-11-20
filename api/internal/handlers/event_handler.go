@@ -816,6 +816,8 @@ func votingConfigurationPayload(cfg *vote.VotingConfiguration) gin.H {
 		"quality_bad_threshold":     cfg.QualityBadThreshold,
 		"adjustment_magnitude":      cfg.AdjustmentMagnitude,
 		"min_evaluations_per_file":  cfg.MinEvaluationsPerFile,
+		"non_evaluator_sanction":    sanctionOrDefault(cfg.NonEvaluatorSanction),
+		"non_evaluator_penalty":     cfg.NonEvaluatorPenalty,
 		"created_at":                cfg.CreatedAt,
 		"updated_at":                cfg.UpdatedAt,
 	}
@@ -828,6 +830,8 @@ func respondVotingConfigError(c *gin.Context, err error) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid quality thresholds", "code": "INVALID_THRESHOLDS", "details": err.Error()})
 	case errors.Is(err, vote.ErrMExceedsEvaluable):
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Attachments per evaluator exceeds the proposals each participant can evaluate", "code": "M_EXCEEDS_EVALUABLE", "details": err.Error()})
+	case errors.Is(err, vote.ErrInvalidSanction):
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid sanction for participants who do not evaluate", "code": "INVALID_SANCTION", "details": err.Error()})
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Voting configuration violates mathematical constraints", "code": "MATH_CONSTRAINT_VIOLATION", "details": err.Error()})
 	}

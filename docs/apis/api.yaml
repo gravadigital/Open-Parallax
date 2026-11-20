@@ -844,6 +844,12 @@ paths:
                       minimum: 1
                       maximum: 20
                       description: 'Default min(3, attachments_per_evaluator)'
+                    non_evaluator_sanction:
+                      type: string
+                      enum: [exclusion, penalty]
+                      default: exclusion
+                      description: 'Ver `VotingConfiguration`. Valor inválido → 400 `INVALID_SANCTION`'
+                    non_evaluator_penalty: { type: integer, minimum: 1, maximum: 100, default: 10 }
       responses:
         '200':
           description: Etapa actualizada
@@ -2211,6 +2217,19 @@ components:
         quality_bad_threshold: { type: number, format: double }
         adjustment_magnitude: { type: integer, description: 'Parámetro n' }
         min_evaluations_per_file: { type: integer }
+        non_evaluator_sanction:
+          type: string
+          enum: [exclusion, penalty]
+          description: |
+            Qué pasa con la propuesta de quien no completó su ranking al cierre. `exclusion`
+            (default, Merrifield & Saari 2009): queda fuera del ranking ajustado G'. `penalty`:
+            baja `non_evaluator_penalty` posiciones. En los dos casos sus votos parciales se
+            descartan. Una configuración guardada antes de la migración 028 vale `exclusion`.
+        non_evaluator_penalty:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: 'Posiciones que baja la propuesta con `penalty` (default 10)'
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
@@ -2310,6 +2329,15 @@ components:
           format: double
           description: 'Puntaje Modified Borda Count normalizado en [0,1]'
         global_rank: { type: integer, description: Posición por puntaje MBC }
-        adjusted_rank: { type: integer, description: Posición tras aplicar incentivos por calidad }
+        adjusted_rank: { type: integer, description: 'Posición tras aplicar incentivos por calidad; 0 si `unevaluated` o `excluded`' }
         vote_count: { type: integer }
         average_rank: { type: number, format: double }
+        non_evaluator:
+          type: boolean
+          description: Su autor no completó su ranking (se omite si es false)
+        excluded:
+          type: boolean
+          description: |
+            Fuera del ranking ajustado porque su autor no evaluó (sanción `exclusion`). Va al
+            final de `adjusted_ranking` con `adjusted_rank` 0; en `global_ranking` conserva su
+            posición, porque los votos que recibió son válidos. Se omite si es false.

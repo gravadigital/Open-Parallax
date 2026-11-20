@@ -172,6 +172,10 @@ export interface VotingConfiguration {
   quality_bad_threshold: number;             // Q_bad (0-1)
   adjustment_magnitude: number;              // n parameter
   min_evaluations_per_file: number;
+  /** Qué pasa con la propuesta de quien no completa su ranking. */
+  non_evaluator_sanction?: NonEvaluatorSanction;
+  /** Puestos que baja con la sanción `penalty`. */
+  non_evaluator_penalty?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -183,7 +187,16 @@ export interface VotingConfigInput {
   quality_bad_threshold?: number;
   adjustment_magnitude?: number;
   min_evaluations_per_file?: number;
+  non_evaluator_sanction?: NonEvaluatorSanction;
+  non_evaluator_penalty?: number;
 }
+
+/**
+ * Sanción para quien no completa su ranking. En los dos casos sus votos parciales se descartan.
+ * `exclusion`: su propuesta queda fuera del ranking (lo que propone el paper).
+ * `penalty`: su propuesta baja `non_evaluator_penalty` puestos.
+ */
+export type NonEvaluatorSanction = 'exclusion' | 'penalty';
 
 export type ReminderType = 'file' | 'vote';
 
@@ -237,6 +250,8 @@ export interface AttachmentResult {
   vote_count: number;
   average_rank: number;
   unevaluated?: boolean;                     // No votes: no position (ranks are 0), listed apart
+  non_evaluator?: boolean;                   // Its owner did not complete their ranking
+  excluded?: boolean;                        // Left out of the ranking because its owner did not evaluate
 }
 
 export interface VotingResults {

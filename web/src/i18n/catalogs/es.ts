@@ -665,6 +665,8 @@ export const es = {
       text: plural({ one: '{count} propuesta por evaluador · mínimo {min} evaluaciones por archivo · ajustes de calidad {quality}', other: '{count} propuestas por evaluador · mínimo {min} evaluaciones por archivo · ajustes de calidad {quality}' }),
       recommended: 'recomendados',
       custom: 'personalizados',
+      sanctionExclusion: 'Quien no envíe su ranking queda fuera del ranking.',
+      sanctionPenalty: plural({ one: 'Quien no envíe su ranking baja {count} posición.', other: 'Quien no envíe su ranking baja {count} posiciones.' }),
       error: 'No pudimos cargar la configuración aplicada.',
     },
     summary: {
@@ -768,6 +770,14 @@ export const es = {
       badThreshold: 'Umbral de evaluador poco confiable',
       badThresholdHelp: 'Por debajo, su voto pesa menos.',
       thresholdError: 'El umbral confiable tiene que superar al poco confiable por al menos 0,1.',
+      sanctionLegend: 'Si alguien no envía su ranking',
+      sanctionExclusion: 'Su propuesta queda fuera del ranking',
+      sanctionExclusionHelp: 'Recomendado. Es la regla del método original.',
+      sanctionPenalty: 'Su propuesta baja posiciones',
+      sanctionPenaltyHelp: 'Sigue en el ranking, pero más abajo.',
+      sanctionNote: 'En los dos casos, sus votos incompletos no se cuentan.',
+      penalty: 'Posiciones que baja',
+      penaltyRange: 'Elige un valor entre 1 y 100.',
       stepperDecrement: 'Bajar {label}',
       stepperIncrement: 'Subir {label}',
       irreversible: 'No se puede volver a Participación.',
@@ -782,7 +792,8 @@ export const es = {
       title: '¿Cerrar votación y publicar?',
       text: 'Se calcula el ranking final y queda visible para todos. Nadie podrá votar después.',
       missingTitle: 'Faltan {missing} de {total} rankings',
-      missingText: 'Con pocos votos el resultado es menos confiable. Quien no envió su ranking queda con calidad 0 y su propuesta baja posiciones.',
+      missingText: 'Con pocos votos el resultado es menos confiable. La propuesta de quien no envió su ranking queda fuera del ranking, y sus votos incompletos no se cuentan.',
+      missingTextPenalty: 'Con pocos votos el resultado es menos confiable. La propuesta de quien no envió su ranking baja posiciones, y sus votos incompletos no se cuentan.',
       unevaluatedTitle: plural({
         one: '{count} propuesta todavía no tiene evaluaciones',
         other: '{count} propuestas todavía no tienen evaluaciones',
@@ -1056,6 +1067,13 @@ export const es = {
       text: plural({
         one: 'Esta propuesta no recibió ninguna evaluación, así que no tiene posición en el ranking.',
         other: 'Estas propuestas no recibieron ninguna evaluación, así que no tienen posición en el ranking.',
+      }),
+    },
+    excluded: {
+      title: 'Fuera del ranking',
+      text: plural({
+        one: 'Quien presentó esta propuesta no completó su evaluación, así que quedó fuera del ranking.',
+        other: 'Quienes presentaron estas propuestas no completaron su evaluación, así que quedaron fuera del ranking.',
       }),
     },
   },

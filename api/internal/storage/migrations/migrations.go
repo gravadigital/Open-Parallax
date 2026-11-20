@@ -180,6 +180,12 @@ func GetMigrations() []Migration {
 			Up:   migration027Up,
 			Down: migration027Down,
 		},
+		{
+			ID:   "028",
+			Name: "non_evaluator_sanction",
+			Up:   migration028Up,
+			Down: migration028Down,
+		},
 	}
 }
 

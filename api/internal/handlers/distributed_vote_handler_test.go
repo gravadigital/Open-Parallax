@@ -905,8 +905,10 @@ func TestGetVotingConfiguration_OmitsUpdatedAt(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, w.Code)
 	data := jsonBody(t, w)["data"].(map[string]interface{})
-	assert.Len(t, data, 8)
+	assert.Len(t, data, 10)
 	assert.NotContains(t, data, "updated_at")
+	assert.Equal(t, "exclusion", data["non_evaluator_sanction"])
+	assert.EqualValues(t, 10, data["non_evaluator_penalty"])
 }
 
 func TestGetVotingConfiguration_InvalidEventID(t *testing.T) {
@@ -1074,6 +1076,8 @@ func TestPreviewVotingConfiguration_Success(t *testing.T) {
 		"quality_good_threshold": 0.6,
 		"quality_bad_threshold":  0.3,
 		"adjustment_magnitude":   float64(3),
+		"non_evaluator_sanction": "exclusion",
+		"non_evaluator_penalty":  float64(10),
 	}, data["defaults"])
 }
 

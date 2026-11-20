@@ -74,6 +74,8 @@ func (f participationFixture) config(minEvaluations int) *vote.VotingConfigurati
 		QualityBadThreshold:     0.3,
 		AdjustmentMagnitude:     3,
 		MinEvaluationsPerFile:   minEvaluations,
+		NonEvaluatorSanction:    vote.SanctionExclusion,
+		NonEvaluatorPenalty:     vote.DefaultNonEvaluatorPenalty,
 	}
 }
 
@@ -138,4 +140,42 @@ func TestOpenVoting_ReplacesExistingConfiguration(t *testing.T) {
 	assert.Equal(t, 1, count(t, tx, `SELECT COUNT(*) FROM voting_configurations WHERE event_id = ?`, f.eventID))
 	assert.Equal(t, 1, count(t, tx, `SELECT COUNT(*) FROM voting_configurations WHERE id = ? AND min_evaluations_per_file = 2`, existingID))
 	assert.Equal(t, 3, count(t, tx, `SELECT COUNT(*) FROM assignments WHERE event_id = ?`, f.eventID))
+}
+
+func TestOpenVoting_PersistsNonEvaluatorSanction(t *testing.T) {
+	tx := migratedTx(t)
+	f := seedParticipation(t, tx)
+	repo := NewPostgresVotingSetupRepository(tx)
+	date := time.Date(2026, 10, 20, 0, 0, 0, 0, time.UTC)
+	cfg := f.config(2)
+	cfg.NonEvaluatorSanction = vote.SanctionPenalty
+	cfg.NonEvaluatorPenalty = 7
+
+	require.NoError(t, repo.OpenVoting(f.eventID.String(), &date, cfg, f.validAssignments()))
+
+	var sanction string
+	var penalty int
+	require.NoError(t, tx.Raw(`SELECT non_evaluator_sanction FROM voting_configurations WHERE event_id = ?`, f.eventID).Scan(&sanction).Error)
+	require.NoError(t, tx.Raw(`SELECT non_evaluator_penalty FROM voting_configurations WHERE event_id = ?`, f.eventID).Scan(&penalty).Error)
+	assert.Equal(t, "penalty", sanction)
+	assert.Equal(t, 7, penalty)
+}
+
+func TestVotingConfigurations_RejectInvalidSanctionAtTheDatabase(t *testing.T) {
+	tx := migratedTx(t)
+	f := seedParticipation(t, tx)
+
+	tx.SavePoint("bad")
+	err := tx.Exec(`INSERT INTO voting_configurations (event_id, attachments_per_evaluator, non_evaluator_sanction)
+		VALUES (?, 2, 'warning')`, f.eventID).Error
+	assert.Error(t, err, "the CHECK of migration 028 must reject an unknown sanction")
+	tx.RollbackTo("bad")
+
+	require.NoError(t, tx.Exec(`INSERT INTO voting_configurations (event_id, attachments_per_evaluator) VALUES (?, 2)`, f.eventID).Error)
+	var sanction string
+	var penalty int
+	require.NoError(t, tx.Raw(`SELECT non_evaluator_sanction FROM voting_configurations WHERE event_id = ?`, f.eventID).Scan(&sanction).Error)
+	require.NoError(t, tx.Raw(`SELECT non_evaluator_penalty FROM voting_configurations WHERE event_id = ?`, f.eventID).Scan(&penalty).Error)
+	assert.Equal(t, "exclusion", sanction, "a row without a sanction defaults to exclusion")
+	assert.Equal(t, 10, penalty)
 }

@@ -1,4 +1,4 @@
-import type { VotingConfiguration } from '../types';
+import type { NonEvaluatorSanction, VotingConfiguration } from '../types';
 
 /** Diferencia mínima entre el umbral bueno y el malo (igual al backend). */
 export const MIN_THRESHOLD_GAP = 0.1;
@@ -26,6 +26,12 @@ export const validateThresholds = (good: number, bad: number): ThresholdIssue | 
 /** `min_evaluations_per_file` recomendado: min(3, m). */
 export const recommendedMinEvaluations = (m: number): number => Math.min(3, m);
 
+/** Sanción por defecto para quien no evalúa: queda fuera del ranking (igual al backend). */
+export const DEFAULT_SANCTION: NonEvaluatorSanction = 'exclusion';
+export const DEFAULT_NON_EVALUATOR_PENALTY = 10;
+export const PENALTY_MIN = 1;
+export const PENALTY_MAX = 100;
+
 export const ADJUSTMENT_MIN = 1;
 export const ADJUSTMENT_MAX = 10;
 export const MIN_EVALUATIONS_MAX = 20;
@@ -37,6 +43,8 @@ export interface VotingConfigDraft {
   adjustment_magnitude: number;
   quality_good_threshold: number;
   quality_bad_threshold: number;
+  non_evaluator_sanction: NonEvaluatorSanction;
+  non_evaluator_penalty: number;
 }
 
 /** Borrador inicial: m recomendado, mínimo recomendado y defaults del preview. */
@@ -46,15 +54,23 @@ export const initialVotingDraft = (p: VotingConfigPreview): VotingConfigDraft =>
   adjustment_magnitude: p.defaults.adjustment_magnitude,
   quality_good_threshold: p.defaults.quality_good_threshold,
   quality_bad_threshold: p.defaults.quality_bad_threshold,
+  non_evaluator_sanction: p.defaults.non_evaluator_sanction ?? DEFAULT_SANCTION,
+  non_evaluator_penalty: p.defaults.non_evaluator_penalty ?? DEFAULT_NON_EVALUATOR_PENALTY,
 });
 
-export type VotingDraftIssue = ThresholdIssue | 'adjustment_out_of_range';
+export type VotingDraftIssue = ThresholdIssue | 'adjustment_out_of_range' | 'penalty_out_of_range';
 
 export const validateVotingDraft = (d: VotingConfigDraft): VotingDraftIssue | null => {
   const thresholds = validateThresholds(d.quality_good_threshold, d.quality_bad_threshold);
   if (thresholds) return thresholds;
   if (d.adjustment_magnitude < ADJUSTMENT_MIN || d.adjustment_magnitude > ADJUSTMENT_MAX) {
     return 'adjustment_out_of_range';
+  }
+  if (
+    d.non_evaluator_sanction === 'penalty' &&
+    (d.non_evaluator_penalty < PENALTY_MIN || d.non_evaluator_penalty > PENALTY_MAX)
+  ) {
+    return 'penalty_out_of_range';
   }
   return null;
 };
@@ -70,12 +86,14 @@ export const isRecommendedConfig = (
     | 'adjustment_magnitude'
     | 'quality_good_threshold'
     | 'quality_bad_threshold'
+    | 'non_evaluator_sanction'
   >
 ): boolean =>
   cents(c.quality_good_threshold) === cents(DEFAULT_THRESHOLDS.quality_good_threshold) &&
   cents(c.quality_bad_threshold) === cents(DEFAULT_THRESHOLDS.quality_bad_threshold) &&
   c.adjustment_magnitude === DEFAULT_THRESHOLDS.adjustment_magnitude &&
-  c.min_evaluations_per_file === recommendedMinEvaluations(c.attachments_per_evaluator);
+  c.min_evaluations_per_file === recommendedMinEvaluations(c.attachments_per_evaluator) &&
+  (c.non_evaluator_sanction ?? DEFAULT_SANCTION) === DEFAULT_SANCTION;
 
 /**
  * Respuesta de `GET /api/v1/events/{event_id}/voting-config/preview`.
@@ -92,5 +110,7 @@ export interface VotingConfigPreview {
     quality_good_threshold: number;
     quality_bad_threshold: number;
     adjustment_magnitude: number;
+    non_evaluator_sanction?: NonEvaluatorSanction;
+    non_evaluator_penalty?: number;
   };
 }

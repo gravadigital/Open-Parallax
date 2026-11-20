@@ -162,6 +162,32 @@ describe('OpenVotingDialog', () => {
     );
   });
 
+  it('la sanción por no evaluar arranca en exclusión y puede pasar a penalización', async () => {
+    updateEventStage.mockResolvedValue({ stage: 'voting' });
+    setup();
+    await screen.findByText('Propuestas');
+    openAdvanced();
+    const exclusion = screen.getByRole('radio', { name: /Su propuesta queda fuera del ranking/ });
+    const penalty = screen.getByRole('radio', { name: /Su propuesta baja posiciones/ });
+    expect(exclusion).toBeChecked();
+    expect(screen.queryByRole('spinbutton', { name: 'Posiciones que baja' })).not.toBeInTheDocument();
+
+    userEvent.click(penalty);
+    expect(penalty).toBeChecked();
+    const places = screen.getByRole('spinbutton', { name: 'Posiciones que baja' });
+    expect(places).toHaveValue(10);
+    fireEvent.change(places, { target: { value: '15' } });
+    expect(confirmButton()).toBeEnabled();
+
+    userEvent.click(confirmButton());
+    expect(updateEventStage).toHaveBeenCalledWith(
+      'e-1',
+      'voting',
+      '2026-10-12',
+      expect.objectContaining({ non_evaluator_sanction: 'penalty', non_evaluator_penalty: 15 })
+    );
+  });
+
   it('TS-39: umbrales inválidos marcan los dos campos y bloquean', async () => {
     setup();
     await screen.findByText('Propuestas');
@@ -206,6 +232,8 @@ describe('OpenVotingDialog', () => {
       adjustment_magnitude: 3,
       quality_good_threshold: 0.6,
       quality_bad_threshold: 0.3,
+      non_evaluator_sanction: 'exclusion',
+      non_evaluator_penalty: 10,
     });
     expect(screen.getByRole('button', { name: /Abriendo votación…/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Cancelar' })).toBeDisabled();

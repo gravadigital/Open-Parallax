@@ -665,6 +665,8 @@ export const en: Catalog = {
       text: plural({ one: '{count} proposal per reviewer · at least {min} reviews per file · {quality} quality settings', other: '{count} proposals per reviewer · at least {min} reviews per file · {quality} quality settings' }),
       recommended: 'recommended',
       custom: 'custom',
+      sanctionExclusion: 'Anyone who doesn\'t send their ranking is left out of the ranking.',
+      sanctionPenalty: plural({ one: 'Anyone who doesn\'t send their ranking moves down {count} position.', other: 'Anyone who doesn\'t send their ranking moves down {count} positions.' }),
       error: 'We couldn\'t load the applied settings.',
     },
     summary: {
@@ -768,6 +770,14 @@ export const en: Catalog = {
       badThreshold: 'Unreliable reviewer threshold',
       badThresholdHelp: 'Below it, their vote weighs less.',
       thresholdError: 'The reliable threshold must exceed the unreliable one by at least 0.1.',
+      sanctionLegend: 'If someone doesn\'t send their ranking',
+      sanctionExclusion: 'Their proposal is left out of the ranking',
+      sanctionExclusionHelp: 'Recommended. It is the rule of the original method.',
+      sanctionPenalty: 'Their proposal moves down',
+      sanctionPenaltyHelp: 'It stays in the ranking, but lower.',
+      sanctionNote: 'Either way, their incomplete votes are not counted.',
+      penalty: 'Positions it moves down',
+      penaltyRange: 'Choose a value between 1 and 100.',
       stepperDecrement: 'Decrease {label}',
       stepperIncrement: 'Increase {label}',
       irreversible: 'You can\'t go back to Participation.',
@@ -782,7 +792,8 @@ export const en: Catalog = {
       title: 'Close voting and publish?',
       text: 'The final ranking is calculated and becomes visible to everyone. No one will be able to vote afterwards.',
       missingTitle: '{missing} of {total} rankings are missing',
-      missingText: 'With few votes the result is less reliable. Anyone who didn\'t send their ranking gets a quality of 0 and their proposal moves down.',
+      missingText: 'With few votes the result is less reliable. The proposal of anyone who didn\'t send their ranking is left out of the ranking, and their incomplete votes are not counted.',
+      missingTextPenalty: 'With few votes the result is less reliable. The proposal of anyone who didn\'t send their ranking moves down, and their incomplete votes are not counted.',
       unevaluatedTitle: plural({
         one: '{count} proposal has no reviews yet',
         other: '{count} proposals have no reviews yet',
@@ -1056,6 +1067,13 @@ export const en: Catalog = {
       text: plural({
         one: 'This proposal received no reviews, so it has no position in the ranking.',
         other: 'These proposals received no reviews, so they have no position in the ranking.',
+      }),
+    },
+    excluded: {
+      title: 'Left out of the ranking',
+      text: plural({
+        one: 'The author of this proposal didn\'t complete their review, so it was left out of the ranking.',
+        other: 'The authors of these proposals didn\'t complete their review, so they were left out of the ranking.',
       }),
     },
   },

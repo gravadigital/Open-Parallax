@@ -78,7 +78,7 @@ lo pide.
 | — | Token de recuperación guardado sin hash | Quien lea la base puede cambiar la contraseña de cualquier cuenta con un pedido vigente; ya figuraba como defecto conocido |
 | — | Detalles internos en las respuestas de error | Algunos errores devuelven el mensaje de la base o del parser del token |
 | — | Los resultados públicos revelan quién no evaluó | Cualquiera, sin sesión, ve qué propuestas quedaron excluidas por no evaluar y de quién son, aunque el detalle de los ajustes está reservado al autor, los administradores y el dueño de cada propuesta (RES-05, DEC-04) |
-| — | Eventos en Creación detectables | Crear un evento con el nombre de uno oculto responde que ya existe, y subir una propuesta, pedir la asignación, enviar el ranking o pedir los resultados de uno oculto responde `400` o `403` con su etapa en vez de `404`, y las operaciones que controlan permisos le responden `403` a quien no es el autor (EVE-E22): todo eso revela que existe |
+| — | Eventos en Creación detectables | Crear un evento con el nombre de uno oculto responde que ya existe, y subir una propuesta, pedir la asignación, enviar el ranking o pedir los resultados de uno oculto responde `400` o `403` con su etapa en vez de `404`, las operaciones que controlan permisos le responden `403` a quien no es el autor (EVE-E22), y el avance público de la votación responde `404` para un evento oculto pero `200` vacío para uno que no existe: todo eso revela que existe |
 
 ## Bugs sospechados
 

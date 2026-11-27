@@ -451,7 +451,7 @@ func (vs *VotingService) calculateRelativeRanks(assignedAttachments []uuid.UUID,
 	return relativeRanks
 }
 
-// applyIncentiveSystem builds the adjusted ranking G' from G, the official ranking (ADR-001).
+// applyIncentiveSystem builds the adjusted ranking G' from G, the official ranking (DEC-02).
 //
 // Merrifield & Saari (2009) move the proposal of a good evaluator up n places, and that of a bad
 // one down n, "relative to the middle-ranking referees": the proposals of neutral evaluators are

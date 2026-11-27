@@ -39,14 +39,15 @@ up: ## Build and start the whole product
 	@echo "  api      http://localhost:$(API_PORT)"
 	@echo "  mailpit  http://localhost:$(MAILPIT_PORT)"
 
+# With the test overrides too, so the containers `make test-e2e` added are removed as well.
 down: ## Remove the containers, keeping the data
-	$(COMPOSE) down
+	$(COMPOSE_TEST) down --remove-orphans
 
 stop: ## Stop everything, keeping the data
-	$(COMPOSE) stop
+	$(COMPOSE_TEST) stop
 
 reset: ## Remove everything, data included
-	$(COMPOSE) down -v
+	$(COMPOSE_TEST) down -v --remove-orphans
 
 logs: ## Follow the logs (one service: make logs s=api)
 	$(COMPOSE) logs -f $(s)

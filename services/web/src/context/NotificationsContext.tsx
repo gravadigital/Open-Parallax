@@ -26,7 +26,7 @@ export const useNotifications = (): NotificationsContextValue => {
   return context;
 };
 
-/** Contador de no leídas con el polling de ADR-009; se monta solo con sesión. */
+/** Contador de no leídas con el polling de DEC-T08; se monta solo con sesión. */
 export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { t } = useT();
   const { pathname } = useLocation();

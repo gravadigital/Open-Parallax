@@ -53,6 +53,6 @@ last_failure: EVE-E23
 | EVE-E18 | El tipo de recordatorio no corresponde a la etapa (propuesta en Participación, ranking en Votación) | `409 INVALID_EVENT_STAGE`, con la etapa actual | initial |
 | EVE-E19 | No hay pendientes a quienes recordar | `409 NO_PENDING_RECIPIENTS` | initial |
 | EVE-E20 | Quien no es el autor ni un administrador intenta gestionar el evento | `403 FORBIDDEN` (`{error, message}`) | initial |
-| EVE-E21 | El identificador del evento falta o no es válido | `400 MISSING_EVENT_ID` o `INVALID_EVENT_ID` | initial |
-| EVE-E22 | El evento no existe, o está en Creación y quien consulta no es su autor ni un administrador | `404 EVENT_NOT_FOUND` | initial |
+| EVE-E21 | El identificador del evento falta o no es válido | `400 MISSING_EVENT_ID` o `INVALID_EVENT_ID`; en las operaciones que controlan permisos, `400 BAD_REQUEST` (`{error, message}`) | initial |
+| EVE-E22 | El evento no existe, o está en Creación y quien consulta no es su autor ni un administrador | `404 EVENT_NOT_FOUND`; en las operaciones que controlan permisos, `404 NOT_FOUND` (`{error, message}`) si el evento no existe | initial |
 | EVE-E23 | Falla interna al leer o guardar | `500 DB_CREATE_ERROR`, `DB_UPDATE_ERROR`, `UPDATE_ERROR`, `CANCEL_ERROR`, `RETRIEVAL_ERROR` o `PARTICIPANT_CHECK_ERROR` | initial |

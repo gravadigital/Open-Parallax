@@ -232,7 +232,9 @@ Table notifications {
 
 // infrastructure
 Table schema_migrations {
-  id varchar [pk]
+  id varchar(10) [pk, note: 'Técnica: número de la migración']
+  name varchar(255) [not null, note: 'Técnica: nombre de la migración']
+  applied_at timestamptz [default: `CURRENT_TIMESTAMP`, note: 'Técnica: cuándo se aplicó; `cmd/migrate -rollback` deshace la última por este orden']
   Note: 'Técnica: migraciones aplicadas'
 }
 ```

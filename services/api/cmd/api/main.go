@@ -134,7 +134,7 @@ func main() {
 			usersProtected.GET("/:user_id/events", userHandler.GetUserEvents) // Get events where user participates
 		}
 
-		// In-app notifications - the authenticated user's own (ADR-009)
+		// In-app notifications - the authenticated user's own (DEC-T08)
 		notifications := api.Group("/notifications")
 		notifications.Use(auth.JWTAuthMiddleware())
 		{

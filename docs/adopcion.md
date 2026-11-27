@@ -10,9 +10,9 @@
 |---|---|
 | Definición | 8 bloques (ACC, EVE, EXP, INS, VOT, RES, NOT, BAN), 10 entidades, 40 operaciones, 12 invariantes, 15 garantías, 23 decisiones (9 de producto, 14 técnicas), 4 flujos |
 | Listo para especificar e implementar | Sí: el repositorio cumple el mínimo (M1–M9), verificado |
-| Correcciones hechas en la adopción | 10 (ninguna en la lógica del producto: no había tests fallando) |
-| Cargado en Jiku | 13 incidencias de seguridad (ver «Cargado en Jiku») |
-| En este informe | 22 bugs, 2 comportamientos a confirmar, 15 defaults sugeridos, 13 otras mejoras |
+| Correcciones hechas en la adopción | 12; en el producto, solo las URLs de Google configurables y una traducción que pide un test existente |
+| Cargado en Jiku | 15 incidencias de seguridad (ver «Cargado en Jiku») |
+| En este informe | 23 bugs, 1 comportamiento a confirmar, 14 defaults sugeridos, 13 otras mejoras |
 | Cobertura por ID | 23 de 193 IDs con un test que los nombra: solo los tests end to end de la adopción llevan IDs; los tests anteriores (más de 1.300) no |
 
 ## Línea de base
@@ -36,12 +36,14 @@ No había tests end to end. El email estaba apagado por defecto y no había Mail
 ## Correcciones hechas en la adopción
 
 Lo que la adopción cambió para llegar al mínimo de jiku flow. La lógica del producto no cambió: no
-había ningún test fallando.
+había ningún test fallando. Lo único que cambió en el producto: las URLs de Google se volvieron
+configurables (sin cambiar su valor) y la web traduce un código de error más, porque un test existente
+lo pide.
 
 | Mínimo | Qué se hizo | Cómo se comprobó |
 |---|---|---|
 | M1 | `api/` y `web/` pasaron a `services/api/` y `services/web/` (con su historia); el Compose, a la raíz; la configuración de Garage, a `infra/storage/`. Se actualizaron todas las rutas: Makefile, CI, `scripts/set-version.sh`, `.gitignore`, plantilla de PR, README, CONTRIBUTING, `documentation/`, comentarios y los dos tests de la web que leen el contrato | Ninguna ruta vieja fuera del CHANGELOG; `make check` |
-| M8 | El contrato `docs/apis/api.yaml` pasó a `_jflow/apis/api.openapi.yaml`, anotado con `operationId`, módulo, requerimientos y condiciones de falla; se le agregaron dos respuestas que la api devuelve y no figuraban (`500` de la asignación, `403` de los borradores). La documentación del framework anterior en `docs/` se borró (queda en la historia de git) | `jflow.py def-check` |
+| M8 | El contrato `docs/apis/api.yaml` pasó a `_jflow/apis/api.openapi.yaml`, anotado con `operationId`, módulo, requerimientos y condiciones de falla; se le agregaron las respuestas y los códigos que la api devuelve y no figuraban (`500` de la asignación, `403` de los borradores, `BAD_REQUEST` y `NOT_FOUND` de los middlewares de permisos, `ACCOUNT_NO_PASSWORD`, `INVALID_USER_ID`). La documentación del framework anterior en `docs/` se borró (queda en la historia de git) | `jflow.py def-check` |
 | M2 | `Makefile` en la raíz con todos los targets de jiku flow, que delegan en `services/api/Makefile` y `services/web/Makefile` (`S=` limita a uno). Se conservaron `stop`, `reset`, `infra`, `api` y `web` | `make check` |
 | M3 | Reportes JUnit en `reports/junit/`: gotestsum para Go, jest-junit para Jest y el reporter de Playwright | `make check` deja `api-unit`, `api-integration`, `api-e2e`, `web-unit` y `web-e2e` |
 | M4 | `.env.example` con todas las variables de Compose, la api y la web, con defaults seguros. El `deploy/.env` local pasó a `.env` | `jflow.py conformance` |
@@ -50,6 +52,8 @@ había ningún test fallando.
 | M7 | El CI corre `make lint typecheck test-unit test-integration` por servicio (antes no corría el lint ni el typecheck de la web ni los tests de integración de la api) y guarda los reportes. La publicación de imágenes solo cambió de rutas | `.github/workflows/ci.yml` |
 | M9 | Las URLs con que la api verifica los tokens de Google pasaron a ser configurables (`GOOGLE_TOKENINFO_URL`, `GOOGLE_USERINFO_URL`; por defecto, las de Google) para apuntarla a un Google falso en los tests. `docker-compose.test.yml` agrega ese Google falso y siembra un admin y un organizer de prueba. Tests end to end de la api (cliente HTTP con tokens reales) y de la web (Playwright) | `make test-e2e` |
 | — | `services/web/.dockerignore` excluye también `coverage` y `e2e` | `make build` |
+| — | Al completar el contrato, el test de la web que cuenta sus códigos de error (TS-23) esperaba 106 y pasaron a ser 108. Con tu respuesta: el test espera 108 y el código `INVALID_USER_ID` tiene ahora su texto en español y en inglés | `make test-unit S=web` |
+| M2 | `make down`, `stop` y `reset` también quitan lo que agrega `make test-e2e` | `make test-e2e && make down` |
 
 ## Cargado en Jiku
 
@@ -62,9 +66,11 @@ había ningún test fallando.
 | — | Enumeración de cuentas en el registro y el login | Las respuestas distintas revelan si un email tiene cuenta y de qué tipo (ACC-E3, ACC-E4 a ACC-E6). Confirmado como error |
 | — | Cualquier usuario lee los datos de cualquier otro | `GET /api/v1/users/{id}` devuelve nombre, email y rol de cualquier cuenta a cualquier sesión (ACC-08); ya figuraba como defecto conocido |
 | — | Apropiación de cuentas por la vinculación con Google | Una cuenta creada con un email ajeno, sin verificarlo, queda vinculada al Google de su dueño cuando este entra, y el atacante conserva su contraseña (ACC-04) |
-| — | Credenciales y datos personales en los logs | En modo debug (el default del código y de `make dev`) se registra la cadena de conexión con la contraseña y el SQL con hashes y tokens de recuperación; los emails se registran siempre |
+| — | Credenciales y datos personales en los logs | En modo debug (el default del código y de `make dev`) se registra la cadena de conexión con la contraseña y el SQL con hashes y tokens de recuperación; los emails se registran siempre. La web escribe en la consola del navegador el email del usuario al restaurar la sesión y el nombre elegido con Google |
 | — | Inyección de cabeceras en los emails por el nombre del evento | El nombre del evento entra sin filtrar en el asunto: un salto de línea agrega cabeceras o cuerpo a los emails que reciben todos los inscritos |
 | — | Subida de propuestas sin endurecer | El tipo lo declara quien sube y se devuelve tal cual al descargar, sin `nosniff`; el tamaño se controla después de leer todo el cuerpo, sin límite; el nombre original no se escapa en la descarga |
+| — | Sesiones que no se pueden revocar | Una sesión sigue valiendo 24 horas después de cambiar la contraseña o de quitarle un rol: quien recupera una cuenta comprometida sigue expuesto, y un administrador degradado sigue siéndolo hasta que vence |
+| — | Sin límite de intentos en el login, el registro y la recuperación | Permite probar contraseñas por fuerza bruta y mandar emails de recuperación en masa a cualquier dirección |
 | — | Token de recuperación guardado sin hash | Quien lea la base puede cambiar la contraseña de cualquier cuenta con un pedido vigente; ya figuraba como defecto conocido |
 | — | Detalles internos en las respuestas de error | Algunos errores devuelven el mensaje de la base o del parser del token |
 | — | Eventos en Creación detectables por su nombre | Crear un evento con el nombre de uno oculto responde que ya existe, y revela que existe |
@@ -217,6 +223,13 @@ No son de seguridad, así que no se cargaron en Jiku. La definición los documen
 - **Qué pasa:** `documentation/configuration.md:27-28` e `installation.md:99` dicen que la web lee su configuración al construirse (hoy es al arrancar); `installation.md:30-32` dice que se cargan usuarios de ejemplo (ya no).
 - **Gravedad sugerida:** baja.
 
+### B-23 El evento no tiene fechas propias
+
+- **Qué pasa:** la web no pide fechas: manda como inicio el día siguiente y como fin el posterior, y el paso 2 del asistente se llama «Fechas y cupo» aunque solo tiene el cupo.
+- **Por qué parece un error:** confirmado como error en la adopción; las fechas del evento no dicen nada real.
+- **Dónde:** EVE-02, EVE-03; `services/web/src/domain/eventForm.ts:141-147`, `services/web/src/i18n/catalogs/es.ts:468`.
+- **Gravedad sugerida:** media.
+
 ## Comportamientos a confirmar
 
 Comportamientos que pueden ser intencionales o no, y que quedaron sin respuesta en la adopción. La
@@ -224,8 +237,7 @@ definición los documenta tal cual, sin decisión. Al especificar algo que los t
 
 | Comportamiento | Duda | IDs |
 |---|---|---|
-| La web no pide fechas de inicio y fin: manda mañana y pasado mañana, y el paso 2 del asistente se llama «Fechas y cupo» sin fechas | El análisis anterior lo marcaba como defecto, y el commit que lo hizo lo trata como deliberado | EVE-03 |
-| Los umbrales de calidad por defecto son 0,6 y 0,3 en la api y 0,65 y 0,35 en la base | Solo cuentan los de la api, que siempre los escribe; no está claro cuál es el valor buscado | VOT-02 |
+| Los umbrales de calidad por defecto son 0,6 y 0,3 en la api y 0,65 y 0,35 en la base | Solo cuentan los de la api, que siempre los escribe; se preguntó cuál es el valor buscado y no se sabe | VOT-02 |
 
 ## Defaults de jiku flow que el producto no sigue
 
@@ -238,8 +250,7 @@ existente es opcional: si se decide mantener uno a propósito, queda como decisi
 | Validación de toda entrada contra un esquema en el borde | Tags de Gin y chequeos a mano; varios identificadores sin validar terminan en 500; longitudes medidas en bytes | Validar identificadores y cuerpos antes de la lógica, con `400 validation_failed` | Medio |
 | Configuración validada al arrancar | Solo `JWT_SECRET`; un número mal escrito toma su default sin avisar | Validar todas las variables y fallar con un mensaje claro | Bajo |
 | Contraseñas con Argon2id | bcrypt | Migrar al iniciar sesión | Medio |
-| Sesiones del navegador en cookies httpOnly, revocables | JWT en `localStorage`, sin CSP, sin revocación; el rol se toma del token por 24 h | Cookie httpOnly y una forma de revocar (o vida corta con renovación) | Alto |
-| Límite de intentos en autenticación (20 por minuto por cliente) | No hay en login, registro ni recuperación | Limitar por IP en esas operaciones | Medio |
+| Sesiones del navegador en cookies httpOnly | JWT en `localStorage`, legible por cualquier script, sin CSP | Cookie httpOnly, Secure y SameSite, y una CSP en nginx | Alto |
 | Identificadores UUIDv7 | UUIDv4 (`uuid-ossp`) | `uuidv7()` en las tablas nuevas | Bajo |
 | Listas con cursor (`limit`, `cursor`) | `page` y `limit` en eventos | Cursor en las listas nuevas | Medio |
 | Campos `camelCase` | `snake_case` en todo el contrato | Solo con una versión nueva del contrato | Alto |
@@ -271,4 +282,3 @@ existente es opcional: si se decide mantener uno a propósito, queda como decisi
 ## Contradicciones
 
 - La api pone por defecto los umbrales de calidad en 0,6 y 0,3, y la base en 0,65 y 0,35 (VOT-02, `voting_configurations`).
-- El análisis anterior marcaba como defecto que la web genere las fechas del evento; el código lo trata como deliberado (EVE-03).

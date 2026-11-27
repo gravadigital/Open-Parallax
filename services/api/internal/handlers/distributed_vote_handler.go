@@ -26,7 +26,7 @@ type DistributedVoteHandler struct {
 	configRepo     postgres.VotingConfigurationRepository
 	resultsRepo    postgres.VotingResultsRepository
 	votingService  *vote.VotingService
-	// notifier emits in-app notifications, best effort (ADR-009); may be nil.
+	// notifier emits in-app notifications, best effort (DEC-T08); may be nil.
 	notifier *notification.Service
 	config   *config.Config
 	log      *log.Logger

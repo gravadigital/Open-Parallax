@@ -3,7 +3,7 @@
  *
  * Los identificadores y su orden son un contrato con la api (enum `CoverColor` de
  * `_jflow/apis/api.openapi.yaml`, CHECK `valid_cover_color`) y con el Design System
- * (`foundations/color.md`). La api guarda el identificador, nunca el hex.
+ * (`src/styles/tokens.css`). La api guarda el identificador, nunca el hex.
  */
 export const COVER_COLORS = [
   'lavender',

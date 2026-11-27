@@ -1,5 +1,5 @@
 /* ========================================================================
-   TOKENS — Design System `web` v2.0.0 (única fuente de tokens, ADR-007 / DA-7)
+   TOKENS — Design System `web` v2.0.0 (única fuente de tokens, DEC-T06)
 
    Regla de nombres (D-1): el nombre CSS es la ruta del token con "." -> "-".
    - Tier 1 (reference) lleva prefijo --ref-
@@ -42,7 +42,7 @@
   --ref-color-amber-500: #e9a227;
   --ref-color-amber-100: #f7edd6;
   --ref-color-red-700: #b8381f;
-  /* Portada del evento (REQ-004): 16 pasteles, misma luminancia. foundations/color.md */
+  /* Portada del evento (REQ-004): 16 pasteles, misma luminancia. */
   --ref-color-cover-lavender: #D9D4FA;
   --ref-color-cover-periwinkle: #CDD8F9;
   --ref-color-cover-sky: #B6DEF7;

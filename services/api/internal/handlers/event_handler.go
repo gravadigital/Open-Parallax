@@ -35,7 +35,7 @@ type EventHandler struct {
 	// voteHandler recalculates and stores the ranking when the event enters
 	// the results stage; may be nil in tests that never reach that stage.
 	voteHandler *DistributedVoteHandler
-	// notifier emits in-app notifications, best effort (ADR-009); may be nil.
+	// notifier emits in-app notifications, best effort (DEC-T08); may be nil.
 	notifier *notification.Service
 	config   *config.Config
 	log      *log.Logger

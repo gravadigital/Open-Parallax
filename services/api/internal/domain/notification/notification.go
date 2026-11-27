@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// RetentionDays is how long a notification stays visible (ADR-009).
+// RetentionDays is how long a notification stays visible (DEC-T08).
 const RetentionDays = 90
 
 // ErrNotFound is returned when a notification does not exist, is not the recipient's or is expired.

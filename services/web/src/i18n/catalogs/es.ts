@@ -1177,6 +1177,7 @@ export const es = {
     INVALID_TOKEN: 'Tu sesión no es válida. Inicia sesión de nuevo.',
     INVALID_TRANSITION: 'No puedes pasar a esa etapa desde la actual.',
     INVALID_UPDATE_STAGE: 'No puedes modificar el evento en su etapa actual.',
+    INVALID_USER_ID: 'El identificador del usuario no es válido.',
     MATH_CONSTRAINT_VIOLATION: 'Los parámetros de votación no son compatibles entre sí. Ajústalos e inténtalo de nuevo.',
     MAX_PARTICIPANTS_BELOW_REGISTERED: 'El máximo no puede ser menor que la cantidad de inscritos.',
     MAX_PARTICIPANTS_LIMIT_EXCEEDED: 'El máximo de participantes supera el límite permitido.',

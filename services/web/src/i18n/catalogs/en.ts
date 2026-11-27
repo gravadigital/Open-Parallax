@@ -1176,6 +1176,7 @@ export const en: Catalog = {
     INVALID_TOKEN: 'Your session is not valid. Log in again.',
     INVALID_TRANSITION: "You can't move to that stage from the current one.",
     INVALID_UPDATE_STAGE: "You can't modify the event in its current stage.",
+    INVALID_USER_ID: 'The user identifier is not valid.',
     MATH_CONSTRAINT_VIOLATION: "The voting parameters aren't compatible with each other. Adjust them and try again.",
     MAX_PARTICIPANTS_BELOW_REGISTERED: "The maximum can't be lower than the number of registered participants.",
     MAX_PARTICIPANTS_LIMIT_EXCEEDED: 'The maximum number of participants exceeds the allowed limit.',

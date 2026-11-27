@@ -182,6 +182,7 @@ paths:
           description: |
             `INVALID_CREDENTIALS` — usuario inexistente o password incorrecta.
             `OAUTH_ACCOUNT_NO_PASSWORD` — cuenta de Google sin password local.
+            `ACCOUNT_NO_PASSWORD` — cuenta creada al inscribirse en un evento, todavía sin password.
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
           x-failure: [ACC-E14]
@@ -489,7 +490,7 @@ paths:
                             result_total: { type: integer, nullable: true }
         '400':
           x-failure: [EXP-E2, EXP-E4]
-          description: '`INVALID_PAYLOAD` — `scope` inválido (`details`: `scope must be one of: participating, all`)'
+          description: '`INVALID_PAYLOAD` — `scope` inválido (`details`: `scope must be one of: participating, all`); `INVALID_USER_ID` — `user_id` con formato inválido'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           x-failure: [ACC-E13, EXP-E3]
@@ -736,7 +737,7 @@ paths:
                   code: { type: string, example: EVENT_UPDATED }
         '400':
           x-failure: [EVE-E1, EVE-E6, EVE-E10]
-          description: '`INVALID_PAYLOAD`, `MAX_PARTICIPANTS_BELOW_REGISTERED` (+ `current_count`), `INVALID_COVER_COLOR` (S-019)'
+          description: '`INVALID_PAYLOAD`, `MAX_PARTICIPANTS_BELOW_REGISTERED` (+ `current_count`), `INVALID_COVER_COLOR` (S-019), `BAD_REQUEST` (id con formato inválido, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -746,7 +747,7 @@ paths:
           x-failure: [EVE-E20]
         '404':
           x-failure: [EVE-E22]
-          description: '`EVENT_NOT_FOUND`'
+          description: '`EVENT_NOT_FOUND`, `NOT_FOUND` (evento inexistente, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '409':
           x-failure: [EVE-E7, EVE-E9]
@@ -992,6 +993,7 @@ paths:
             `MISSING_VOTING_CONFIG`, `INVALID_THRESHOLDS`, `M_EXCEEDS_EVALUABLE`,
             `MATH_CONSTRAINT_VIOLATION`. (`INSUFFICIENT_PARTICIPANTS` y `NO_ATTACHMENTS` dejan
             de usarse en esta transición, S-006.)
+            `BAD_REQUEST` (id con formato inválido, del middleware de permisos).
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -1001,7 +1003,7 @@ paths:
           x-failure: [EVE-E20]
         '404':
           x-failure: [EVE-E22]
-          description: '`EVENT_NOT_FOUND`'
+          description: '`EVENT_NOT_FOUND`, `NOT_FOUND` (evento inexistente, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
           x-failure: [EVE-E23, VOT-E20]
@@ -1059,6 +1061,7 @@ paths:
 
             `INVALID_STAGE_FOR_EDIT` — `details` es un **objeto**
             `{current_stage, requested_stage}`, no un string.
+            `BAD_REQUEST` (id con formato inválido, del middleware de permisos).
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -1068,7 +1071,7 @@ paths:
           x-failure: [EVE-E20]
         '404':
           x-failure: [EVE-E22]
-          description: '`EVENT_NOT_FOUND`'
+          description: '`EVENT_NOT_FOUND`, `NOT_FOUND` (evento inexistente, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
           x-failure: [EVE-E23]
@@ -1104,7 +1107,7 @@ paths:
                   code: { type: string, example: EVENT_CANCELLED }
         '400':
           x-failure: [EVE-E21]
-          description: '`INVALID_EVENT_ID`'
+          description: '`INVALID_EVENT_ID`, `BAD_REQUEST` (id con formato inválido, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -1114,7 +1117,7 @@ paths:
           x-failure: [EVE-E20]
         '404':
           x-failure: [EVE-E22]
-          description: '`EVENT_NOT_FOUND`'
+          description: '`EVENT_NOT_FOUND`, `NOT_FOUND` (evento inexistente, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '409':
           x-failure: [EVE-E15]
@@ -1164,7 +1167,7 @@ paths:
                     description: '`EVENT_PAUSED` también se usa como código de error 403 en otros endpoints'
         '400':
           x-failure: [EVE-E21]
-          description: '`INVALID_EVENT_ID`'
+          description: '`INVALID_EVENT_ID`, `BAD_REQUEST` (id con formato inválido, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -1174,7 +1177,7 @@ paths:
           x-failure: [EVE-E20]
         '404':
           x-failure: [EVE-E22]
-          description: '`EVENT_NOT_FOUND`'
+          description: '`EVENT_NOT_FOUND`, `NOT_FOUND` (evento inexistente, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '409':
           x-failure: [EVE-E16]
@@ -1306,6 +1309,7 @@ paths:
             `DESCRIPTION_TOO_LONG`, `FILE_TOO_LARGE` (+ `max_size` string, `received_size` int),
             `INVALID_FILE_TYPE` (+ `received_type`, `allowed_types` con descripciones
             legibles y orden no determinístico), `INVALID_FILENAME`
+            `BAD_REQUEST` (id con formato inválido, del middleware de permisos).
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -1316,7 +1320,7 @@ paths:
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '404':
           x-failure: [EVE-E22, INS-E14]
-          description: '`EVENT_NOT_FOUND`, `PARTICIPANT_NOT_FOUND`'
+          description: '`EVENT_NOT_FOUND`, `PARTICIPANT_NOT_FOUND`, `NOT_FOUND` (evento inexistente, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '409':
           x-failure: [INS-E15]
@@ -1503,6 +1507,9 @@ paths:
                           quality_good_threshold: { type: number, example: 0.6 }
                           quality_bad_threshold: { type: number, example: 0.3 }
                           adjustment_magnitude: { type: integer, example: 3 }
+        '400':
+          $ref: '#/components/responses/MiddlewareBadRequest'
+          x-failure: [EVE-E21, INS-E18]
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
           x-failure: [ACC-E13]
@@ -1511,7 +1518,7 @@ paths:
           x-failure: [EVE-E20]
         '404':
           x-failure: [EVE-E22]
-          description: '`EVENT_NOT_FOUND`'
+          description: '`EVENT_NOT_FOUND`, `NOT_FOUND` (evento inexistente, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
 
   /api/v1/events/{event_id}/voting-config:
@@ -1553,7 +1560,7 @@ paths:
                   created_at: '2026-10-05T13:00:00Z'
         '400':
           x-failure: [EVE-E21]
-          description: '`MISSING_EVENT_ID`, `INVALID_EVENT_ID`'
+          description: '`MISSING_EVENT_ID`, `INVALID_EVENT_ID`, `BAD_REQUEST` (id con formato inválido, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -1654,6 +1661,7 @@ paths:
             `MISSING_EVENT_ID`, `INVALID_EVENT_ID`, `INVALID_PAYLOAD`, `INVALID_THRESHOLDS`,
             `INVALID_EVENT_STAGE`, `INSUFFICIENT_ATTACHMENTS` (+ `current_count`,
             `required_minimum: 3`), `M_EXCEEDS_EVALUABLE`, `MATH_CONSTRAINT_VIOLATION`
+            `BAD_REQUEST` (id con formato inválido, del middleware de permisos).
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -1663,7 +1671,7 @@ paths:
           x-failure: [VOT-E19]
         '404':
           x-failure: [EVE-E22]
-          description: '`EVENT_NOT_FOUND`'
+          description: '`EVENT_NOT_FOUND`, `NOT_FOUND` (evento inexistente, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '409':
           x-failure: [VOT-E16]
@@ -1723,6 +1731,7 @@ paths:
           description: |
             `MISSING_EVENT_ID`, `INVALID_EVENT_ID`, `INVALID_EVENT_STAGE`,
             `INSUFFICIENT_ATTACHMENTS` (+ `current_count`, `required_minimum: 3`), `CONFIG_INVALID`
+            `BAD_REQUEST` (id con formato inválido, del middleware de permisos).
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -1732,7 +1741,7 @@ paths:
           x-failure: [VOT-E19]
         '404':
           x-failure: [EVE-E22, VOT-E15]
-          description: '`EVENT_NOT_FOUND`, `CONFIG_NOT_FOUND`'
+          description: '`EVENT_NOT_FOUND`, `CONFIG_NOT_FOUND`, `NOT_FOUND` (evento inexistente, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '409':
           x-failure: [VOT-E17]
@@ -1773,7 +1782,7 @@ paths:
                   participant_id: { type: string, format: uuid, description: El propio evaluador }
         '400':
           x-failure: [INS-E18, VOT-E7]
-          description: Parámetros faltantes, o el evento no está en `voting` ni `results` (+ `current_stage`)
+          description: Parámetros faltantes, o el evento no está en `voting` ni `results` (+ `current_stage`), `BAD_REQUEST` (id con formato inválido, del middleware de permisos)
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -1784,7 +1793,7 @@ paths:
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
         '404':
           x-failure: [EVE-E22, VOT-E9]
-          description: 'Evento inexistente; `NO_ASSIGNMENT` si el participante no tiene asignación (S-007, forma ApiError)'
+          description: 'Evento inexistente; `NO_ASSIGNMENT` si el participante no tiene asignación (S-007, forma ApiError), `NOT_FOUND` (evento inexistente, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
           x-failure: [VOT-E20]
@@ -1854,6 +1863,7 @@ paths:
           description: |
             Payload inválido, etapa incorrecta, `assignment_id` que no corresponde,
             rangos duplicados o no consecutivos, propuesta no asignada o de otro evento.
+            `BAD_REQUEST` (id con formato inválido, del middleware de permisos).
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -1864,7 +1874,7 @@ paths:
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
         '404':
           x-failure: [EVE-E22, VOT-E12]
-          description: Evento, asignación o propuesta inexistente
+          description: Evento, asignación o propuesta inexistente, `NOT_FOUND` (evento inexistente, del middleware de permisos)
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
         '500':
           x-failure: [VOT-E20]
@@ -1924,7 +1934,7 @@ paths:
                   code: { type: string, example: DRAFT_SAVED }
         '400':
           x-failure: [VOT-E14]
-          description: '`INVALID_EVENT_ID`, `INVALID_PARTICIPANT_ID`, `INVALID_PAYLOAD`, `INVALID_ATTACHMENT_ID`'
+          description: '`INVALID_EVENT_ID`, `INVALID_PARTICIPANT_ID`, `INVALID_PAYLOAD`, `INVALID_ATTACHMENT_ID`, `BAD_REQUEST` (id con formato inválido, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -1934,7 +1944,7 @@ paths:
           x-failure: [INS-E18]
         '404':
           x-failure: [VOT-E9]
-          description: '`ASSIGNMENT_NOT_FOUND`'
+          description: '`ASSIGNMENT_NOT_FOUND`, `NOT_FOUND` (evento inexistente, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
           x-failure: [VOT-E20]
@@ -1977,7 +1987,7 @@ paths:
                       updated_at: { type: string, format: date-time }
         '400':
           x-failure: [VOT-E14]
-          description: '`INVALID_PARTICIPANT_ID`'
+          description: '`INVALID_PARTICIPANT_ID`, `BAD_REQUEST` (id con formato inválido, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -1987,7 +1997,7 @@ paths:
           x-failure: [INS-E18]
         '404':
           x-failure: [VOT-E9, VOT-E13]
-          description: '`ASSIGNMENT_NOT_FOUND`, `DRAFT_NOT_FOUND`'
+          description: '`ASSIGNMENT_NOT_FOUND`, `DRAFT_NOT_FOUND`, `NOT_FOUND` (evento inexistente, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
           x-failure: [VOT-E20]
@@ -2003,7 +2013,7 @@ paths:
       summary: Resultados de la votación distribuida (solo lectura)
       description: |
         Devuelve el ranking global (`global_ranking`, por puntaje MBC) y el ranking ajustado
-        por el sistema de incentivos (`adjusted_ranking`), que es **el ranking oficial** (ADR-001).
+        por el sistema de incentivos (`adjusted_ranking`), que es **el ranking oficial** (DEC-02).
         El ajuste de cada propuesta (`adjustment`, `adjustment_reason`, `non_evaluator`) deja ver
         cómo evaluó su autor, así que solo se incluye para la propuesta del usuario autenticado,
         o para todas si quien pide es el autor del evento o un admin (token opcional). No incluye la calidad Q de los
@@ -2093,7 +2103,7 @@ paths:
           content: { application/json: { schema: { type: object } } }
         '400':
           x-failure: [RES-E3]
-          description: '`event_id` ausente o con formato inválido'
+          description: '`event_id` ausente o con formato inválido, `BAD_REQUEST` (id con formato inválido, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -2104,7 +2114,7 @@ paths:
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
         '404':
           x-failure: [RES-E3, RES-E4]
-          description: Evento o configuración de votación inexistente
+          description: Evento o configuración de votación inexistente, `NOT_FOUND` (evento inexistente, del middleware de permisos)
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
         '500':
           x-failure: [RES-E5]
@@ -2213,7 +2223,7 @@ paths:
                   code: { type: string, example: REMINDER_SENT }
         '400':
           x-failure: [EVE-E1]
-          description: '`INVALID_PAYLOAD`'
+          description: '`INVALID_PAYLOAD`, `BAD_REQUEST` (id con formato inválido, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -2223,7 +2233,7 @@ paths:
           x-failure: [EVE-E20]
         '404':
           x-failure: [EVE-E22]
-          description: '`EVENT_NOT_FOUND`'
+          description: '`EVENT_NOT_FOUND`, `NOT_FOUND` (evento inexistente, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '409':
           x-failure: [EVE-E17, EVE-E18, EVE-E19]
@@ -2288,7 +2298,7 @@ paths:
       x-origin: initial
       tags: [notification]
       summary: Cantidad de notificaciones sin leer
-      description: 'S-009. Es el endpoint del polling de la web (ADR-009).'
+      description: 'S-009. Es el endpoint del polling de la web (DEC-T08).'
       responses:
         '200':
           description: Contador
@@ -2417,6 +2427,14 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/MiddlewareError' }
+    MiddlewareBadRequest:
+      x-failure: [EVE-E21, INS-E18]
+      description: |
+        `BAD_REQUEST`: identificador de evento o de participante con formato inválido. Emitido
+        por los middlewares de permisos, con la forma `{error: "BAD_REQUEST", message: "..."}`.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/MiddlewareError' }
     MiddlewareForbidden:
       x-failure: [EVE-E20, INS-E18, VOT-E19]
       description: |
@@ -2473,7 +2491,7 @@ components:
       default: lavender
       description: |
         Identificador del color de portada del evento (S-019 / REQ-004). Paleta cerrada de 16
-        pasteles; los hex viven en `docs/design-system/web/foundations/color.md` y la API solo
+        pasteles; los hex viven en `services/web/src/styles/tokens.css` y la API solo
         guarda el identificador. Renombrar o quitar un valor es un cambio incompatible.
 
     Stage:
@@ -2619,7 +2637,7 @@ components:
     Notification:
       type: object
       description: |
-        S-009. Se guarda `type` + `data`, no texto (ADR-009): la web compone el texto en el
+        S-009. Se guarda `type` + `data`, no texto (DEC-T08): la web compone el texto en el
         idioma del usuario con el nombre vigente del evento.
 
         `data` por tipo: `stage_changed` → `{stage, deadline?}` + en `voting`

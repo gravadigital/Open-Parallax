@@ -152,7 +152,7 @@ type VoteDraftRepository interface {
 }
 
 // NotificationRepository persists and queries in-app notifications. Every read and update
-// is scoped to the recipient and to the retention window (ADR-009).
+// is scoped to the recipient and to the retention window (DEC-T08).
 type NotificationRepository interface {
 	CreateBatch(notifications []*notification.Notification) error
 	UpsertParticipantRegistered(recipientID, eventID string) error

@@ -12,7 +12,7 @@ type Writer interface {
 	UpsertParticipantRegistered(recipientID, eventID string) error
 }
 
-// Service emits notifications. Callers treat its errors as best effort (ADR-009).
+// Service emits notifications. Callers treat its errors as best effort (DEC-T08).
 type Service struct {
 	writer Writer
 }

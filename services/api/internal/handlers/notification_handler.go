@@ -107,7 +107,7 @@ func (h *NotificationHandler) ListNotifications(c *gin.Context) {
 		before = &t
 	}
 
-	// Retention without a scheduler (ADR-009): purge the user's expired rows on read.
+	// Retention without a scheduler (DEC-T08): purge the user's expired rows on read.
 	if _, err := h.repo.DeleteExpired(userID); err != nil {
 		h.log.Warn("failed to delete expired notifications", "user_id", userID, "error", err)
 	}

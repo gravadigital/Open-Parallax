@@ -752,7 +752,7 @@ func (r *PostgresVoteRepository) GetVotingStatistics(eventID string) (map[string
 var ErrAssignmentNotFound = errors.New("assignment not found")
 
 // ReplaceAssignmentVotes deletes the assignment's votes and inserts the new ones in a single
-// transaction. Completion flags and vote counts are maintained by DB triggers (ADR-002).
+// transaction. Completion flags and vote counts are maintained by DB triggers (DEC-T01).
 // The assignment row is locked first, so two submissions of the same ranking run one after
 // the other: the second replaces the first instead of adding its votes next to them.
 func (r *PostgresVoteRepository) ReplaceAssignmentVotes(assignmentID string, votes []*vote.Vote) (bool, error) {

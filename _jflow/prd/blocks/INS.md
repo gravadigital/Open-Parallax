@@ -45,5 +45,5 @@ last_failure: INS-E19
 | INS-E15 | El inscrito ya tiene una propuesta en el evento | `409 DUPLICATE_ATTACHMENT`, con la propuesta existente | initial |
 | INS-E16 | La propuesta o su archivo no existen | `404 ATTACHMENT_NOT_FOUND` o `FILE_NOT_FOUND` | initial |
 | INS-E17 | Quien descarga o elimina no tiene permiso sobre la propuesta | `403 FORBIDDEN` | initial |
-| INS-E18 | Faltan o no son válidos los identificadores del participante, o quien opera sobre los recursos de un participante no es él, el autor ni un administrador | `400 MISSING_PARAMETERS` o `INVALID_PARTICIPANT_ID`; `403 FORBIDDEN` (`{error, message}`) | initial |
+| INS-E18 | Faltan o no son válidos los identificadores del participante, o quien opera sobre los recursos de un participante no es él, el autor ni un administrador | `400 MISSING_PARAMETERS` o `INVALID_PARTICIPANT_ID`, o `400 BAD_REQUEST` (`{error, message}`); `403 FORBIDDEN` (`{error, message}`) | initial |
 | INS-E19 | Falla interna al crear la cuenta, inscribir, guardar o borrar el archivo, o leer | `500 USER_CREATE_ERROR`, `PARTICIPANT_CHECK_ERROR`, `REGISTRATION_ERROR`, `FILE_SAVE_ERROR`, `DB_SAVE_ERROR`, `EVENT_LOOKUP_ERROR`, `DB_DELETE_ERROR` o `RETRIEVAL_ERROR` | initial |

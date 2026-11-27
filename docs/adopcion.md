@@ -63,7 +63,7 @@ lo pide.
 
 | # | Título | Por qué |
 |---|---|---|
-| — | Inscripción en eventos sin identificarse, a nombre de cualquier email | Cualquiera puede inscribir a terceros: crea cuentas, inscribe cuentas existentes sin su consentimiento, llena el cupo, les hace llegar los emails del evento y obtiene el identificador del usuario (INS-01). Confirmado como error |
+| — | Inscripción en eventos sin identificarse, a nombre de cualquier email | Cualquiera puede inscribir a terceros: crea cuentas, inscribe cuentas existentes sin su consentimiento, llena el cupo, les hace llegar los emails del evento y obtiene el identificador del usuario (INS-01). La cuenta se crea antes de controlar el cupo: aun con el evento lleno, cada email nuevo deja una cuenta creada (INS-03). Confirmado como error |
 | — | Emails de los inscritos visibles para cualquier usuario | Cualquier cuenta lista nombre y email de los inscritos de cualquier evento (INS-04). Confirmado como error |
 | — | El organizador puede votar en nombre de los participantes | El autor y los administradores envían rankings, borradores y propuestas por cualquier inscrito: pueden fabricar el resultado (VOT-09, INS-06). Confirmado como error |
 | — | El rol global organizer actúa sobre cualquier evento | Configura la votación, genera asignaciones y recalcula resultados de eventos ajenos, y ve la calidad de los evaluadores (VOT-13, RES-06). Confirmado como error |
@@ -99,7 +99,7 @@ No son de seguridad, así que no se cargaron en Jiku. La definición los documen
 
 ### B-03 Un evento cancelado sigue funcionando
 
-- **Qué pasa:** cancelado, el evento acepta inscripciones, propuestas, rankings y cambios de etapa; solo la pausa los bloquea. La web no ofrece cancelar.
+- **Qué pasa:** cancelado, el evento sigue aceptando inscripciones, propuestas, rankings y cambios de etapa. La pausa sí bloquea las inscripciones, las propuestas y los recordatorios, pero tampoco los rankings ni los cambios de etapa. La web no ofrece cancelar.
 - **Por qué parece un error:** confirmado como error en la adopción.
 - **Dónde:** EVE-10; `services/api/internal/handlers/event_handler.go:1086`, `attachment_handler.go:135`.
 - **Gravedad sugerida:** media.

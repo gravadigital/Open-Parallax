@@ -11,7 +11,8 @@ Alguien se inscribe con nombre y email; si no tiene cuenta, se crea.
 | # | From → To | What happens | Operation / table | Rules |
 |---|---|---|---|---|
 | 1 | web → api.event | Inscripción con el nombre y el email | `registerParticipant` | INS-01 |
-| 2 | api.event | Se valida etapa, pausa, cupo, autor e inscripción previa | `events`, `event_participants` | INS-03, GAR-12 |
-| 3 | api.event → api.participant | Se busca la cuenta por email; si no existe, se crea sin contraseña | `users` | INS-01, GAR-10 |
-| 4 | api.event → base | Se registra la inscripción | `event_participants` | — |
-| 5 | api.event → api.notification | Confirmación al inscrito y aviso al autor, sumado a su aviso sin leer del mismo evento | `notifications` (`registration_confirmed`, `participant_registered`) | NOT-05, NOT-06 |
+| 2 | api.event | Se valida la etapa y que el evento no esté pausado | `events` | INS-03 |
+| 3 | api.event → api.participant | Se busca la cuenta por email; si no existe, se crea sin contraseña (queda creada aunque los pasos siguientes rechacen la inscripción) | `users` | INS-01, GAR-10 |
+| 4 | api.event | Se valida que no sea el autor, que no esté inscrito y que haya cupo | `event_participants` | INS-03, GAR-12 |
+| 5 | api.event → base | Se registra la inscripción | `event_participants` | — |
+| 6 | api.event → api.notification | Confirmación al inscrito y aviso al autor, sumado a su aviso sin leer del mismo evento | `notifications` (`registration_confirmed`, `participant_registered`) | NOT-05, NOT-06 |

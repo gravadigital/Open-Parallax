@@ -16,7 +16,7 @@ last_failure: INS-E19
 |---|---|---|---|
 | INS-01 | Cualquiera, sin sesión, inscribe un nombre (2 a 100 caracteres) y un email en un evento en Participación: si el email no tiene cuenta, se crea una sin contraseña; si la tiene, esa cuenta queda inscrita. La respuesta devuelve el identificador del usuario | U-01 | initial |
 | INS-02 | En la web, inscribirse pide sesión y usa el nombre y el email de la cuenta | U-02 | initial |
-| INS-03 | No se inscribe con el evento pausado, con el cupo completo, al autor ni a quien ya está inscrito | — | initial |
+| INS-03 | No se inscribe con el evento pausado, con el cupo completo, al autor ni a quien ya está inscrito. La etapa y la pausa se controlan antes de buscar o crear la cuenta; el autor, la inscripción previa y el cupo, después: una inscripción rechazada por esos motivos deja creada la cuenta sin contraseña de un email nuevo | — | initial |
 | INS-04 | Cualquier usuario con sesión lista los inscritos de un evento, sin el autor, con nombre, email y rol | U-02 | initial |
 | INS-05 | Un inscrito sube su propuesta durante Participación, con el evento sin pausar: un archivo de hasta **tamaño máximo de propuesta**, de tipo JPG, PNG, GIF, WebP, PDF, TXT, DOC o DOCX, con una descripción opcional de hasta 1000 bytes (una letra con tilde cuenta dos). Una sola por inscrito y evento; el autor no sube | U-02 | initial |
 | INS-06 | El autor o un administrador sube, en nombre de un inscrito, su propuesta | U-03 | initial |

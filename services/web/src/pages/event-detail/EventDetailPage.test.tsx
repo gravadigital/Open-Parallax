@@ -584,7 +584,7 @@ describe('EventDetailPage', () => {
       expect(screen.getByRole('list', { name: 'Tu ranking de propuestas' })).toBeInTheDocument();
       const aside = screen.getByRole('complementary');
       expect(within(aside).getByText('¿Cómo cuenta tu voto?')).toBeInTheDocument();
-      expect(within(aside).getByText(/Cuanto más coherente y honesto, más influye en el resultado final/)).toBeInTheDocument();
+      expect(within(aside).getByText(/Tu orden se compara con el ranking de la comunidad/)).toBeInTheDocument();
       const progress = within(aside).getByRole('heading', { level: 4, name: 'Tu progreso' }).closest('section')!;
       expect(within(progress).getByText('Propuesta enviada')).toBeInTheDocument();
       expect(within(progress).getByText('Enviar ranking')).toBeInTheDocument();
@@ -907,8 +907,8 @@ describe('EventDetailPage', () => {
       await ready();
       const aside = screen.getByRole('complementary');
       expect(within(aside).getByText('¿Cómo cuenta tu voto?')).toBeInTheDocument();
-      expect(within(aside).getByText(/Cuanto más coherente y honesto/)).toBeInTheDocument();
-      expect(aside.textContent).not.toMatch(/pese más|pesa más/);
+      expect(within(aside).getByText(/si coinciden, tu propuesta gana puestos en el ranking final; si se alejan, los pierde/i)).toBeInTheDocument();
+      expect(aside.textContent).not.toMatch(/pese más|pesa más|más influye/);
     });
 
     it('TS-44: sin asignación no hay lista ni borrador', async () => {

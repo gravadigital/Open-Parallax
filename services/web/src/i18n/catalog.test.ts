@@ -127,6 +127,31 @@ describe('catálogo', () => {
     expect(en.myEvents.organizingEmpty).toBe("You haven't organized any events yet.");
   });
 
+  it('[581-AC-01] voting texts ask for the community order and explain the reward, not personal taste nor vote weight', () => {
+    const misleading = [
+      /te parece mejor/i,
+      /pesan? (más|menos)/i,
+      /más influye/i,
+      /honest/i,
+      /think is best/i,
+      /carry more weight/i,
+      /weighs? (more|less)/i,
+      /more it influences/i,
+    ];
+    const offenders = [...flattenLeaves(es), ...flattenLeaves(en)].filter(([, text]) =>
+      misleading.some((pattern) => pattern.test(text))
+    );
+    expect(offenders).toEqual([]);
+
+    expect(es.eventDetail.nextStep.vote.text).toMatch(/como crees que lo haría la comunidad/);
+    expect(en.eventDetail.nextStep.vote.text).toMatch(/as you think the community would/);
+    for (const text of [es.eventDetail.nextStep.vote.text, es.eventDetail.howVoteCounts.text]) {
+      expect(text).toMatch(/tu propuesta/);
+      expect(text).toMatch(/sube|gana/);
+      expect(text).toMatch(/baja|pierde/);
+    }
+  });
+
   it('es y en tienen las mismas hojas', () => {
     expect(flattenLeaves(en).map(([k]) => k)).toEqual(flattenLeaves(es).map(([k]) => k));
   });

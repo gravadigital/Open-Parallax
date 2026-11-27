@@ -13,3 +13,4 @@
 | INV-10 | Un evento no tiene más inscritos que su cupo | Evento, Inscripción | INS, EVE | initial |
 | INV-11 | Dos eventos no tienen el mismo nombre | Evento | EVE | initial |
 | INV-12 | Una asignación está completa si y solo si su evaluador votó todas sus propuestas, y el contador de votos de cada propuesta es la cantidad de sus votos | Asignación, Voto, Propuesta | VOT | initial |
+| INV-13 | Un inscrito tiene a lo sumo una propuesta por evento | Propuesta | INS | #662 |

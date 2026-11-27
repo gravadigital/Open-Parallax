@@ -33,7 +33,7 @@ No hay procesos programados, workers ni colas. Lo único que corre fuera del ped
 
 | Proceso | Servicio | Cada cuánto | Qué hace | Métrica de último éxito |
 |---|---|---|---|---|
-| Migraciones | api | Al arrancar | Aplica las migraciones pendientes (`schema_migrations`) | No existe; si fallan, la api no arranca |
+| Migraciones | api | Al arrancar | Aplica las migraciones pendientes (`schema_migrations`). Si una migración borra registros con archivo, borra después sus archivos del almacenamiento; el que no se puede borrar queda en el log (`file of a removed record could not be deleted`, con su clave) y la migración sigue | No existe; si fallan, la api no arranca |
 | Envío de emails | api | Después de cada cambio de etapa, cancelación, pausa, cambio de cierre o recordatorio | Manda los emails en segundo plano, sin reintento; si la api se reinicia, se pierden | No existe; los fallos quedan en el log |
 | Limpieza de notificaciones | api | Cuando un usuario lista sus notificaciones | Borra las suyas de más de 90 días | No existe |
 
@@ -114,6 +114,12 @@ El despliegue a servidores vive en otro repositorio. Lo que necesita una instala
   `JWT_SECRET` (un valor largo y aleatorio), la base, el S3 con el bucket ya creado y privado, y
   `GIN_MODE=release`. La web solo necesita `API_URL` (y `GOOGLE_CLIENT_ID` si se usa Google): la
   misma imagen sirve para cualquier instalación.
-- Las migraciones las aplica la api al arrancar.
+- Las migraciones las aplica la api al arrancar, después de conectarse al almacenamiento (también
+  `make migrate`; si ahí el almacenamiento no responde, la migración sigue y solo registra en el log
+  los archivos que no pudo borrar).
+- La migración 029 (#662) deja a cada inscrito una sola propuesta por evento: conserva la más
+  reciente y borra las demás con su archivo, sin avisarle. Cada propuesta borrada queda en el log
+  (`removed a duplicate proposal`, con evento, participante y clave). Un archivo que no se pudo borrar
+  queda en el bucket privado, sin registro que lo use: se puede borrar a mano con la clave del log.
 - El primer usuario se crea desde la web («Crear cuenta»). Los roles admin y organizer se asignan
   escribiendo `users.role` en la base.

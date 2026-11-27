@@ -16,3 +16,4 @@
 | GAR-13 | El nombre del evento no se repite | INV-11, EVE-04 | Consulta previa en Go, sin restricción en la base | api.event | initial |
 | GAR-14 | La completitud de la asignación y el contador de votos siguen a los votos | INV-12 | Triggers `update_assignment_completion` y `update_attachment_vote_count` después de insertar o borrar un voto | la base | initial |
 | GAR-15 | Los resultados no se ven antes de tiempo | RES-05, RES-E1 | Cada operación de resultados comprueba que el evento esté en Resultados | api.vote | initial |
+| GAR-16 | Una segunda propuesta del mismo inscrito en el evento no se guarda | INV-13, INS-05 | Control previo en Go, y restricción única sobre evento y participante en la base, que también rechaza la segunda de dos subidas simultáneas | api.attachment, la base | #662 |

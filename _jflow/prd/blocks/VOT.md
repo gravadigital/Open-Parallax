@@ -51,7 +51,7 @@ last_failure: VOT-E21
 | VOT-E17 | Ya hay asignaciones (paso separado) | `409 ASSIGNMENTS_EXIST` | initial |
 | VOT-E18 | Se configura fuera de Participación y Votación, o se generan asignaciones fuera de Votación | `400 INVALID_EVENT_STAGE` | initial |
 | VOT-E19 | Quien configura o genera asignaciones no es el autor, un organizador global ni un administrador | `403 FORBIDDEN` (`{error, message}`) | initial |
-| VOT-E20 | Falla interna al preparar o guardar la votación (por ejemplo, un inscrito con dos propuestas aparece dos veces entre los evaluadores), el ranking o el borrador, o al leer | `500 VOTING_SETUP_ERROR`, `ATTACHMENTS_ERROR`, `PARTICIPANTS_ERROR`, `DB_SAVE_ERROR`, `GENERATION_FAILED`, `CONFIG_LOOKUP_ERROR`, `RETRIEVAL_ERROR`, `DRAFT_SAVE_ERROR`, `DRAFT_GET_ERROR`, «Failed to save votes», «Failed to get votes» o «Failed to get assignments» (también con un identificador de evento mal formado en las estadísticas) | initial |
+| VOT-E20 | Falla interna al preparar o guardar la votación, el ranking o el borrador, o al leer | `500 VOTING_SETUP_ERROR`, `ATTACHMENTS_ERROR`, `PARTICIPANTS_ERROR`, `DB_SAVE_ERROR`, `GENERATION_FAILED`, `CONFIG_LOOKUP_ERROR`, `RETRIEVAL_ERROR`, `DRAFT_SAVE_ERROR`, `DRAFT_GET_ERROR`, «Failed to save votes», «Failed to get votes» o «Failed to get assignments» (también con un identificador de evento mal formado en las estadísticas) | #662 |
 | VOT-E21 | Un valor de la configuración está fuera de rango: m fuera de 1 a 50, un umbral fuera de 0 a 1, n fuera de 1 a 10 o las evaluaciones mínimas fuera de 1 a 20 | `400 INVALID_PAYLOAD`, con el detalle | initial |
 
 ## Examples

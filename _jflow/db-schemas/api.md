@@ -12,7 +12,7 @@ the deviations are listed in the adoption report.
 | Engine | PostgreSQL 15 |
 | Other services that use it | ninguno |
 | Extensions | `uuid-ossp` (identificadores `uuid_generate_v4()`) |
-| Migrations | Go, numeradas y registradas en orden en `migrations.go`, cada una en su transacción, registradas en `schema_migrations`. La 002 crea las tablas con `AutoMigrate` de GORM sobre los modelos de `migrations/models.go` |
+| Migrations | Go, numeradas y registradas en orden en `migrations.go`, cada una en su transacción, registradas en `schema_migrations`. La 002 crea las tablas con `AutoMigrate` de GORM sobre los modelos de `migrations/models.go`. Una migración que borra registros con archivo (la 029) devuelve sus claves y el archivo se borra en el almacenamiento después de confirmarla; el que no se puede borrar queda en el log y la migración no falla (DEC-10) |
 
 ## Schema decisions
 
@@ -117,6 +117,9 @@ Table attachments {
   description text [note: 'descripción']
   vote_count bigint [default: 0, note: 'votos recibidos (GAR-14)']
   uploaded_at timestamptz [note: 'fecha de subida']
+  indexes {
+    (event_id, participant_id) [unique, name: 'uq_attachments_event_participant', note: 'INV-13 (GAR-16)']
+  }
   Note: 'Entidad: Propuesta'
 }
 

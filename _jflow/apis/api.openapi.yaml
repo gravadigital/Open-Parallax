@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: OpenParallax API
-  version: 1.1.0
+  version: 1.1.1
   description: |
     API de OpenParallax, plataforma de asignación de recursos escasos por revisión distribuida entre pares.
 
@@ -1255,7 +1255,7 @@ paths:
     post:
       operationId: uploadProposal
       x-requirements: [INS-05, INS-06]
-      x-origin: initial
+      x-origin: '#662'
       tags: [attachment]
       summary: Subir la propuesta de un participante
       description: |
@@ -1328,11 +1328,11 @@ paths:
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '409':
           x-failure: [INS-E15]
-          description: '`DUPLICATE_ATTACHMENT` (+ `existing_attachment_id`)'
+          description: '`DUPLICATE_ATTACHMENT` (+ `existing_attachment_id`): el participante ya tiene una propuesta en el evento, también cuando la base rechaza la segunda de dos subidas simultáneas (GAR-16)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
           x-failure: [INS-E19, INS-E20]
-          description: '`FILE_SAVE_ERROR`, `DB_SAVE_ERROR` (también con un archivo vacío: la base exige tamaño mayor que 0)'
+          description: '`RETRIEVAL_ERROR` (al buscar la propuesta existente), `FILE_SAVE_ERROR`, `DB_SAVE_ERROR` (también con un archivo vacío: la base exige tamaño mayor que 0)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
 
   /api/v1/events/{event_id}/attachments:

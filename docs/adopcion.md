@@ -11,8 +11,8 @@
 | Definición | 8 bloques (ACC, EVE, EXP, INS, VOT, RES, NOT, BAN), 10 entidades, 40 operaciones, 12 invariantes, 15 garantías, 23 decisiones (9 de producto, 14 técnicas), 4 flujos |
 | Listo para especificar e implementar | Sí: el repositorio cumple el mínimo (M1–M9), verificado |
 | Correcciones hechas en la adopción | 16; en el producto, solo las URLs de Google configurables y una traducción que pide un test existente |
-| Cargado en Jiku | 15 incidencias de seguridad (ver «Cargado en Jiku») |
-| En este informe | 35 bugs, 1 comportamiento a confirmar, 19 defaults sugeridos, 14 otras mejoras |
+| Cargado en Jiku | 16 incidencias de seguridad (ver «Cargado en Jiku») |
+| En este informe | 33 bugs, 1 comportamiento a confirmar, 19 defaults sugeridos, 14 otras mejoras |
 | Cobertura por ID | 23 de 199 IDs con un test que los nombra: solo los tests end to end de la adopción llevan IDs; los tests anteriores (más de 1.300) no |
 
 ## Línea de base
@@ -77,7 +77,8 @@ lo pide.
 | — | Sin límite de intentos en el login, el registro y la recuperación | Permite probar contraseñas por fuerza bruta y mandar emails de recuperación en masa a cualquier dirección |
 | — | Token de recuperación guardado sin hash | Quien lea la base puede cambiar la contraseña de cualquier cuenta con un pedido vigente; ya figuraba como defecto conocido |
 | — | Detalles internos en las respuestas de error | Algunos errores devuelven el mensaje de la base o del parser del token |
-| — | Eventos en Creación detectables por su nombre | Crear un evento con el nombre de uno oculto responde que ya existe, y revela que existe |
+| — | Los resultados públicos revelan quién no evaluó | Cualquiera, sin sesión, ve qué propuestas quedaron excluidas por no evaluar y de quién son, aunque el detalle de los ajustes está reservado al autor, los administradores y el dueño de cada propuesta (RES-05, DEC-04) |
+| — | Eventos en Creación detectables | Crear un evento con el nombre de uno oculto responde que ya existe, y pedir los resultados de uno oculto responde `403` con su etapa en vez de `404` (RES-E1): los dos revelan que existe |
 
 ## Bugs sospechados
 
@@ -274,41 +275,27 @@ No son de seguridad, así que no se cargaron en Jiku. La definición los documen
 - **Dónde:** INS-08; `services/api/internal/storage/postgres/attachment_repository.go:139-143`.
 - **Gravedad sugerida:** baja.
 
-### B-30 Los resultados públicos dicen quién no evaluó
-
-- **Qué pasa:** el ajuste de cada propuesta se oculta a quien no es su autor, pero la marca de excluida por no evaluar llega para todas, con el nombre del autor de la propuesta; la web las lista en público bajo «Fuera del ranking».
-- **Por qué parece un error:** el ajuste se oculta justamente porque revela cómo evaluó cada persona (DEC-04); la exclusión revela lo mismo.
-- **Dónde:** RES-05; `services/api/internal/domain/vote/vote.go:138-143`, `services/web/src/components/voting/event-results/EventResults.tsx:197-210`.
-- **Gravedad sugerida:** media.
-
-### B-31 Los resultados no ocultan un evento en Creación
-
-- **Qué pasa:** pedir los resultados de un evento en Creación ajeno responde `403` con su etapa, en vez de `404` como el resto de las operaciones públicas.
-- **Por qué parece un error:** revela que el evento existe.
-- **Dónde:** RES-E1; `services/api/internal/handlers/distributed_vote_handler.go:889-899`.
-- **Gravedad sugerida:** baja.
-
-### B-32 La web cierra la sesión ante cualquier 401
+### B-30 La web cierra la sesión ante cualquier 401
 
 - **Qué pasa:** cualquier respuesta 401 cierra la sesión en la web, no solo la de sesión vencida: también pedir eventos ajenos o crear un evento con un usuario que ya no existe. Subir y descargar propuestas, en cambio, no la cierran aunque la sesión haya vencido.
 - **Dónde:** ACC-10, ACC-E13; `services/web/src/config/api.ts:158-172,186-231`.
 - **Gravedad sugerida:** baja.
 
-### B-33 Una cuenta de Google puede tener contraseña
+### B-31 Una cuenta de Google puede tener contraseña
 
 - **Qué pasa:** la recuperación de contraseña no distingue las cuentas de Google: con el enlace, una cuenta de Google define una contraseña y entra de las dos formas. El login, en cambio, le responde que use Google mientras no la tenga.
 - **Por qué parece un error:** el login trata las cuentas de Google como sin contraseña, y la recuperación les da una.
 - **Dónde:** ACC-06, ACC-E5; `services/api/internal/handlers/user_handler.go:498-600`.
 - **Gravedad sugerida:** baja.
 
-### B-34 «Hoy» no es el mismo día en todas las fechas
+### B-32 «Hoy» no es el mismo día en todas las fechas
 
 - **Qué pasa:** la fecha de inicio del evento se compara con el día local del servidor, y los cierres estimados con el día UTC; la web, además, exige un cierre posterior a hoy en el calendario del navegador.
 - **Por qué parece un error:** cerca de la medianoche, la misma fecha es válida para una regla y no para otra.
 - **Dónde:** EVE-03, EVE-07, EVE-E12; `services/api/internal/handlers/event_handler.go:295,579,921`.
 - **Gravedad sugerida:** baja.
 
-### B-35 El ranking que se muestra como enviado puede ser un borrador
+### B-33 El ranking que se muestra como enviado puede ser un borrador
 
 - **Qué pasa:** en Resultados, la web muestra como ranking enviado el que guardó el navegador al enviarlo o, si no lo tiene (otro navegador), el último borrador, que puede tener cambios que nunca se enviaron.
 - **Dónde:** RES-07; `services/web/src/pages/event-detail/useRankingVote.ts:53-57`.

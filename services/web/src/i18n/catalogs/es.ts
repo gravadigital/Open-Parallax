@@ -597,7 +597,7 @@ export const es = {
       rankings: 'Rankings enviados',
       rankingsValue: '{sent} de {total}',
       rankingsA11y: 'Rankings enviados: {sent} de {total}',
-      rankingsHelp: 'Cada participante ordena las propuestas que recibió. Los votos de quienes evalúan de forma coherente con el grupo pesan más.',
+      rankingsHelp: 'Cada participante ordena las propuestas que recibió como cree que lo haría la comunidad. Quien ordena en línea con el grupo hace subir su propia propuesta; quien se aleja mucho, la hace bajar.',
       deadline: 'Cierre',
       days: plural({ one: '{count} día', other: '{count} días' }),
       closesToday: 'Cierra hoy',
@@ -765,9 +765,9 @@ export const es = {
       adjustmentUnit: 'posiciones',
       adjustmentRange: 'Elige un valor entre 1 y 10.',
       goodThreshold: 'Umbral de evaluador confiable',
-      goodThresholdHelp: 'Por encima, su voto pesa más.',
+      goodThresholdHelp: 'Con una calidad igual o mayor, su propuesta sube puestos.',
       badThreshold: 'Umbral de evaluador poco confiable',
-      badThresholdHelp: 'Por debajo, su voto pesa menos.',
+      badThresholdHelp: 'Con una calidad igual o menor, su propuesta baja puestos.',
       thresholdError: 'El umbral confiable tiene que superar al poco confiable por al menos 0,1.',
       sanctionLegend: 'Si alguien no envía su ranking',
       sanctionExclusion: 'Su propuesta queda fuera del ranking',
@@ -893,7 +893,7 @@ export const es = {
       },
       vote: {
         title: plural({ one: 'Ordena la {count} propuesta', other: 'Ordena las {count} propuestas' }),
-        text: 'Arriba la que te parece mejor. Abre cada archivo antes de decidir.',
+        text: 'Ordénalas como crees que lo haría la comunidad, no según tu gusto. Si tu orden coincide con el del grupo, tu propuesta sube puestos; si se aleja mucho, baja. Abre cada archivo antes de decidir.',
       },
       rankingSent: {
         title: 'Tu ranking está enviado',
@@ -988,7 +988,7 @@ export const es = {
     },
     howVoteCounts: {
       title: '¿Cómo cuenta tu voto?',
-      text: 'Tu orden se compara con el de otros evaluadores. Cuanto más coherente y honesto, más influye en el resultado final.',
+      text: 'Tu orden se compara con el ranking de la comunidad. Si coinciden, tu propuesta gana puestos en el ranking final; si se alejan mucho, los pierde, y en el medio queda donde está. Si no envías tu ranking, tu propuesta queda fuera del ranking o pierde puestos, según lo que haya elegido el organizador.',
     },
     details: {
       title: 'Detalles',
@@ -1069,7 +1069,7 @@ export const es = {
       }),
     },
     adjustmentNote:
-      'El orden final incluye un ajuste por cómo evaluó cada autor: la propuesta de quien ordenó en línea con la comunidad gana unos puestos frente a las demás y la de quien no, los pierde. Por eso el puntaje no siempre sigue el orden.',
+      'El orden final incluye un ajuste por cómo evaluó cada autor: la propuesta de quien ordenó en línea con la comunidad gana unos puestos frente a las demás, la de quien se alejó mucho los pierde y el resto queda donde está, salvo la de quien no completó su evaluación, que queda fuera del ranking o baja según la sanción del evento. Por eso el puntaje no siempre sigue el orden.',
     adjustment: {
       up: plural({ one: 'Premio de {count} puesto', other: 'Premio de {count} puestos' }),
       down: plural({ one: 'Castigo de {count} puesto', other: 'Castigo de {count} puestos' }),

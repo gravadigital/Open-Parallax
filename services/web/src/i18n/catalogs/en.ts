@@ -597,7 +597,7 @@ export const en: Catalog = {
       rankings: 'Rankings sent',
       rankingsValue: '{sent} of {total}',
       rankingsA11y: 'Rankings sent: {sent} of {total}',
-      rankingsHelp: 'Each participant ranks the proposals they received. Rankings that align with the group carry more weight.',
+      rankingsHelp: 'Each participant ranks the proposals they received as they think the community would. Those whose order matches the group move their own proposal up; those who stray far move it down.',
       deadline: 'Closing',
       days: plural({ one: '{count} day', other: '{count} days' }),
       closesToday: 'Closes today',
@@ -765,9 +765,9 @@ export const en: Catalog = {
       adjustmentUnit: 'positions',
       adjustmentRange: 'Choose a value between 1 and 10.',
       goodThreshold: 'Reliable reviewer threshold',
-      goodThresholdHelp: 'Above it, their vote weighs more.',
+      goodThresholdHelp: 'At or above it, their proposal moves up.',
       badThreshold: 'Unreliable reviewer threshold',
-      badThresholdHelp: 'Below it, their vote weighs less.',
+      badThresholdHelp: 'At or below it, their proposal moves down.',
       thresholdError: 'The reliable threshold must exceed the unreliable one by at least 0.1.',
       sanctionLegend: 'If someone doesn\'t send their ranking',
       sanctionExclusion: 'Their proposal is left out of the ranking',
@@ -893,7 +893,7 @@ export const en: Catalog = {
       },
       vote: {
         title: plural({ one: 'Rank the {count} proposal', other: 'Rank the {count} proposals' }),
-        text: 'Put the one you think is best at the top. Open each file before deciding.',
+        text: "Rank them as you think the community would, not by your own taste. If your order matches the group's, your proposal moves up; if it strays far, it moves down. Open each file before deciding.",
       },
       rankingSent: {
         title: 'Your ranking is sent',
@@ -988,7 +988,7 @@ export const en: Catalog = {
     },
     howVoteCounts: {
       title: 'How does your vote count?',
-      text: 'Your order is compared with other evaluators. The more consistent and honest it is, the more it influences the final result.',
+      text: "Your order is compared with the community ranking. If they match, your proposal gains positions in the final ranking; if they diverge widely, it loses them, and in between it stays where it is. If you don't send your ranking, your proposal is left out of the ranking or loses positions, depending on what the organizer chose.",
     },
     details: {
       title: 'Details',
@@ -1069,7 +1069,7 @@ export const en: Catalog = {
       }),
     },
     adjustmentNote:
-      'The final order includes an adjustment for how each author reviewed: the proposal of anyone who ranked in line with the community gains a few places over the others, and the proposal of anyone who didn\'t loses them. That is why the score doesn\'t always follow the order.',
+      'The final order includes an adjustment for how each author reviewed: the proposal of anyone who ranked in line with the community gains a few places over the others, the proposal of anyone who strayed far loses them, and the rest stay where they are, except the proposal of anyone who didn\'t complete their review, which is left out of the ranking or moves down depending on the event\'s sanction. That is why the score doesn\'t always follow the order.',
     adjustment: {
       up: plural({ one: 'Bonus of {count} place', other: 'Bonus of {count} places' }),
       down: plural({ one: 'Penalty of {count} place', other: 'Penalty of {count} places' }),

@@ -4,7 +4,7 @@ name: Organización de eventos
 surfaces: [Web]
 covers: Crear un evento, editarlo, avanzarlo por sus etapas, posponer sus cierres, pausarlo, cancelarlo y recordar a los pendientes
 entities: [Evento, Inscripción]
-last_requirement: EVE-14
+last_requirement: EVE-15
 last_failure: EVE-E24
 ---
 
@@ -27,7 +27,8 @@ last_failure: EVE-E24
 | EVE-11 | El autor envía un recordatorio a los pendientes: en Participación, a los inscritos sin propuesta; en Votación, a los evaluadores sin ranking. No con el evento pausado o cancelado | U-03 | initial |
 | EVE-12 | En la web, el autor gestiona el evento en una pantalla con las métricas (inscritos, propuestas, rankings enviados, cierre), la tabla de participantes con su email, su propuesta para descargar y si votó, y el paso siguiente de la etapa; otro usuario que entra ahí ve «No tienes permiso para gestionar este evento» | U-03 | initial |
 | EVE-13 | Un administrador hace por la api todo lo que hace el autor, en cualquier evento | U-04 | initial |
-| EVE-14 | En la web, avanzar de etapa, posponer el cierre y enviar recordatorios se deshabilitan con el evento pausado; el cierre se edita solo en Participación y Votación | — | initial |
+| EVE-14 | En la web, avanzar de etapa, posponer el cierre y enviar recordatorios se deshabilitan con el evento pausado, con el aviso «El evento está pausado. Los participantes no pueden inscribirse, subir propuestas ni votar hasta que lo reanudes.»; el cierre se edita solo en Participación y Votación | — | initial |
+| EVE-15 | En la web, la gestión de un evento cancelado es un estado final: sin participantes, estadísticas, paso siguiente, recordatorios, compartir ni edición del cierre; editar solo cambia el color, con «El evento está cancelado: solo puedes cambiar el color de portada.» | — | initial |
 
 ## Failure conditions
 

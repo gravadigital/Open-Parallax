@@ -32,7 +32,7 @@ info:
     en los de usuario, `{assignment, event_name, participant_id}` en la asignación, y
     payload plano en el envío de rankings y en el registro con Google.
 
-    ## Autenticación opcional (REQ-003, S-008)
+    ## Autenticación opcional
 
     Los endpoints públicos de eventos usan `OptionalJWTAuthMiddleware`: si llega un
     `Authorization` válido identifican al usuario; si falta o es inválido siguen como
@@ -426,7 +426,7 @@ paths:
         Solo el propio usuario. Los campos `title`, `date` y `creator_id` están duplicados
         de `name`, `start_date` y `author_id` por compatibilidad con el frontend.
 
-        Con `scope=all` (S-008) incluye también los eventos que el usuario creó, incluso en
+        Con `scope=all` incluye también los eventos que el usuario creó, incluso en
         `creation`, y cada ítem trae `role`; los ítems con `role = participant` traen
         `my_status`. La posición sale de `voting_results.adjusted_ranking`. Las consultas de
         estado personal se hacen por lote, sin N+1.
@@ -470,14 +470,14 @@ paths:
                         creator_id: { type: string, format: uuid, description: Duplicado de author_id }
                         created_at: { type: string, format: date-time }
                         updated_at: { type: string, format: date-time }
-                        role: { type: string, enum: [creator, participant], description: 'S-008' }
+                        role: { type: string, enum: [creator, participant], description: 'Rol del usuario en el evento' }
                         max_participants: { type: integer, nullable: true }
                         participants_count: { type: integer }
                         participation_estimated_end_date: { type: string, format: date, nullable: true }
                         voting_estimated_end_date: { type: string, format: date, nullable: true }
                         is_paused: { type: boolean }
                         is_cancelled: { type: boolean }
-                        cover_color: { $ref: '#/components/schemas/CoverColor', description: 'S-019. Solo con scope=all' }
+                        cover_color: { $ref: '#/components/schemas/CoverColor', description: 'Solo con scope=all' }
                         my_status:
                           type: object
                           nullable: true
@@ -498,7 +498,7 @@ paths:
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '403':
           x-failure: [EXP-E3]
-          description: '`FORBIDDEN` — `scope=all` sobre otro usuario (S-008)'
+          description: '`FORBIDDEN` — `scope=all` sobre otro usuario'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
           x-failure: [EXP-E5]
@@ -516,7 +516,7 @@ paths:
         Paginación **en memoria**: trae todos los eventos y pagina después, con una consulta
         de participantes por evento (N+1).
 
-        **Nunca devuelve eventos en `creation`** (S-008); `stage=creation` → `data: []`.
+        **Nunca devuelve eventos en `creation`**; `stage=creation` → `data: []`.
         `stage_counts` se calcula sobre el conjunto filtrado por `q`, antes de filtrar por
         `stage` y de paginar, y siempre trae las tres claves (`participation`, `voting`,
         `results`), aunque valgan 0. `q` ignora los espacios de los extremos; en blanco no filtra.
@@ -536,7 +536,7 @@ paths:
         - name: q
           in: query
           schema: { type: string }
-          description: 'Búsqueda case-insensitive por `name` u `organizer` (S-008)'
+          description: 'Búsqueda case-insensitive por `name` u `organizer`'
       responses:
         '200':
           description: Lista paginada
@@ -561,7 +561,7 @@ paths:
                       stage: { type: string }
                   stage_counts:
                     type: object
-                    description: 'S-008'
+                    description: 'Cantidad de eventos de cada etapa pública, con la búsqueda aplicada'
                     properties:
                       participation: { type: integer }
                       voting: { type: integer }
@@ -637,7 +637,7 @@ paths:
             `INVALID_PAYLOAD`, `INVALID_START_DATE`, `INVALID_END_DATE`, `PAST_START_DATE`,
             `INVALID_DATE_RANGE`, `DURATION_TOO_SHORT`, `DURATION_TOO_LONG`,
             `INVALID_MAX_PARTICIPANTS`, `MAX_PARTICIPANTS_LIMIT_EXCEEDED`, `VALIDATION_FAILED`,
-            `INVALID_COVER_COLOR` (S-019)
+            `INVALID_COVER_COLOR`
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           x-failure: [ACC-E13, EVE-E8]
@@ -661,7 +661,7 @@ paths:
       summary: Detalle del evento
       description: |
         Autenticación opcional. Un evento en `creation` responde `404 EVENT_NOT_FOUND` a quien
-        no sea su autor ni `admin` (S-008).
+        no sea su autor ni `admin`.
       security: []
       parameters:
         - $ref: '#/components/parameters/EventId'
@@ -700,10 +700,10 @@ paths:
       tags: [event]
       summary: Editar datos del evento
       description: |
-        S-008. Solo el autor (`RequireEventOwner`) y solo en `creation` o `participation`.
+        Solo el autor (`RequireEventOwner`) y solo en `creation` o `participation`.
         Al menos un campo. Las fechas no se editan acá.
 
-        S-019 (REQ-004): si el body trae **solo** `cover_color`, se acepta en cualquier etapa y
+        Si el body trae **solo** `cover_color`, se acepta en cualquier etapa y
         aunque el evento esté pausado o cancelado. Con cualquier otro campo rige la regla de etapa.
 
         `RequireEventOwner` corre antes del handler: para un no-admin y un evento inexistente
@@ -737,7 +737,7 @@ paths:
                   code: { type: string, example: EVENT_UPDATED }
         '400':
           x-failure: [EVE-E1, EVE-E6, EVE-E10]
-          description: '`INVALID_PAYLOAD`, `MAX_PARTICIPANTS_BELOW_REGISTERED` (+ `current_count`), `INVALID_COVER_COLOR` (S-019), `BAD_REQUEST` (id con formato inválido, del middleware de permisos)'
+          description: '`INVALID_PAYLOAD`, `MAX_PARTICIPANTS_BELOW_REGISTERED` (+ `current_count`), `INVALID_COVER_COLOR`, `BAD_REQUEST` (id con formato inválido, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -751,7 +751,7 @@ paths:
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '409':
           x-failure: [EVE-E7, EVE-E9]
-          description: '`INVALID_UPDATE_STAGE` (+ `current_stage`; desde S-019 solo si el body trae campos distintos de `cover_color`), `DUPLICATE_EVENT_NAME`'
+          description: '`INVALID_UPDATE_STAGE` (+ `current_stage`; solo si el body trae campos distintos de `cover_color`), `DUPLICATE_EVENT_NAME`'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
           x-failure: [EVE-E23]
@@ -765,7 +765,7 @@ paths:
       x-origin: initial
       tags: [event]
       summary: Metadata para compartir en redes
-      description: 'Autenticación opcional; un evento en `creation` ajeno responde 404 (S-008).'
+      description: 'Autenticación opcional; un evento en `creation` ajeno responde 404.'
       security: []
       parameters:
         - $ref: '#/components/parameters/EventId'
@@ -827,9 +827,9 @@ paths:
         existe** (sin password). Solo durante la etapa `participation`. El creador del evento
         no puede registrarse como participante. Cupo por defecto 20 si el evento no define uno.
 
-        Efectos (S-009): notificación `registration_confirmed` al inscripto y
+        Efectos: notificación `registration_confirmed` al inscripto y
         `participant_registered` (agregada por evento mientras no se lea) al autor. Un evento
-        en `creation` ajeno responde 404 (S-008).
+        en `creation` ajeno responde 404.
       security: []
       parameters:
         - $ref: '#/components/parameters/EventId'
@@ -900,7 +900,7 @@ paths:
         `estimated_end_date` es obligatoria cuando la etapa destino es `participation` o
         `voting`.
 
-        **Pasar a `voting` (S-006)** exige al menos **3 participantes con propuesta**
+        **Pasar a `voting`** exige al menos **3 participantes con propuesta**
         (`INSUFFICIENT_ATTACHMENTS`, `required_minimum: 3`) y `voting_config`. Se valida todo
         antes de escribir y, en una transacción, se actualiza la etapa, se guarda la
         configuración y se generan las asignaciones **solo para participantes con propuesta**.
@@ -912,7 +912,7 @@ paths:
         etapa igual se aplica y el error solo queda en el log.
 
         Dispara emails a los participantes en segundo plano y notificaciones in-app
-        `stage_changed` (S-009).
+        `stage_changed`.
       parameters:
         - $ref: '#/components/parameters/EventId'
       requestBody:
@@ -930,7 +930,7 @@ paths:
                   description: 'YYYY-MM-DD. Obligatoria si stage es participation o voting'
                 voting_config:
                   type: object
-                  description: 'Obligatorio si stage = voting (S-006)'
+                  description: 'Obligatorio si stage = voting'
                   required: [attachments_per_evaluator]
                   properties:
                     attachments_per_evaluator: { type: integer, minimum: 1, maximum: 50 }
@@ -978,7 +978,7 @@ paths:
                       to: { $ref: '#/components/schemas/Stage' }
                   voting:
                     type: object
-                    description: 'Solo cuando stage = voting (S-006)'
+                    description: 'Solo cuando stage = voting'
                     properties:
                       configuration: { $ref: '#/components/schemas/VotingConfiguration' }
                       assignments_count: { type: integer }
@@ -992,7 +992,7 @@ paths:
             `INSUFFICIENT_ATTACHMENTS` (+ `current_count`, `required_minimum: 3`),
             `MISSING_VOTING_CONFIG`, `INVALID_THRESHOLDS`, `M_EXCEEDS_EVALUABLE`,
             `MATH_CONSTRAINT_VIOLATION`. (`INSUFFICIENT_PARTICIPANTS` y `NO_ATTACHMENTS` dejan
-            de usarse en esta transición, S-006.)
+            de usarse en esta transición.)
             `BAD_REQUEST` (id con formato inválido, del middleware de permisos).
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
@@ -1017,7 +1017,7 @@ paths:
       x-origin: initial
       tags: [event]
       summary: Actualizar fecha estimada de fin de una etapa
-      description: 'Solo posponer. Efecto (S-009): email existente + notificación `deadline_changed` a los inscriptos.'
+      description: 'Solo posponer. Efecto: email existente + notificación `deadline_changed` a los inscriptos.'
       parameters:
         - $ref: '#/components/parameters/EventId'
       requestBody:
@@ -1085,7 +1085,7 @@ paths:
       x-origin: initial
       tags: [event]
       summary: Cancelar el evento
-      description: 'Sin body. Operación irreversible. Efecto (S-009): email existente + notificación `event_cancelled` a los inscriptos.'
+      description: 'Sin body. Operación irreversible. Efecto: email existente + notificación `event_cancelled` a los inscriptos.'
       parameters:
         - $ref: '#/components/parameters/EventId'
       responses:
@@ -1141,7 +1141,7 @@ paths:
 
         Nota: `data.name` y `data.stage` se leen del objeto previo al update.
 
-        Efecto (S-009): al pausar (no al reanudar), email existente + notificación
+        Efecto: al pausar (no al reanudar), email existente + notificación
         `event_paused` a los inscriptos.
       parameters:
         - $ref: '#/components/parameters/EventId'
@@ -1197,10 +1197,10 @@ paths:
       summary: Listar participantes del evento
       description: |
         Cualquier usuario autenticado. El `role` es el rol **dentro del evento**.
-        Un evento en `creation` ajeno responde 404 (S-008).
+        Un evento en `creation` ajeno responde 404.
 
         ⚠️ Devuelve `email` a cualquier usuario autenticado; la web solo lo muestra al
-        organizador. Deuda de privacidad fuera del alcance de REQ-003.
+        organizador. Deuda de privacidad: ver INS-04.
       parameters:
         - $ref: '#/components/parameters/EventId'
       responses:
@@ -1277,7 +1277,7 @@ paths:
                   type: string
                   format: binary
                   description: |
-                    Tipos permitidos: image/jpeg, image/png, image/gif, image/webp (S-006), application/pdf,
+                    Tipos permitidos: image/jpeg, image/png, image/gif, image/webp, application/pdf,
                     text/plain, application/msword,
                     application/vnd.openxmlformats-officedocument.wordprocessingml.document.
                     Tamaño máximo según MAX_FILE_SIZE (10MB por defecto).
@@ -1345,9 +1345,9 @@ paths:
         Los nombres de campo difieren de los de la subida: acá `original_name` y `file_size`,
         allá `filename` y `size`.
 
-        **Anonimato (S-007):** el autor del evento y un `admin` reciben todas las propuestas;
+        **Anonimato:** el autor del evento y un `admin` reciben todas las propuestas;
         cualquier otro usuario recibe solo las propias. Un evento en `creation` ajeno responde
-        404 (S-008).
+        404.
       parameters:
         - $ref: '#/components/parameters/EventId'
       responses:
@@ -1369,7 +1369,7 @@ paths:
                         original_name: { type: string }
                         file_size: { type: integer, format: int64 }
                         mime_type: { type: string }
-                        description: { type: string, description: Se omite si está vacía }
+                        description: { type: string, description: Vacía si no se cargó }
                         uploaded_at: { type: string, format: date-time }
                         url: { type: string, example: '/api/v1/attachments/3fa85f64-5717-4562-b3fc-2c963f66afa6/download' }
                   count: { type: integer }
@@ -1393,8 +1393,8 @@ paths:
       tags: [attachment]
       summary: Descargar una propuesta
       description: |
-        Pueden descargarla su dueño, el autor del evento o un `admin`, y (S-007) quien la tiene
-        en su asignación del mismo evento en etapa `voting` o `results` (cierra D-15). El
+        Pueden descargarla su dueño, el autor del evento o un `admin`, y quien la tiene
+        en su asignación del mismo evento en etapa `voting` o `results` (DEC-T10, INS-09). El
         permiso se verifica en el handler (`canDownload`), no con un middleware de ruta.
 
         **Anonimato:** para el evaluador, `Content-Disposition` usa un nombre neutro
@@ -1479,7 +1479,7 @@ paths:
       tags: [vote]
       summary: Vista previa del reparto para abrir la votación
       description: |
-        S-006. Solo el autor (`RequireEventOwner`). Usa la misma lógica que valida la apertura
+        Solo el autor (`RequireEventOwner`). Usa la misma lógica que valida la apertura
         (`VotingService`), así el front no recalcula `m`. El `min_evaluations_per_file`
         recomendado es `min(3, m)`.
       parameters:
@@ -1529,7 +1529,7 @@ paths:
       tags: [vote]
       summary: Configuración de votación aplicada al evento
       description: |
-        S-016. Solo el autor (`RequireEventOwner`, como `GET /voting-config/preview`). Solo
+        Solo el autor (`RequireEventOwner`, como `GET /voting-config/preview`). Solo
         lectura: devuelve los parámetros que guardó la apertura de la votación (`PATCH /stage`
         con `voting_config`). La gestión del organizador la usa para mostrar la "Configuración
         aplicada" en las etapas Votación y Resultados; es la única fuente en Votación
@@ -1587,7 +1587,7 @@ paths:
       summary: Configurar los parámetros de votación
       deprecated: true
       description: |
-        **Deprecado (S-006):** la configuración se envía en `PATCH /stage` con `voting_config`.
+        **Deprecado:** la configuración se envía en `PATCH /stage` con `voting_config`.
         Usa la misma regla de mínimo (3 propuestas) y de evaluadores.
 
         Solo el autor del evento, un organizador o un admin. Una sola configuración por evento.
@@ -1691,7 +1691,7 @@ paths:
       summary: Generar las asignaciones de evaluación
       deprecated: true
       description: |
-        **Deprecado (S-006):** las asignaciones se generan dentro de `PATCH /stage`. Usa la
+        **Deprecado:** las asignaciones se generan dentro de `PATCH /stage`. Usa la
         misma regla: evaluadores = participantes con propuesta, mínimo 3 propuestas.
 
         Sin body. Solo durante la etapa `voting` y una sola vez por evento. Requiere al menos 3
@@ -1761,9 +1761,9 @@ paths:
       summary: Obtener la asignación de un participante
       description: |
         Las propuestas que le tocó evaluar. Solo el propio participante, el autor del evento
-        o un admin, en etapa `voting` o `results` (S-007).
+        o un admin, en etapa `voting` o `results`.
 
-        Payload construido explícitamente (S-007): **anónimo**, sin autor ni nombre original de
+        Payload construido explícitamente: **anónimo**, sin autor ni nombre original de
         cada propuesta y sin campos internos (`quality_score`, `expertise_match_score`,
         `conflict_of_interest`). Un inscripto sin asignación recibe `404 NO_ASSIGNMENT`.
       parameters:
@@ -1793,7 +1793,7 @@ paths:
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
         '404':
           x-failure: [EVE-E22, VOT-E9]
-          description: 'Evento inexistente; `NO_ASSIGNMENT` si el participante no tiene asignación (S-007, forma ApiError), `NOT_FOUND` (evento inexistente, del middleware de permisos)'
+          description: 'Evento inexistente; `NO_ASSIGNMENT` si el participante no tiene asignación (forma ApiError), `NOT_FOUND` (evento inexistente, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
           x-failure: [VOT-E20]
@@ -1814,14 +1814,14 @@ paths:
         con `expected` y `received`; si una se repite, 400 `Duplicate attachment in ranking`.
         La base lo refuerza con un índice único `(assignment_id, attachment_id)` en `votes`.
 
-        **Reenvío (S-007):** si la asignación ya está completa y el evento sigue en `voting`,
+        **Reenvío:** si la asignación ya está completa y el evento sigue en `voting`,
         el ranking nuevo reemplaza al anterior (`DELETE` + `INSERT` en una transacción que
         primero bloquea la fila de la asignación, así dos envíos simultáneos se aplican uno
         después del otro; los triggers mantienen `is_completed` y `vote_count`) y la respuesta
         trae `replaced: true`.
         Fuera de `voting` responde 400.
 
-        Efecto (S-009): notificación `ranking_submitted` al participante.
+        Efecto: notificación `ranking_submitted` al participante.
 
         Respuesta plana, sin envelope `data` ni `code`.
       parameters:
@@ -1857,7 +1857,7 @@ paths:
                   event_id: { type: string, format: uuid }
                   participant_id: { type: string, format: uuid }
                   votes_count: { type: integer }
-                  replaced: { type: boolean, description: 'true si reemplazó un ranking anterior (S-007)' }
+                  replaced: { type: boolean, description: 'true si reemplazó un ranking anterior' }
         '400':
           x-failure: [VOT-E14, VOT-E10, VOT-E11]
           description: |
@@ -1893,7 +1893,7 @@ paths:
         A diferencia del envío definitivo, **no** valida duplicados ni consecutividad.
 
         Un borrador por par (asignación, participante): el guardado es un upsert. Se acepta
-        también con la asignación completa mientras el evento esté en `voting` (S-007).
+        también con la asignación completa mientras el evento esté en `voting`.
 
         Nota: `updated_at` en la respuesta sale del objeto previo al upsert, así que suele
         venir como fecha cero.
@@ -2083,7 +2083,7 @@ paths:
       description: |
         Recalcula el MBC, rellena los nombres de los autores y hace upsert en `voting_results`.
 
-        **⚠️ Muta estado:** no es idempotente (defecto D-11, ahora aislado en este POST).
+        **⚠️ Muta estado:** no es idempotente (aislado en este POST).
 
         Se ejecuta automáticamente cuando el organizador pasa el evento a la etapa `results`,
         y lo llama el frontend como fallback si un evento llegó a `results` sin ranking
@@ -2136,7 +2136,7 @@ paths:
         coinciden con los configurables por evento.
 
         **Público (sin sesión)**: los visitantes anónimos ven el avance de la votación.
-        Un evento en `creation` ajeno responde 404 (S-008).
+        Un evento en `creation` ajeno responde 404.
       security: []
       parameters:
         - $ref: '#/components/parameters/EventId'
@@ -2189,7 +2189,7 @@ paths:
       tags: [event]
       summary: Recordatorio manual a pendientes
       description: |
-        S-009. Solo el autor (`RequireEventOwner`). `file` solo en `participation`
+        Solo el autor (`RequireEventOwner`). `file` solo en `participation`
         (destinatarios = inscriptos sin propuesta); `vote` solo en `voting` (destinatarios =
         asignaciones sin completar). Envía email en segundo plano y una notificación
         `file_reminder` / `vote_reminder` por destinatario. Orden de validaciones: `event_id`,
@@ -2252,7 +2252,7 @@ paths:
       tags: [notification]
       summary: Listar las notificaciones propias
       description: |
-        S-009. Filtra siempre por el usuario del JWT y por los últimos 90 días, de la más
+        Filtra siempre por el usuario del JWT y por los últimos 90 días, de la más
         reciente a la más antigua. Además borra las del usuario con más de 90 días.
       parameters:
         - name: limit
@@ -2298,7 +2298,7 @@ paths:
       x-origin: initial
       tags: [notification]
       summary: Cantidad de notificaciones sin leer
-      description: 'S-009. Es el endpoint del polling de la web (DEC-T08).'
+      description: 'Es el endpoint del polling de la web (DEC-T08).'
       responses:
         '200':
           description: Contador
@@ -2326,7 +2326,7 @@ paths:
       x-origin: initial
       tags: [notification]
       summary: Marcar una notificación como leída
-      description: 'S-009. Idempotente: repetir devuelve el mismo `read_at`. Una notificación ajena, inexistente, con más de 90 días o con un id mal formado responde 404 (`NOTIFICATION_NOT_FOUND`), no 400 ni 403.'
+      description: 'Idempotente: repetir devuelve el mismo `read_at`. Una notificación ajena, inexistente, con más de 90 días o con un id mal formado responde 404 (`NOTIFICATION_NOT_FOUND`), no 400 ni 403.'
       parameters:
         - name: notification_id
           in: path
@@ -2490,7 +2490,7 @@ components:
       enum: [lavender, periwinkle, sky, ice, aqua, mint, pistachio, lemon, butter, peach, coral, rose, pink, lilac, sand, mist]
       default: lavender
       description: |
-        Identificador del color de portada del evento (S-019 / REQ-004). Paleta cerrada de 16
+        Identificador del color de portada del evento. Paleta cerrada de 16
         pasteles; los hex viven en `services/web/src/styles/tokens.css` y la API solo
         guarda el identificador. Renombrar o quitar un valor es un cambio incompatible.
 
@@ -2531,7 +2531,7 @@ components:
         participant_ids:
           type: array
           items: { type: string, format: uuid }
-        participants_count: { type: integer, description: 'S-008' }
+        participants_count: { type: integer, description: 'Cantidad de inscritos, sin el autor' }
         is_cancelled: { type: boolean }
         is_paused: { type: boolean }
         cover_color: { $ref: '#/components/schemas/CoverColor' }
@@ -2603,7 +2603,7 @@ components:
     AnonymousAssignment:
       type: object
       description: |
-        Asignación vista por el evaluador (S-007). No expone autoría de las propuestas ni
+        Asignación vista por el evaluador. No expone autoría de las propuestas ni
         métricas internas.
       properties:
         id: { type: string, format: uuid }
@@ -2637,7 +2637,7 @@ components:
     Notification:
       type: object
       description: |
-        S-009. Se guarda `type` + `data`, no texto (DEC-T08): la web compone el texto en el
+        Se guarda `type` + `data`, no texto (DEC-T08): la web compone el texto en el
         idioma del usuario con el nombre vigente del evento.
 
         `data` por tipo: `stage_changed` → `{stage, deadline?}` + en `voting`

@@ -4,7 +4,7 @@ name: Exploración de eventos
 surfaces: [Web]
 covers: Ver los eventos públicos, su detalle y cómo compartirlos, y los eventos propios con lo que falta hacer en cada uno
 entities: [Evento, Inscripción]
-last_requirement: EXP-07
+last_requirement: EXP-08
 last_failure: EXP-E5
 ---
 
@@ -21,12 +21,13 @@ last_failure: EXP-E5
 | EXP-05 | En la web, la página de inicio muestra un evento destacado y hasta 3 eventos con inscripción abierta; la lista de eventos muestra, con sesión, hasta 4 pendientes del usuario («Falta tu archivo», «Te toca votar») | U-01 | initial |
 | EXP-06 | En la web, la acción de cada evento depende de quién mira y de la etapa: Gestionar (su autor), Participar, Subir archivo, Votar, Ver resultados o Ver evento; el autor que abre el detalle de su evento va a la gestión | U-02 | initial |
 | EXP-07 | En la web, el detalle del evento muestra la cuenta regresiva al cierre estimado de la etapa, la línea de etapas y, para el inscrito, su progreso (propuesta, ranking) | U-02 | initial |
+| EXP-08 | En la web, el detalle de un evento cancelado reemplaza toda acción por «Este evento fue cancelado / Ya no se puede participar en este evento»; el de un evento pausado, salvo en Resultados, por «El evento está pausado / Por ahora no se puede inscribir ni subir propuestas. El organizador reanudará el evento.», también en Votación, donde oculta el ranking | U-02 | initial |
 
 ## Failure conditions
 
 | ID | Condition | Result | Origin |
 |---|---|---|---|
-| EXP-E1 | El filtro de etapa no es una etapa pública | `400 INVALID_STAGE_FILTER`, con las etapas válidas | initial |
+| EXP-E1 | El filtro de etapa no es una etapa conocida (con `creation` la respuesta es una lista vacía) | `400 INVALID_STAGE_FILTER`, con las etapas válidas | initial |
 | EXP-E2 | El alcance pedido en «mis eventos» no es `participating` ni `all` | `400 INVALID_PAYLOAD` | initial |
 | EXP-E3 | Un usuario pide los eventos de otro: con alcance `participating` (o sin alcance), aunque sea administrador; con alcance `all`, si no es administrador | `401 UNAUTHORIZED_ACCESS` (alcance `participating`) o `403 FORBIDDEN` (alcance `all`) | initial |
 | EXP-E4 | El identificador del usuario no es válido | `400 INVALID_USER_ID` | initial |

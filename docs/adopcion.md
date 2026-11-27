@@ -12,8 +12,8 @@
 | Listo para especificar e implementar | Sí: el repositorio cumple el mínimo (M1–M9), verificado |
 | Correcciones hechas en la adopción | 16; en el producto, solo las URLs de Google configurables y una traducción que pide un test existente |
 | Cargado en Jiku | 15 incidencias de seguridad (ver «Cargado en Jiku») |
-| En este informe | 24 bugs, 1 comportamiento a confirmar, 19 defaults sugeridos, 14 otras mejoras |
-| Cobertura por ID | 23 de 194 IDs con un test que los nombra: solo los tests end to end de la adopción llevan IDs; los tests anteriores (más de 1.300) no |
+| En este informe | 25 bugs, 1 comportamiento a confirmar, 19 defaults sugeridos, 14 otras mejoras |
+| Cobertura por ID | 23 de 196 IDs con un test que los nombra: solo los tests end to end de la adopción llevan IDs; los tests anteriores (más de 1.300) no |
 
 ## Línea de base
 
@@ -99,9 +99,9 @@ No son de seguridad, así que no se cargaron en Jiku. La definición los documen
 
 ### B-03 Un evento cancelado sigue funcionando
 
-- **Qué pasa:** cancelado, el evento sigue aceptando inscripciones, propuestas, rankings y cambios de etapa. La pausa sí bloquea las inscripciones, las propuestas y los recordatorios, pero tampoco los rankings ni los cambios de etapa. La web no ofrece cancelar.
+- **Qué pasa:** en la api, un evento cancelado sigue aceptando inscripciones, propuestas, rankings y cambios de etapa; la pausa bloquea las inscripciones, las propuestas y los recordatorios, pero no los rankings ni los cambios de etapa. La web sí cierra el evento cancelado (EXP-08, EVE-15) y, pausado, oculta el ranking y avisa que no se puede votar (EVE-14): la regla vive solo en la web, así que por la api se saltea. La web, además, no ofrece cancelar.
 - **Por qué parece un error:** confirmado como error en la adopción.
-- **Dónde:** EVE-10; `services/api/internal/handlers/event_handler.go:1086`, `attachment_handler.go:135`.
+- **Dónde:** EVE-09, EVE-10, EVE-14, EVE-15, EXP-08; `services/api/internal/handlers/event_handler.go:1086`, `attachment_handler.go:135`.
 - **Gravedad sugerida:** media.
 
 ### B-04 Una base nueva y una actualizada no tienen el mismo esquema
@@ -241,6 +241,13 @@ No son de seguridad, así que no se cargaron en Jiku. La definición los documen
 - **Dónde:** EVE-E24; `services/api/internal/handlers/event_handler.go:237`.
 - **Gravedad sugerida:** baja.
 
+### B-25 Un error de la base al inscribirse se trata como «no tiene cuenta»
+
+- **Qué pasa:** al inscribirse, cualquier error al buscar la cuenta por email se toma como que no existe, y se intenta crearla: una falla de la base termina en `USER_CREATE_ERROR` o choca con el email único.
+- **Por qué parece un error:** el mensaje no dice qué falló, y con la base intermitente puede intentar crear cuentas que ya existen.
+- **Dónde:** INS-01, INS-E19; `services/api/internal/handlers/event_handler.go:1095-1114`, `services/api/internal/storage/postgres/user_repository.go:89-95`.
+- **Gravedad sugerida:** baja.
+
 ## Comportamientos a confirmar
 
 Comportamientos que pueden ser intencionales o no, y que quedaron sin respuesta en la adopción. La
@@ -294,7 +301,7 @@ existente es opcional: si se decide mantener uno a propósito, queda como decisi
 | El build de la web en el CI ignora los warnings | Los warnings se acumulan sin que nadie los vea | Bajo |
 | Que el test de S3 use el Garage de Compose en vez de testcontainers | Una sola forma de levantar la infraestructura de los tests | Bajo |
 | `cmd/migrate -rollback` elige la última migración por fecha de aplicación | Con migraciones aplicadas en el mismo instante puede deshacer otra | Bajo |
-| Quitar o actualizar las referencias al análisis anterior en comentarios y nombres de tests (`REQ-00n`, `S-0nn`, `D-n`, `DA-n`, `CA-n`, `TS-nn`…) | Citan documentos que la adopción borró (siguen en la historia de git, en `7ff8b00`); los tests se renombran con los IDs nuevos a medida que se tocan | Bajo |
+| Quitar o actualizar las referencias al análisis anterior en comentarios y nombres de tests del código (`REQ-00n`, `S-0nn`, `D-n`, `DA-n`, `CA-n`, `TS-nn`…); en `_jflow/` ya no quedan | Citan documentos que la adopción borró (siguen en la historia de git, en `7ff8b00`); los tests se renombran con los IDs nuevos a medida que se tocan | Bajo |
 
 ## Contradicciones
 

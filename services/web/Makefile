@@ -44,11 +44,11 @@ test-integration:
 # brings it up). Host network, so the browser reaches the web and the api as a user does.
 test-e2e: e2e/node_modules ## Playwright against `make up`
 	@test -n "$(E2E_UP)" || $(MAKE) -C $(ROOT) e2e-up
-	@mkdir -p $(REPORTS)
+	@mkdir -p $(REPORTS) $(ROOT)/reports/screenshots
 	docker run --rm --network host --ipc host --user $$(id -u):$$(id -g) -e HOME=/tmp \
 		-e WEB_URL=http://localhost:$(WEB_PORT) -e API_URL=http://localhost:$(API_PORT) \
-		-e PLAYWRIGHT_JUNIT_OUTPUT_FILE=/reports/web-e2e.xml \
-		-v $(CURDIR)/e2e:/e2e -v $(REPORTS):/reports -w /e2e \
+		-e PLAYWRIGHT_JUNIT_OUTPUT_FILE=/reports/web-e2e.xml -e SCREENSHOTS_DIR=/screenshots \
+		-v $(CURDIR)/e2e:/e2e -v $(REPORTS):/reports -v $(ROOT)/reports/screenshots:/screenshots -w /e2e \
 		$(PLAYWRIGHT_IMAGE) npx playwright test
 
 test-perf:

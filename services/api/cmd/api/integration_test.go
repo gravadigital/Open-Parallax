@@ -47,7 +47,7 @@ func TestDatabaseMigration(t *testing.T) {
 	assert.NoError(t, err, "Should be able to connect to test database")
 
 	if err == nil {
-		err = postgres.AutoMigrate(db)
+		err = postgres.AutoMigrate(db, nil)
 		assert.NoError(t, err, "Should be able to run migrations")
 
 		sqlDB, _ := db.DB()

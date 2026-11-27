@@ -3,9 +3,11 @@ package handlers
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -16,6 +18,7 @@ import (
 	"github.com/gravadigital/openparallax/api/internal/domain/attachment"
 	"github.com/gravadigital/openparallax/api/internal/domain/event"
 	"github.com/gravadigital/openparallax/api/internal/domain/participant"
+	"github.com/gravadigital/openparallax/api/internal/storage/postgres"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -227,23 +230,144 @@ func TestUploadAttachment_RejectsUnregisteredParticipant(t *testing.T) {
 }
 
 func TestUploadAttachment_RejectsDuplicateAttachment(t *testing.T) {
-	s := newTestAttachmentHandlerSet()
-	e, _ := newParticipationStageEvent()
-	s.eventRepo.addEvent(e)
-	p := participant.NewParticipant("P", "One", "p@example.com")
-	s.userRepo.addUser(p)
-	s.eventRepo.byParticipant[p.ID.String()] = []*event.Event{e}
-	existing := attachment.NewAttachment(e.ID, p.ID, "old.jpg", "old.jpg", "old-key", "image/jpeg", 10, "")
-	s.attachmentRepo.addAttachment(existing)
+	t.Run("[INS-05][INS-E15][GAR-16] a second proposal of the same participant is rejected with the existing one and stores no file", func(t *testing.T) {
+		s := newTestAttachmentHandlerSet()
+		e, _ := newParticipationStageEvent()
+		s.eventRepo.addEvent(e)
+		p := participant.NewParticipant("P", "One", "p@example.com")
+		s.userRepo.addUser(p)
+		s.eventRepo.byParticipant[p.ID.String()] = []*event.Event{e}
+		existing := attachment.NewAttachment(e.ID, p.ID, "old.jpg", "old.jpg", "old-key", "image/jpeg", 10, "")
+		s.attachmentRepo.addAttachment(existing)
+		s.fileStorage.files["old-key"] = []byte("old bytes")
 
-	w, c := buildMultipartUpload(t,
-		gin.Params{{Key: "event_id", Value: e.ID.String()}, {Key: "participant_id", Value: p.ID.String()}},
-		"photo.jpg", "image/jpeg", []byte("data"))
+		w, c := buildMultipartUpload(t,
+			gin.Params{{Key: "event_id", Value: e.ID.String()}, {Key: "participant_id", Value: p.ID.String()}},
+			"photo.jpg", "image/jpeg", []byte("data"))
 
-	s.handler.UploadAttachment(c)
+		s.handler.UploadAttachment(c)
 
-	assert.Equal(t, http.StatusConflict, w.Code)
-	assert.Equal(t, "DUPLICATE_ATTACHMENT", jsonBody(t, w)["code"])
+		require.Equal(t, http.StatusConflict, w.Code, w.Body.String())
+		resp := jsonBody(t, w)
+		assert.Equal(t, "DUPLICATE_ATTACHMENT", resp["code"])
+		assert.Equal(t, existing.ID.String(), resp["existing_attachment_id"])
+		assert.Equal(t, map[string][]byte{"old-key": []byte("old bytes")}, s.fileStorage.files, "only the existing file is stored")
+		attachments, _ := s.attachmentRepo.GetByEventID(e.ID.String())
+		assert.Len(t, attachments, 1)
+	})
+}
+
+// A second upload that passes the Go check because the first one is not saved yet is rejected by
+// the database (simulated by the mock's uniqueness); the handler answers like the check does.
+func TestUploadAttachment_ConcurrentSecondUpload(t *testing.T) {
+	t.Run("[INS-E15][GAR-16][INV-13] the upload the database rejects answers 409 with the existing proposal, removes its own file and keeps the other", func(t *testing.T) {
+		s := newTestAttachmentHandlerSet()
+		e, _ := newParticipationStageEvent()
+		s.eventRepo.addEvent(e)
+		p := participant.NewParticipant("P", "One", "p@example.com")
+		s.userRepo.addUser(p)
+		s.eventRepo.byParticipant[p.ID.String()] = []*event.Event{e}
+		s.attachmentRepo.lookupSeesNothing = true // both uploads pass the Go check, as in a race
+
+		params := gin.Params{{Key: "event_id", Value: e.ID.String()}, {Key: "participant_id", Value: p.ID.String()}}
+		w1, c1 := buildMultipartUpload(t, params, "first.pdf", "application/pdf", []byte("first"))
+		s.handler.UploadAttachment(c1)
+		require.Equal(t, http.StatusCreated, w1.Code, w1.Body.String())
+		firstID := jsonBody(t, w1)["data"].(map[string]interface{})["id"]
+
+		w2, c2 := buildMultipartUpload(t, params, "second.pdf", "application/pdf", []byte("second"))
+		s.handler.UploadAttachment(c2)
+
+		require.Equal(t, http.StatusConflict, w2.Code, w2.Body.String())
+		resp := jsonBody(t, w2)
+		assert.Equal(t, "DUPLICATE_ATTACHMENT", resp["code"])
+		assert.Equal(t, firstID, resp["existing_attachment_id"])
+
+		attachments, _ := s.attachmentRepo.GetByEventID(e.ID.String())
+		require.Len(t, attachments, 1)
+		assert.Equal(t, map[string][]byte{attachments[0].FilePath: []byte("first")}, s.fileStorage.files,
+			"the rejected file is gone and the accepted one is unchanged")
+		assert.Len(t, s.fileStorage.deletedKeys, 1)
+		assert.NotEqual(t, attachments[0].FilePath, s.fileStorage.deletedKeys[0])
+	})
+}
+
+func TestUploadAttachment_SameSecondUploadsGetDistinctStorageNames(t *testing.T) {
+	t.Run("[662-AC-03] two uploads of the same participant and event in the same second store their files under different names", func(t *testing.T) {
+		s := newTestAttachmentHandlerSet()
+		e, _ := newParticipationStageEvent()
+		s.eventRepo.addEvent(e)
+		p := participant.NewParticipant("P", "One", "p@example.com")
+		s.userRepo.addUser(p)
+		s.eventRepo.byParticipant[p.ID.String()] = []*event.Event{e}
+		s.attachmentRepo.lookupSeesNothing = true
+		var keys []string
+		s.fileStorage.onPut = func(key string) { keys = append(keys, key) }
+
+		params := gin.Params{{Key: "event_id", Value: e.ID.String()}, {Key: "participant_id", Value: p.ID.String()}}
+		start := time.Now()
+		for _, name := range []string{"a.pdf", "b.pdf"} {
+			_, c := buildMultipartUpload(t, params, name, "application/pdf", []byte(name))
+			s.handler.UploadAttachment(c)
+		}
+		require.Less(t, time.Since(start), time.Second, "both uploads ran within the same second")
+
+		require.Len(t, keys, 2)
+		assert.NotEqual(t, keys[0], keys[1])
+		pattern := regexp.MustCompile(`^` + e.ID.String() + `_` + p.ID.String() + `_[0-9a-f-]{36}\.pdf$`)
+		for _, k := range keys {
+			assert.Regexp(t, pattern, k)
+		}
+	})
+}
+
+func TestUploadAttachment_LookupFailureAfterDatabaseRejection(t *testing.T) {
+	t.Run("[INS-E15][INS-E19] a failure reading the existing proposal after the database rejection answers 500 and removes the rejected file", func(t *testing.T) {
+		s := newTestAttachmentHandlerSet()
+		e, _ := newParticipationStageEvent()
+		s.eventRepo.addEvent(e)
+		p := participant.NewParticipant("P", "One", "p@example.com")
+		s.userRepo.addUser(p)
+		s.eventRepo.byParticipant[p.ID.String()] = []*event.Event{e}
+		s.attachmentRepo.createErr = fmt.Errorf("create attachment: %w", postgres.ErrDuplicateAttachment)
+		s.attachmentRepo.batchErrAfter = 1 // the Go check succeeds, the lookup after the rejection fails
+		s.attachmentRepo.batchErr = errors.New("db down")
+
+		w, c := buildMultipartUpload(t,
+			gin.Params{{Key: "event_id", Value: e.ID.String()}, {Key: "participant_id", Value: p.ID.String()}},
+			"photo.jpg", "image/jpeg", []byte("data"))
+
+		s.handler.UploadAttachment(c)
+
+		require.Equal(t, http.StatusInternalServerError, w.Code, w.Body.String())
+		assert.Equal(t, "RETRIEVAL_ERROR", jsonBody(t, w)["code"])
+		assert.Empty(t, s.fileStorage.files, "the rejected file is removed")
+		assert.Len(t, s.fileStorage.deletedKeys, 1)
+	})
+}
+
+func TestUploadAttachment_DuplicateLookupFailure(t *testing.T) {
+	t.Run("[INS-05][INS-E19] a failure checking for an existing proposal answers 500 instead of accepting the upload", func(t *testing.T) {
+		s := newTestAttachmentHandlerSet()
+		e, _ := newParticipationStageEvent()
+		s.eventRepo.addEvent(e)
+		p := participant.NewParticipant("P", "One", "p@example.com")
+		s.userRepo.addUser(p)
+		s.eventRepo.byParticipant[p.ID.String()] = []*event.Event{e}
+		s.attachmentRepo.batchErr = errors.New("db down")
+
+		w, c := buildMultipartUpload(t,
+			gin.Params{{Key: "event_id", Value: e.ID.String()}, {Key: "participant_id", Value: p.ID.String()}},
+			"photo.jpg", "image/jpeg", []byte("data"))
+
+		s.handler.UploadAttachment(c)
+
+		require.Equal(t, http.StatusInternalServerError, w.Code, w.Body.String())
+		assert.Equal(t, "RETRIEVAL_ERROR", jsonBody(t, w)["code"])
+		assert.Empty(t, s.fileStorage.files)
+		attachments, _ := s.attachmentRepo.GetByEventID(e.ID.String())
+		assert.Empty(t, attachments)
+	})
 }
 
 func TestUploadAttachment_RejectsFileTooLarge(t *testing.T) {

@@ -18,7 +18,7 @@ last_failure: INS-E20
 | INS-02 | En la web, inscribirse pide sesión y usa el nombre y el email de la cuenta | U-02 | initial |
 | INS-03 | No se inscribe con el evento pausado, con el cupo completo, al autor ni a quien ya está inscrito. La etapa y la pausa se controlan antes de buscar o crear la cuenta; el autor, la inscripción previa y el cupo, después: una inscripción rechazada por esos motivos deja creada la cuenta sin contraseña de un email nuevo | — | initial |
 | INS-04 | Cualquier usuario con sesión lista los inscritos de un evento, sin el autor, con identificador, nombre, email, rol en el evento (siempre participante) y la fecha de alta de la cuenta (no la de la inscripción); un evento en Creación ajeno no existe | U-02 | initial |
-| INS-05 | Un inscrito sube su propuesta durante Participación, con el evento sin pausar: un archivo de hasta **tamaño máximo de propuesta**, de tipo JPG, PNG, GIF, WebP, PDF, TXT, DOC o DOCX, con una descripción opcional de hasta 1000 bytes (una letra con tilde cuenta dos), sin espacios en los extremos. El control de una sola por inscrito y evento no funciona: falla siempre y su error se ignora, así que una segunda propuesta del mismo inscrito se acepta, y con dos propuestas suyas abrir la votación falla (VOT-E20). El autor no sube | U-02 | initial |
+| INS-05 | Un inscrito sube su propuesta durante Participación, con el evento sin pausar: un archivo de hasta **tamaño máximo de propuesta**, de tipo JPG, PNG, GIF, WebP, PDF, TXT, DOC o DOCX, con una descripción opcional de hasta 1000 bytes (una letra con tilde cuenta dos), sin espacios en los extremos. Tiene a lo sumo una por evento (INV-13). El autor no sube | U-02 | #662 |
 | INS-06 | El autor o un administrador sube, en nombre de un inscrito, su propuesta | U-03 | initial |
 | INS-07 | El dueño elimina su propuesta durante Participación, también con el evento pausado; la web la reemplaza eliminándola y subiendo la nueva, y si la subida falla queda sin propuesta | U-02 | initial |
 | INS-08 | El autor y los administradores ven todas las propuestas del evento; cada inscrito, solo la suya | U-03 | initial |
@@ -42,7 +42,7 @@ last_failure: INS-E20
 | INS-E12 | El autor intenta subir o eliminar una propuesta propia | `403 CREATOR_CANNOT_UPLOAD` o `CREATOR_CANNOT_DELETE` | initial |
 | INS-E13 | Quien figura como dueño de la propuesta no está inscrito | `403 NOT_REGISTERED` | initial |
 | INS-E14 | El participante no existe | `404 PARTICIPANT_NOT_FOUND` | initial |
-| INS-E15 | El inscrito ya tiene una propuesta en el evento (hoy no ocurre: el control falla siempre, INS-05) | `409 DUPLICATE_ATTACHMENT`, con la propuesta existente | initial |
+| INS-E15 | El inscrito ya tiene una propuesta en el evento, también cuando dos subidas suyas llegan a la vez | `409 DUPLICATE_ATTACHMENT`, con la propuesta existente; el archivo de la subida rechazada no queda en el almacenamiento y el de la existente no cambia. La web muestra «Ya subiste una propuesta a este evento.» | #662 |
 | INS-E16 | La propuesta o su archivo no existen | `404 ATTACHMENT_NOT_FOUND` o `FILE_NOT_FOUND` | initial |
 | INS-E17 | Quien descarga o elimina no tiene permiso sobre la propuesta | `403 FORBIDDEN` | initial |
 | INS-E18 | Faltan o no son válidos los identificadores del participante, o quien opera sobre los recursos de un participante no es él, el autor ni un administrador | `400 MISSING_PARAMETERS` o `INVALID_PARTICIPANT_ID`, o `400 BAD_REQUEST` (`{error, message}`); `403 FORBIDDEN` (`{error, message}`) | initial |

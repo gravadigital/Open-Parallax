@@ -6,11 +6,23 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 
 	attachmentDomain "github.com/gravadigital/openparallax/api/internal/domain/attachment"
 	"github.com/gravadigital/openparallax/api/internal/logger"
 )
+
+// ErrDuplicateAttachment is returned by Create when the database rejects a second proposal of the
+// same participant in the event (INV-13): it is how the second of two simultaneous uploads ends.
+var ErrDuplicateAttachment = errors.New("participant already has an attachment for this event")
+
+// UniqueAttachmentPerParticipantIndex is the unique index on attachments (event_id,
+// participant_id) created by migration 029 (GAR-16).
+const UniqueAttachmentPerParticipantIndex = "uq_attachments_event_participant"
+
+// uniqueViolation is the PostgreSQL error code of a unique constraint violation.
+const uniqueViolation = "23505"
 
 // PostgresAttachmentRepository implements AttachmentRepository using GORM
 type PostgresAttachmentRepository struct {
@@ -92,6 +104,11 @@ func (r *PostgresAttachmentRepository) Create(attachment *attachmentDomain.Attac
 	}
 
 	if err := r.db.Create(attachment).Error; err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == uniqueViolation && pgErr.ConstraintName == UniqueAttachmentPerParticipantIndex {
+			r.log.Warn("participant already has a proposal in the event", "event_id", attachment.EventID, "participant_id", attachment.ParticipantID)
+			return fmt.Errorf("failed to create attachment: %w", ErrDuplicateAttachment)
+		}
 		r.log.Error("failed to create attachment", "error", err, "attachment_id", attachment.ID)
 		return fmt.Errorf("failed to create attachment: %w", err)
 	}
@@ -149,30 +166,6 @@ func (r *PostgresAttachmentRepository) GetByEventID(eventID string) ([]*attachme
 	}
 
 	r.log.Debug("attachments retrieved successfully", "event_id", eventID, "count", len(attachments))
-	return attachments, nil
-}
-
-func (r *PostgresAttachmentRepository) GetByParticipantID(participantID string) ([]*attachmentDomain.Attachment, error) {
-	r.log.Debug("retrieving attachments by participant ID", "participant_id", participantID)
-
-	if participantID == "" {
-		r.log.Error("participant ID cannot be empty")
-		return nil, errors.New("participant ID cannot be empty")
-	}
-
-	participantUUID, err := uuid.Parse(participantID)
-	if err != nil {
-		r.log.Error("invalid participant ID format", "participant_id", participantID, "error", err)
-		return nil, fmt.Errorf("invalid participant ID format: %w", err)
-	}
-
-	var attachments []*attachmentDomain.Attachment
-	if err := r.db.Preload("Event").Where("participant_id = ?", participantUUID).Find(&attachments).Error; err != nil {
-		r.log.Error("failed to retrieve attachments by participant ID", "participant_id", participantID, "error", err)
-		return nil, fmt.Errorf("failed to retrieve attachments by participant ID: %w", err)
-	}
-
-	r.log.Debug("attachments retrieved successfully", "participant_id", participantID, "count", len(attachments))
 	return attachments, nil
 }
 

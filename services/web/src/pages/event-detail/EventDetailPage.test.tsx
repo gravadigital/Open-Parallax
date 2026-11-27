@@ -438,6 +438,17 @@ describe('EventDetailPage', () => {
         userEvent.click(screen.getByRole('button', { name: 'Enviar propuesta' }));
         expect(await screen.findByRole('alert')).toHaveTextContent('El archivo es demasiado grande. Sube uno más liviano.');
       });
+
+      it('[INS-E15] a second proposal in the event shows that one was already uploaded', async () => {
+        upload.mockRejectedValueOnce(
+          new ApiError({ status: 409, body: { error: 'x', code: 'DUPLICATE_ATTACHMENT', existing_attachment_id: 'a-1' } }),
+        );
+        renderPage(signedIn());
+        await screen.findByRole('heading', { level: 2, name: 'Sube tu propuesta' });
+        userEvent.upload(dropzoneInput(), pdfFile());
+        userEvent.click(screen.getByRole('button', { name: 'Enviar propuesta' }));
+        expect(await screen.findByRole('alert')).toHaveTextContent('Ya subiste una propuesta a este evento.');
+      });
     });
 
     describe('reemplazo', () => {

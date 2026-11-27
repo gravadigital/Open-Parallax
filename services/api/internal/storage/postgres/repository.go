@@ -93,11 +93,12 @@ type UserRepository interface {
 
 // AttachmentRepository define los métodos para interactuar con los archivos adjuntos
 type AttachmentRepository interface {
+	// Create returns an error wrapping ErrDuplicateAttachment when the participant already has a
+	// proposal in the event (INV-13, GAR-16).
 	Create(attachment *attachment.Attachment) error
 	GetByID(id string) (*attachment.Attachment, error)
 	GetByEventID(eventID string) ([]*attachment.Attachment, error)
 	GetByEventIDPaginated(eventID string, params PaginationParams) (*PaginatedResult, error)
-	GetByParticipantID(participantID string) ([]*attachment.Attachment, error)
 	GetByParticipantAndEventIDs(participantID string, eventIDs []string) ([]*attachment.Attachment, error)
 	Update(attachment *attachment.Attachment) error
 	UpdatePartial(id string, updates map[string]interface{}) error

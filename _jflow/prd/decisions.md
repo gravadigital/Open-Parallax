@@ -13,6 +13,7 @@
 | DEC-07 | Notificaciones dentro de la web | Replican los emails y suman inscripciones, ranking enviado y recordatorios; se muestran 90 días | — | — | NOT, BAN | initial |
 | DEC-08 | Idiomas | Interfaz en español neutro (sin voseo ni modismos rioplatenses) e inglés, con selector que se recuerda en el navegador | — | — | web | initial |
 | DEC-09 | Resultados y avance públicos | Los resultados (en Resultados) y el avance de la votación, con quién envió su ranking, se ven sin sesión y solo para leer | — | — | RES, VOT | initial |
+| DEC-10 | Propuestas duplicadas existentes | Al desplegar se conserva la propuesta más reciente de cada inscrito en cada evento y se eliminan las demás, registro y archivo, sin avisarle; si un archivo no se puede borrar, se registra en el log y el despliegue sigue | Conservar la primera; frenar la migración y resolver a mano; borrar solo los registros; frenar el arranque si el almacenamiento no responde | Es la última que subió el inscrito y la que ve en el evento; esos eventos solo pueden estar en Participación, así que no hay votos que perder; el archivo que queda sin borrar está en un bucket privado y nadie puede descargarlo | INS-05, INV-13 | #662 |
 
 ## Technical
 
@@ -32,6 +33,7 @@
 | DEC-T12 | Versión | Una sola versión para todo el monorepo, en `VERSION`, que `scripts/set-version.sh` propaga y verifica; la api la recibe al compilar | — | La api en Go no tiene dónde declarar su versión | api, web | initial |
 | DEC-T13 | Publicación | El CI publica las imágenes de api y web en Docker Hub en cada push a dev y en cada tag `vX.Y.Z`; el despliegue a servidores vive en otro repositorio | — | — | api, web | initial |
 | DEC-T14 | Login con Google | La web usa el flujo implícito y la api verifica el token de acceso contra tokeninfo (audiencia y email verificado) y userinfo | — | El chequeo de audiencia impide reusar un token emitido para otra aplicación; el de email, porque las cuentas se vinculan por email | api.participant, INT-01 | initial |
+| DEC-T15 | Nombre guardado de la propuesta | `{evento}_{participante}_{identificador único}{extensión}`, distinto en cada subida | Mantener `{evento}_{participante}_{instante}` | Dos subidas en el mismo segundo compartían el archivo, y al rechazar una se podía borrar el de la otra | api.attachment, GAR-16 | #662 |
 
 ## Reverted
 

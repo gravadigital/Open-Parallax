@@ -247,8 +247,9 @@ func HealthCheckWithTimeout(db *gorm.DB, timeout time.Duration) error {
 	return nil
 }
 
-// AutoMigrate runs the structured migrations for all models with enhanced error handling
-func AutoMigrate(db *gorm.DB) error {
+// AutoMigrate applies the pending migrations; files deletes the stored files of the records a
+// migration removes (nil logs them as not deleted).
+func AutoMigrate(db *gorm.DB, files migrations.FileRemover) error {
 	log := logger.Migration()
 	log.Info("Starting database migrations...")
 
@@ -266,7 +267,7 @@ func AutoMigrate(db *gorm.DB) error {
 	startTime := time.Now()
 
 	// Run all migrations using the new migration system
-	if err := migrations.RunMigrations(db); err != nil {
+	if err := migrations.RunMigrations(db, files); err != nil {
 		log.Error("Database migrations failed", "error", err, "duration", time.Since(startTime))
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}

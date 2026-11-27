@@ -47,7 +47,7 @@ the official documentation for the stable version and its recommended practices.
 - `internal/handlers/`: HTTP handlers per module, with their unit tests and the hand-written mocks (`mocks_*_test.go`).
 - `internal/middleware/auth/`: JWT and the permission middlewares (`permissions.go`).
 - `internal/storage/postgres/`: repositories and their integration tests (`*_integration_test.go`).
-- `internal/storage/migrations/`: numbered migrations, registered in order in `migrations.go`; `004_constraints_and_triggers.go` holds the triggers.
+- `internal/storage/migrations/`: numbered migrations, registered in order in `migrations.go`; `004_constraints_and_triggers.go` holds the triggers. A migration that deletes records with a stored file sets `UpRemovingFiles` instead of `Up` and returns their storage keys; the runner deletes the files after the commit and only logs the ones it cannot delete (029, DEC-10). That is why `cmd/api` opens the file storage before migrating.
 - `internal/storage/`: file storage (S3 and local).
 - `internal/email/`: SMTP service and the email templates.
 - `e2e/`: end-to-end tests (build tag `e2e`) and `e2e/fakegoogle/`, the fake Google of the tests.

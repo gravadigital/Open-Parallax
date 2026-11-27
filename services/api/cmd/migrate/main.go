@@ -7,6 +7,7 @@ import (
 
 	"github.com/gravadigital/openparallax/api/internal/config"
 	"github.com/gravadigital/openparallax/api/internal/logger"
+	"github.com/gravadigital/openparallax/api/internal/storage"
 	"github.com/gravadigital/openparallax/api/internal/storage/migrations"
 	"github.com/gravadigital/openparallax/api/internal/storage/postgres"
 )
@@ -37,7 +38,15 @@ func main() {
 		log.Info("Migration rollback completed successfully")
 	} else {
 		log.Info("Running migrations...")
-		if err := migrations.RunMigrations(db); err != nil {
+		// The files of the records a migration removes are deleted through the file storage; if it
+		// is not reachable they are logged and the migration goes on (DEC-10).
+		var files migrations.FileRemover
+		if fileStorage, err := storage.NewFileStorage(cfg); err != nil {
+			log.Warn("File storage unavailable: files of removed records will only be logged", "error", err)
+		} else {
+			files = fileStorage
+		}
+		if err := migrations.RunMigrations(db, files); err != nil {
 			log.Error("Migration failed", "error", err)
 			os.Exit(1)
 		}

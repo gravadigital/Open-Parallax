@@ -23,7 +23,7 @@ type votingFixture struct {
 	eventID     uuid.UUID
 	reviewer    uuid.UUID
 	author      uuid.UUID
-	attachments []uuid.UUID // all uploaded by author
+	attachments []uuid.UUID // each uploaded by a different participant (INV-13)
 	own         uuid.UUID   // uploaded by reviewer
 }
 
@@ -37,7 +37,7 @@ func migratedTx(t *testing.T) *gorm.DB {
 
 	db, err := Connect(cfg)
 	require.NoError(t, err)
-	require.NoError(t, AutoMigrate(db))
+	require.NoError(t, AutoMigrate(db, nil))
 
 	tx := db.Begin()
 	t.Cleanup(func() {
@@ -75,7 +75,11 @@ func seedVoting(t *testing.T, tx *gorm.DB, attachmentsPerEvaluator int) votingFi
 	}
 
 	for i := 0; i < attachmentsPerEvaluator; i++ {
-		f.attachments = append(f.attachments, insertAttachment(f.author))
+		owner := uuid.New()
+		require.NoError(t, tx.Exec(
+			`INSERT INTO users (id, name, email) VALUES (?, 'Test', ?)`,
+			owner, owner.String()+"@example.com").Error)
+		f.attachments = append(f.attachments, insertAttachment(owner))
 	}
 	f.own = insertAttachment(f.reviewer)
 

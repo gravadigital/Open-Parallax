@@ -524,21 +524,23 @@ func TestUpdateEventStage_VotingConfigurationDefaultsAndRules(t *testing.T) {
 }
 
 func TestUpdateEventStage_VotingSetupFailureReturns500WithoutWritingTheStage(t *testing.T) {
-	s := newTestEventHandlerSet()
-	f := seedOpenVoting(s, 4, 3)
-	s.setupRepo.eventRepo = nil
-	s.setupRepo.OpenVotingFunc = func(string, *time.Time, *vote.VotingConfiguration, []*vote.Assignment) error {
-		return errors.New("insert assignments")
-	}
+	t.Run("[VOT-E20] an internal failure saving the voting answers 500 VOTING_SETUP_ERROR and the event stays in participation", func(t *testing.T) {
+		s := newTestEventHandlerSet()
+		f := seedOpenVoting(s, 4, 3)
+		s.setupRepo.eventRepo = nil
+		s.setupRepo.OpenVotingFunc = func(string, *time.Time, *vote.VotingConfiguration, []*vote.Assignment) error {
+			return errors.New("insert assignments")
+		}
 
-	w := patchStage(t, s, f.event.ID, votingBody(dateStr(time.Now().AddDate(0, 0, 3)), map[string]interface{}{"attachments_per_evaluator": 2}))
+		w := patchStage(t, s, f.event.ID, votingBody(dateStr(time.Now().AddDate(0, 0, 3)), map[string]interface{}{"attachments_per_evaluator": 2}))
 
-	require.Equal(t, http.StatusInternalServerError, w.Code, w.Body.String())
-	resp := jsonBody(t, w)
-	assert.Equal(t, "VOTING_SETUP_ERROR", resp["code"])
-	assert.NotContains(t, resp, "data")
-	assert.Equal(t, event.StageParticipation, f.event.Stage)
-	assert.Zero(t, s.eventRepo.stageUpdates)
+		require.Equal(t, http.StatusInternalServerError, w.Code, w.Body.String())
+		resp := jsonBody(t, w)
+		assert.Equal(t, "VOTING_SETUP_ERROR", resp["code"])
+		assert.NotContains(t, resp, "data")
+		assert.Equal(t, event.StageParticipation, f.event.Stage)
+		assert.Zero(t, s.eventRepo.stageUpdates)
+	})
 }
 
 func TestUpdateEventStage_OpeningReplacesAnExistingConfiguration(t *testing.T) {

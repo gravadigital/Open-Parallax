@@ -34,7 +34,7 @@ last_failure: INS-E19
 | INS-E4 | El email es el del autor del evento | `400 CREATOR_CANNOT_REGISTER` | initial |
 | INS-E5 | El email ya está inscrito | `409 ALREADY_REGISTERED` | initial |
 | INS-E6 | El cupo está completo | `400 MAX_PARTICIPANTS_REACHED` | initial |
-| INS-E7 | Se sube o elimina una propuesta fuera de Participación | `400 INVALID_EVENT_STAGE`, con la etapa actual | initial |
+| INS-E7 | Se sube o elimina una propuesta fuera de Participación | `400 INVALID_EVENT_STAGE` (al subir, con la etapa actual) | initial |
 | INS-E8 | La subida no trae archivo | `400 NO_FILE` | initial |
 | INS-E9 | La descripción supera los 1000 bytes | `400 DESCRIPTION_TOO_LONG` | initial |
 | INS-E10 | El archivo supera el **tamaño máximo de propuesta** | `400 FILE_TOO_LARGE`; la web lo rechaza antes: «El archivo supera los 10 MB.» | initial |

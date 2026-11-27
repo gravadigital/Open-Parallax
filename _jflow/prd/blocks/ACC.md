@@ -30,7 +30,7 @@ last_failure: ACC-E14
 
 | ID | Condition | Result | Origin |
 |---|---|---|---|
-| ACC-E1 | Faltan datos o no cumplen su formato (nombre, email, contraseña de menos de 8 caracteres, token) | `400 INVALID_PAYLOAD`, con el detalle de cada campo | initial |
+| ACC-E1 | Faltan datos o no cumplen su formato (nombre, email, contraseña de menos de 8 caracteres, token) | `400 INVALID_PAYLOAD`, con el detalle de cada campo (en la recuperación, sin detalle) | initial |
 | ACC-E2 | La contraseña supera los 72 bytes (una de menos de 8 caracteres es ACC-E1) | `400 INVALID_PASSWORD`; la web: «La contraseña no cumple los requisitos. Elige una más segura.» | initial |
 | ACC-E3 | Ya hay una cuenta con ese email | `409 EMAIL_ALREADY_EXISTS`; la web: «Ya hay una cuenta con este email. Inicia sesión o recupera tu contraseña.» | initial |
 | ACC-E4 | El email no tiene cuenta o la contraseña no es la suya | `401 INVALID_CREDENTIALS`; la web: «El correo o la contraseña no son correctos.» | initial |

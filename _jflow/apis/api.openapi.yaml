@@ -941,7 +941,7 @@ paths:
                       type: integer
                       minimum: 1
                       maximum: 20
-                      description: 'Default min(3, attachments_per_evaluator). Ya no afecta la asignación, que es regular (cada propuesta recibe exactamente attachments_per_evaluator evaluaciones); se acepta por compatibilidad'
+                      description: 'Default min(3, attachments_per_evaluator). No puede superar attachments_per_evaluator (si no, `MATH_CONSTRAINT_VIOLATION`). La asignación es regular: cada propuesta recibe exactamente attachments_per_evaluator evaluaciones'
                     non_evaluator_sanction:
                       type: string
                       enum: [exclusion, penalty]
@@ -1594,7 +1594,10 @@ paths:
         Requiere al menos 3 propuestas (`INSUFFICIENT_ATTACHMENTS`).
 
         Valida las restricciones matemáticas del algoritmo: `m ≤ k-1` (nadie evalúa lo propio),
-        `m ≥ 2·log₂(k)` para convergencia, y cobertura suficiente (`n·m ≥ k·min_evaluations`).
+        `m ≥ ⌈2·log₂(k)⌉` para convergencia (relajado a `⌈0,6·(k-1)⌉` con k ≤ 10) y
+        `min_evaluations_per_file ≤ m`. Se acepta en `participation` y en `voting`; en `voting`
+        ya existe la configuración de la apertura (`CONFIG_EXISTS`), y una creada en
+        `participation` se reemplaza al abrir la votación.
       parameters:
         - $ref: '#/components/parameters/EventId'
       requestBody:
@@ -1698,8 +1701,9 @@ paths:
         propuestas (`INSUFFICIENT_ATTACHMENTS`); `total_participants` es la cantidad de
         evaluadores (participantes con propuesta).
 
-        Ejecuta el algoritmo de asignación: garantiza el mínimo de evaluaciones por propuesta,
-        completa hasta `m` por participante y excluye la propuesta propia de cada evaluador.
+        Ejecuta la asignación regular: cada evaluador recibe `m` propuestas y cada propuesta `m`
+        evaluadores, nunca su autor. Como la apertura de la votación ya crea las asignaciones,
+        hoy siempre responde `ASSIGNMENTS_EXIST`.
       parameters:
         - $ref: '#/components/parameters/EventId'
       responses:
@@ -2558,7 +2562,7 @@ components:
         quality_good_threshold: { type: number, format: double }
         quality_bad_threshold: { type: number, format: double }
         adjustment_magnitude: { type: integer, description: 'Parámetro n' }
-        min_evaluations_per_file: { type: integer, description: 'Sin efecto desde la asignación regular: cada propuesta recibe exactamente m evaluaciones' }
+        min_evaluations_per_file: { type: integer, description: 'No supera m; la asignación regular le da a cada propuesta exactamente m evaluaciones' }
         non_evaluator_sanction:
           type: string
           enum: [exclusion, penalty]

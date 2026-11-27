@@ -44,7 +44,7 @@ last_failure: EVE-E24
 | EVE-E8 | El usuario de la sesión ya no existe o la sesión no trae su identidad | `401 USER_NOT_FOUND` o `UNAUTHORIZED`; `500 INVALID_TOKEN` si la identidad no se puede leer | initial |
 | EVE-E9 | Se edita nombre, descripción, organizador o cupo fuera de Creación y Participación | `409 INVALID_UPDATE_STAGE`, con la etapa actual | initial |
 | EVE-E10 | El cupo nuevo es menor que los inscritos | `400 MAX_PARTICIPANTS_BELOW_REGISTERED`, con la cantidad actual | initial |
-| EVE-E11 | La etapa pedida no existe o no es la siguiente | `400 INVALID_STAGE` o `INVALID_TRANSITION`, con la etapa actual y la pedida | initial |
+| EVE-E11 | La etapa pedida no existe (o, al cambiar el cierre, no es Participación ni Votación), o no es la siguiente | `400 INVALID_STAGE`, con las etapas válidas, o `400 INVALID_TRANSITION`, con la etapa actual y la pedida | initial |
 | EVE-E12 | Falta la fecha estimada de cierre, no tiene formato `AAAA-MM-DD` o es anterior a hoy | `400 MISSING_ESTIMATED_DATE`, `INVALID_DATE_FORMAT` o `INVALID_ESTIMATED_DATE` | initial |
 | EVE-E13 | Se cambia el cierre de una etapa que no es la actual | `400 INVALID_STAGE_FOR_EDIT` | initial |
 | EVE-E14 | La fecha nueva adelanta el cierre | `400 CANNOT_ADVANCE_DEADLINE`; la web: «El cierre solo se puede posponer…» | initial |

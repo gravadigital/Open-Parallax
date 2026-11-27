@@ -297,7 +297,7 @@ existente es opcional: si se decide mantener uno a propósito, queda como decisi
 |---|---|---|
 | Quitar código muerto de la api: handlers sin ruta (`DeleteEvent`, `RemoveParticipant`, `GetAttachment`, `UpdateVotingConfiguration`, `DeleteVotingConfiguration`), `RequireRole`, el presigner, `optimizer.go`, las vistas de la migración 005 y las columnas sin uso | Confunde al leer y al cambiar el esquema | Medio |
 | Quitar código muerto de la web: `Podium`, `RankingList`, `ParticipantsDialog`, `useFetch`, `ApiHealthService`, `getUserById`, `uploadFile`, constantes y claves de catálogo sin uso | Igual | Bajo |
-| Retirar las operaciones de configurar la votación y generar asignaciones por separado | La apertura atómica las reemplazó y la de asignaciones no es transaccional | Bajo |
+| Retirar las operaciones de configurar la votación y generar asignaciones por separado | La apertura atómica las reemplazó: generar asignaciones ya no puede terminar bien (VOT-12) y no es transaccional, y una configuración creada aparte se reemplaza sin aviso | Bajo |
 | `GET /api/v1/events` carga todos los eventos y consulta los inscritos de a uno | No escala con muchos eventos | Medio |
 | Controlar el tamaño de la subida antes de leer el cuerpo | Hoy se lee todo el archivo y recién después se rechaza | Bajo |
 | Tests de `AuthContext` en la web | La sesión no tiene tests propios | Bajo |

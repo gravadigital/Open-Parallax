@@ -53,7 +53,7 @@ test-integration: ## Integration tests against the Compose database, migrations 
 		"SELECT 1 FROM pg_database WHERE datname = 'openparallax_test'" | grep -q 1 || \
 		$(COMPOSE) exec -T database createdb -U $(POSTGRES_USER) openparallax_test
 	$(API_ENV) TEST_DB_NAME=openparallax_test $(GOTESTSUM) --format testname \
-		--junitfile $(REPORTS)/api-integration.xml -- -tags=integration -count=1 ./...
+		--junitfile $(REPORTS)/api-integration.xml -- -tags=integration -count=1 -p 1 ./...
 
 # Against the product already up with the test overrides (`make test-e2e` at the root
 # brings it up): an HTTP client with real tokens, Mailpit for the email, the fake Google.

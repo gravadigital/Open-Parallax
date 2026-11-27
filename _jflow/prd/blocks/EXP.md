@@ -28,6 +28,6 @@ last_failure: EXP-E5
 |---|---|---|---|
 | EXP-E1 | El filtro de etapa no es una etapa pública | `400 INVALID_STAGE_FILTER`, con las etapas válidas | initial |
 | EXP-E2 | El alcance pedido en «mis eventos» no es `participating` ni `all` | `400 INVALID_PAYLOAD` | initial |
-| EXP-E3 | Un usuario pide los eventos de otro sin ser administrador | `401 UNAUTHORIZED_ACCESS` (alcance `participating`) o `403 FORBIDDEN` (alcance `all`) | initial |
+| EXP-E3 | Un usuario pide los eventos de otro: con alcance `participating` (o sin alcance), aunque sea administrador; con alcance `all`, si no es administrador | `401 UNAUTHORIZED_ACCESS` (alcance `participating`) o `403 FORBIDDEN` (alcance `all`) | initial |
 | EXP-E4 | El identificador del usuario no es válido | `400 INVALID_USER_ID` | initial |
 | EXP-E5 | Falla interna al leer | `500 RETRIEVAL_ERROR` | initial |

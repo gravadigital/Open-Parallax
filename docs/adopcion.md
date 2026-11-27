@@ -10,9 +10,9 @@
 |---|---|
 | Definición | 8 bloques (ACC, EVE, EXP, INS, VOT, RES, NOT, BAN), 10 entidades, 40 operaciones, 12 invariantes, 15 garantías, 23 decisiones (9 de producto, 14 técnicas), 4 flujos |
 | Listo para especificar e implementar | Sí: el repositorio cumple el mínimo (M1–M9), verificado |
-| Correcciones hechas en la adopción | 15; en el producto, solo las URLs de Google configurables y una traducción que pide un test existente |
+| Correcciones hechas en la adopción | 16; en el producto, solo las URLs de Google configurables y una traducción que pide un test existente |
 | Cargado en Jiku | 15 incidencias de seguridad (ver «Cargado en Jiku») |
-| En este informe | 23 bugs, 1 comportamiento a confirmar, 19 defaults sugeridos, 14 otras mejoras |
+| En este informe | 24 bugs, 1 comportamiento a confirmar, 19 defaults sugeridos, 14 otras mejoras |
 | Cobertura por ID | 23 de 193 IDs con un test que los nombra: solo los tests end to end de la adopción llevan IDs; los tests anteriores (más de 1.300) no |
 
 ## Línea de base
@@ -56,6 +56,7 @@ lo pide.
 | M2 | `make down`, `stop` y `reset` también quitan lo que agrega `make test-e2e` | `make test-e2e && make down` |
 | M1 | El Dockerfile de la web pasó de `services/web/docker/` a `services/web/` | `make build S=web` |
 | M2 | Los Makefiles de cada servicio tienen también `up`, `down`, `logs` y `check`; su `test-e2e`, corrido solo, levanta el producto con la configuración de test | `make -C services/api check` |
+| M6 | Los tests de integración de la api corren de a un paquete por vez (`go test -p 1`): dos paquetes comparten la base `openparallax_test` y, en paralelo, un test de migraciones que borra `notifications` trababa (deadlock) a los tests de repositorios al azar. Ya pasaba antes de la adopción, con menos frecuencia | `make test-integration S=api`, varias veces |
 | — | Dos comentarios del código citaban IDs del análisis anterior que hoy significan otra cosa (`U-03 / JTBD-03`, `D-11`): ahora citan RES-05, DEC-09 y RES-06 | — |
 
 ## Cargado en Jiku
@@ -133,7 +134,7 @@ No son de seguridad, así que no se cargaron en Jiku. La definición los documen
 
 ### B-08 Los emails pueden fallar en silencio
 
-- **Qué pasa:** el envío informa éxito aunque fallen todos los destinatarios; el asunto no se codifica (RFC 2047); no funciona con un servidor sin STARTTLS; se manda sin reintento en segundo plano y se pierde si la api se reinicia.
+- **Qué pasa:** el envío informa éxito aunque fallen todos los destinatarios; el asunto no se codifica (RFC 2047); no funciona con un servidor sin STARTTLS, y en ese caso además deja abierta la conexión (`email_service.go:191-194`); se manda sin reintento en segundo plano y se pierde si la api se reinicia.
 - **Por qué parece un error:** nadie se entera de que un aviso no llegó.
 - **Dónde:** NOT-11; `services/api/internal/email/email_service.go:147-166,209-219`.
 - **Gravedad sugerida:** media.
@@ -232,6 +233,13 @@ No son de seguridad, así que no se cargaron en Jiku. La definición los documen
 - **Por qué parece un error:** confirmado como error en la adopción; las fechas del evento no dicen nada real.
 - **Dónde:** EVE-02, EVE-03; `services/web/src/domain/eventForm.ts:141-147`, `services/web/src/i18n/catalogs/es.ts:468`.
 - **Gravedad sugerida:** media.
+
+### B-24 Un organizador largo hace fallar la creación del evento
+
+- **Qué pasa:** al crear un evento, el organizador no se controla; con más de 200 caracteres la base lo rechaza y la api responde `500 DB_CREATE_ERROR`. Al editar sí se controla (`400`).
+- **Por qué parece un error:** el mismo límite se valida en un caso y en el otro termina en un error interno; la web lo limita a 200, así que solo pasa por la api.
+- **Dónde:** EVE-E24; `services/api/internal/handlers/event_handler.go:237`.
+- **Gravedad sugerida:** baja.
 
 ## Comportamientos a confirmar
 

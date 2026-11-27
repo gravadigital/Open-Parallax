@@ -648,7 +648,7 @@ paths:
           description: '`DUPLICATE_EVENT_NAME`'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
-          x-failure: [EVE-E8, EVE-E23]
+          x-failure: [EVE-E8, EVE-E23, EVE-E24]
           description: '`INVALID_TOKEN`, `DB_CREATE_ERROR`'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
 

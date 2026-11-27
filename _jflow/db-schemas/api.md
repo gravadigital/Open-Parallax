@@ -264,6 +264,8 @@ had the columns).
 | `trigger_validate_assignment` | assignments | trigger | `validate_assignment_constraints()`: con configuración, exactamente m propuestas, todas del evento, ninguna del evaluador («Participant cannot be assigned to evaluate their own proposals (conflict of interest)») | GAR-01, GAR-02 |
 | `valid_rank_position` | votes | check | `rank_position > 0` | GAR-03 |
 | `valid_confidence`, `valid_evaluation_time` | votes | check | rangos de columnas sin uso | — |
+| `valid_participant_counts` | voting_results | check | `total_participants > 0 AND total_votes >= 0` | — |
+| `valid_evaluator_counts` | voting_results | check | `good_evaluator_count >= 0 AND bad_evaluator_count >= 0 AND good_evaluator_count + bad_evaluator_count <= total_participants` | — |
 | `trigger_validate_vote` | votes | trigger | `validate_vote_constraints()`: el evaluador tiene asignación, la propuesta está en ella, posición ≤ m; calcula `score = (m − posición + 1) · 100 / m` | GAR-03 |
 | `trigger_update_assignment_completion_insert`, `_delete` | votes | trigger | `update_assignment_completion()`: marca o desmarca `is_completed` y `completed_at` | GAR-14 |
 | `trigger_update_vote_count` | votes | trigger | `update_attachment_vote_count()`: mantiene `attachments.vote_count` | GAR-14 |

@@ -12,7 +12,7 @@ describes: Convocatoria que recibe propuestas, las reparte para evaluar y public
 |---|---|---|---|---|---|
 | nombre | texto | sí | 3 a 200 caracteres; único entre todos los eventos | no | initial |
 | descripción | texto | sí | 10 a 2000 caracteres | no | initial |
-| organizador | texto | no | hasta 200 caracteres; si falta se muestra el nombre del autor | no | initial |
+| organizador | texto | no | hasta 200 caracteres (la base; la api lo controla solo al editar); si falta se muestra el nombre del autor | no | initial |
 | autor | referencia | sí | el Usuario que lo creó | no | initial |
 | fecha de inicio | fecha | sí | hoy o después al crear; no se puede mover al pasado | no | initial |
 | fecha de fin | fecha | sí | no anterior al inicio; de 1 a 365 días después al crear | no | initial |

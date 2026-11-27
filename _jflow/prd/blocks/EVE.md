@@ -5,7 +5,7 @@ surfaces: [Web]
 covers: Crear un evento, editarlo, avanzarlo por sus etapas, posponer sus cierres, pausarlo, cancelarlo y recordar a los pendientes
 entities: [Evento, Inscripción]
 last_requirement: EVE-14
-last_failure: EVE-E23
+last_failure: EVE-E24
 ---
 
 # EVE — Organización de eventos
@@ -14,7 +14,7 @@ last_failure: EVE-E23
 
 | ID | Requirement | Actor | Origin |
 |---|---|---|---|
-| EVE-01 | Un usuario con sesión crea un evento con nombre (3 a 200 caracteres), descripción (10 a 2000), organizador opcional (hasta 200), cupo (1 a 100, 20 por defecto) y color de portada (uno de 16, «lavender» por defecto); el evento nace en Creación y su autor queda registrado como creador | U-03 | initial |
+| EVE-01 | Un usuario con sesión crea un evento con nombre (3 a 200 caracteres), descripción (10 a 2000), organizador opcional, cupo (1 a 100, 20 por defecto) y color de portada (uno de 16, «lavender» por defecto); el evento nace en Creación y su autor queda registrado como creador | U-03 | initial |
 | EVE-02 | En la web, la creación es un asistente de tres pasos (identificación, cupo, revisión) que guarda un borrador en el navegador; al crear lleva a la gestión del evento con el aviso «Evento creado. Cuando esté listo, abre la inscripción.» | U-03 | initial |
 | EVE-03 | El evento tiene fecha de inicio y de fin: el inicio es hoy o después y la duración va de 1 a 365 días. La web no las pide: envía como inicio el día siguiente y como fin el posterior | — | initial |
 | EVE-04 | El nombre de un evento es único entre todos los eventos | — | initial |
@@ -33,7 +33,7 @@ last_failure: EVE-E23
 
 | ID | Condition | Result | Origin |
 |---|---|---|---|
-| EVE-E1 | Faltan datos o no cumplen sus límites (nombre, descripción, organizador, cupo, etapa, tipo de recordatorio) | `400 INVALID_PAYLOAD` o `VALIDATION_FAILED`, con el detalle | initial |
+| EVE-E1 | Faltan datos o no cumplen sus límites (nombre, descripción, cupo, etapa, tipo de recordatorio; al editar, también el organizador de hasta 200 caracteres) | `400 INVALID_PAYLOAD` o `VALIDATION_FAILED`, con el detalle | initial |
 | EVE-E2 | La fecha de inicio o de fin no tiene formato `AAAA-MM-DD` | `400 INVALID_START_DATE` o `INVALID_END_DATE` | initial |
 | EVE-E3 | La fecha de inicio está en el pasado | `400 PAST_START_DATE` | initial |
 | EVE-E4 | El fin es anterior al inicio, o la duración es menor a 1 día o mayor a 365 | `400 INVALID_DATE_RANGE`, `DURATION_TOO_SHORT` o `DURATION_TOO_LONG` | initial |
@@ -56,3 +56,4 @@ last_failure: EVE-E23
 | EVE-E21 | El identificador del evento falta o no es válido | `400 MISSING_EVENT_ID` o `INVALID_EVENT_ID`; en las operaciones que controlan permisos, `400 BAD_REQUEST` (`{error, message}`) | initial |
 | EVE-E22 | El evento no existe, o está en Creación y quien consulta no es su autor ni un administrador | `404 EVENT_NOT_FOUND`; en las operaciones que controlan permisos, `404 NOT_FOUND` (`{error, message}`) si el evento no existe | initial |
 | EVE-E23 | Falla interna al leer o guardar | `500 DB_CREATE_ERROR`, `DB_UPDATE_ERROR`, `UPDATE_ERROR`, `CANCEL_ERROR`, `RETRIEVAL_ERROR` o `PARTICIPANT_CHECK_ERROR` | initial |
+| EVE-E24 | Al crear el evento, el organizador supera los 200 caracteres (la creación no lo controla y la base lo rechaza) | `500 DB_CREATE_ERROR` | initial |

@@ -17,7 +17,7 @@ describes: Archivo que un inscrito presenta al evento y que otros evalúan
 | ubicación | texto | sí | clave del archivo en el almacenamiento | no | initial |
 | tamaño | número | sí | mayor que 0 y hasta el **tamaño máximo de propuesta** | no | initial |
 | tipo | texto | sí | JPG, PNG, GIF, WebP, PDF, TXT, DOC o DOCX, según lo declara quien sube | no | initial |
-| descripción | texto | no | hasta 1000 caracteres | no | initial |
+| descripción | texto | no | hasta 1000 bytes | no | initial |
 | fecha de subida | fecha y hora | sí | — | no | initial |
 
 ## Derived attributes

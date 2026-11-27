@@ -132,7 +132,7 @@ services:
   web:
     build:
       context: ./services/web
-      dockerfile: docker/Dockerfile
+      dockerfile: Dockerfile
     container_name: openparallax-local-web
     restart: unless-stopped
     environment:

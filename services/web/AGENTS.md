@@ -21,7 +21,7 @@ English one derives its type from it.
 | Runtime config | `config.js` written when the container starts (`docker/40-runtime-config.sh`) | — | DEC-T11 |
 | Unit tests | Jest (react-scripts) + Testing Library, jest-junit | 27 / 16 / 17.0.0 | — |
 | End-to-end tests | Playwright in `mcr.microsoft.com/playwright:v1.65.1-noble` (`e2e/`, its own package) | 1.65.1 | — |
-| Serving | nginx (alpine) in the image (`docker/Dockerfile`, `docker/nginx.conf`) | — | — |
+| Serving | nginx (alpine) in the image (`Dockerfile`, `docker/nginx.conf`) | — | — |
 
 Chosen before the adoption; versions from `package.json`. Before adding or upgrading a dependency,
 check the official documentation for the stable version and its recommended practices.
@@ -47,7 +47,7 @@ check the official documentation for the stable version and its recommended prac
 - `src/context/`: session (`AuthContext`) and unread notifications.
 - `src/i18n/`: catalogs and the provider.
 - `e2e/`: Playwright tests (`tests/`), with its own `package.json`.
-- `docker/`: Dockerfile, nginx config and the runtime-config script.
+- `Dockerfile`; `docker/`: the nginx config and the runtime-config script.
 
 ## Canonical examples
 

@@ -154,7 +154,7 @@ func main() {
 			eventsPublic.POST("/:event_id/register", eventHandler.RegisterParticipant) // Register for event (creates user if doesn't exist)
 
 			// Results are public: visitors can see the final rankings of a
-			// finished event without signing up (U-03 / JTBD-03). Read-only —
+			// finished event without signing up (RES-05, DEC-09). Read-only —
 			// never recalculates, and only answers in the results stage.
 			eventsPublic.GET("/:event_id/distributed-results", distributedVoteHandler.GetStoredResults)
 			eventsPublic.GET("/:event_id/voting-statistics", distributedVoteHandler.GetVotingStatistics)

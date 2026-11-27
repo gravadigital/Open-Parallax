@@ -33,7 +33,7 @@ API_ENV = \
 # gotestsum runs `go test` and writes the JUnit report. Pinned; `go run` fetches it once.
 GOTESTSUM := go run gotest.tools/gotestsum@v1.13.0
 
-.PHONY: dev test test-unit test-integration test-e2e test-perf lint typecheck fmt migrate build
+.PHONY: up down logs check dev test test-unit test-integration test-e2e test-perf lint typecheck fmt migrate build
 
 dev: ## Run the api with go run against `make infra` (no hot reload)
 	$(API_ENV) go run ./cmd/api
@@ -58,6 +58,7 @@ test-integration: ## Integration tests against the Compose database, migrations 
 # Against the product already up with the test overrides (`make test-e2e` at the root
 # brings it up): an HTTP client with real tokens, Mailpit for the email, the fake Google.
 test-e2e: ## End-to-end tests of the HTTP interface against `make up`
+	@test -n "$(E2E_UP)" || $(MAKE) -C $(ROOT) e2e-up
 	@mkdir -p $(REPORTS)
 	API_URL=http://localhost:$(API_PORT) MAILPIT_URL=http://localhost:$(MAILPIT_PORT) \
 		$(GOTESTSUM) --format testname --junitfile $(REPORTS)/api-e2e.xml -- -tags=e2e -count=1 ./e2e/...
@@ -82,3 +83,16 @@ migrate: ## Apply the migrations to the Compose database
 
 build:
 	$(COMPOSE) build api
+
+# --- The service in the product's stack (the root Makefile runs the whole product) ---
+
+up: ## Build and start this service and what it depends on
+	$(COMPOSE) up -d --build --wait api
+
+down: ## Stop and remove this service's container
+	$(COMPOSE) rm -s -f api
+
+logs: ## Follow this service's logs
+	$(COMPOSE) logs -f api
+
+check: lint typecheck test ## lint + typecheck + every test level of this service

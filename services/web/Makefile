@@ -14,7 +14,7 @@ GOOGLE_CLIENT_ID ?=
 # Same version as e2e/package.json (@playwright/test): the image carries its browsers.
 PLAYWRIGHT_IMAGE := mcr.microsoft.com/playwright:v1.65.1-noble
 
-.PHONY: dev test test-unit test-integration test-e2e test-perf lint typecheck fmt migrate build
+.PHONY: up down logs check dev test test-unit test-integration test-e2e test-perf lint typecheck fmt migrate build
 
 node_modules: package-lock.json
 	npm ci
@@ -43,6 +43,7 @@ test-integration:
 # Playwright in its official image, against the product up (`make test-e2e` at the root
 # brings it up). Host network, so the browser reaches the web and the api as a user does.
 test-e2e: e2e/node_modules ## Playwright against `make up`
+	@test -n "$(E2E_UP)" || $(MAKE) -C $(ROOT) e2e-up
 	@mkdir -p $(REPORTS)
 	docker run --rm --network host --ipc host --user $$(id -u):$$(id -g) -e HOME=/tmp \
 		-e WEB_URL=http://localhost:$(WEB_PORT) -e API_URL=http://localhost:$(API_PORT) \
@@ -68,3 +69,16 @@ migrate:
 
 build:
 	$(COMPOSE) build web
+
+# --- The service in the product's stack (the root Makefile runs the whole product) ---
+
+up: ## Build and start this service and what it depends on
+	$(COMPOSE) up -d --build --wait web
+
+down: ## Stop and remove this service's container
+	$(COMPOSE) rm -s -f web
+
+logs: ## Follow this service's logs
+	$(COMPOSE) logs -f web
+
+check: lint typecheck test ## lint + typecheck + every test level of this service

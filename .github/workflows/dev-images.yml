@@ -76,7 +76,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: services/${{ matrix.service }}
-          file: services/${{ matrix.service }}/${{ matrix.service == 'web' && 'docker/Dockerfile' || 'Dockerfile' }}
+          file: services/${{ matrix.service }}/Dockerfile
           push: true
           build-args: |
             VERSION=dev-${{ github.sha }}

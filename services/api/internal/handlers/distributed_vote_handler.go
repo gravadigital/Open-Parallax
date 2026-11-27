@@ -826,7 +826,7 @@ func (h *DistributedVoteHandler) calculateAndPersist(eventID string, eventUUID u
 		}
 	}
 
-	// Upsert: results are recalculated whenever they are requested (defect D-11)
+	// Upsert: results are recalculated whenever they are requested (RES-06)
 	existingResults, err := h.resultsRepo.GetByEventID(eventID)
 	if err != nil || existingResults == nil {
 		if err := h.resultsRepo.Create(results); err != nil {

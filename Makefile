@@ -101,7 +101,7 @@ e2e-up:
 	$(COMPOSE_TEST) run --rm --no-deps e2e-seed
 
 test-e2e: e2e-up ## End-to-end tests of every entry, against the product up → reports/junit/
-	$(call each,test-e2e)
+	$(call each,test-e2e E2E_UP=1)
 
 test-perf: ## Performance tests (not part of `make check`)
 	$(call each,test-perf)

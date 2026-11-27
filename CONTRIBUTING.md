@@ -118,7 +118,7 @@ machine has cached:
   `services/api/Dockerfile` must match. The official image runs with `GOTOOLCHAIN=local`, so an image
   older than `go.mod` fails at `go mod download`.
 - **Node:** `services/web/.nvmrc` (what CI uses) and the `FROM node:N-alpine` in
-  `services/web/docker/Dockerfile` must share the major version.
+  `services/web/Dockerfile` must share the major version.
 
 Change both in the same commit.
 

@@ -10,9 +10,9 @@
 |---|---|
 | Definición | 8 bloques (ACC, EVE, EXP, INS, VOT, RES, NOT, BAN), 10 entidades, 40 operaciones, 12 invariantes, 15 garantías, 23 decisiones (9 de producto, 14 técnicas), 4 flujos |
 | Listo para especificar e implementar | Sí: el repositorio cumple el mínimo (M1–M9), verificado |
-| Correcciones hechas en la adopción | 12; en el producto, solo las URLs de Google configurables y una traducción que pide un test existente |
+| Correcciones hechas en la adopción | 15; en el producto, solo las URLs de Google configurables y una traducción que pide un test existente |
 | Cargado en Jiku | 15 incidencias de seguridad (ver «Cargado en Jiku») |
-| En este informe | 23 bugs, 1 comportamiento a confirmar, 14 defaults sugeridos, 13 otras mejoras |
+| En este informe | 23 bugs, 1 comportamiento a confirmar, 19 defaults sugeridos, 14 otras mejoras |
 | Cobertura por ID | 23 de 193 IDs con un test que los nombra: solo los tests end to end de la adopción llevan IDs; los tests anteriores (más de 1.300) no |
 
 ## Línea de base
@@ -25,7 +25,7 @@ Cómo estaba el repositorio antes de la adopción, corriendo sus propios comando
 | `./scripts/set-version.sh --check` | Pasa |
 | `cd api && go build ./... && go vet ./...` | Pasa |
 | `cd api && go test -race ./...` (unitarios) | Pasa: 8 paquetes, 0 fallas |
-| `make test-integration` (base de Compose + `go test -tags=integration`) | Pasa: 12 paquetes, 0 fallas |
+| `make test-integration` (base de Compose + `go test -tags=integration`) | Pasa: 11 paquetes (y 6 sin tests), 0 fallas |
 | `cd web && npm ci && npm run build` | Pasa |
 | `cd web && CI=true npm test` (Jest) | Pasa: 91 suites, 813 tests |
 | `cd web && npm run lint` y `npm run typecheck` | Pasan (el CI no los corría) |
@@ -54,6 +54,9 @@ lo pide.
 | — | `services/web/.dockerignore` excluye también `coverage` y `e2e` | `make build` |
 | — | Al completar el contrato, el test de la web que cuenta sus códigos de error (TS-23) esperaba 106 y pasaron a ser 108. Con tu respuesta: el test espera 108 y el código `INVALID_USER_ID` tiene ahora su texto en español y en inglés | `make test-unit S=web` |
 | M2 | `make down`, `stop` y `reset` también quitan lo que agrega `make test-e2e` | `make test-e2e && make down` |
+| M1 | El Dockerfile de la web pasó de `services/web/docker/` a `services/web/` | `make build S=web` |
+| M2 | Los Makefiles de cada servicio tienen también `up`, `down`, `logs` y `check`; su `test-e2e`, corrido solo, levanta el producto con la configuración de test | `make -C services/api check` |
+| — | Dos comentarios del código citaban IDs del análisis anterior que hoy significan otra cosa (`U-03 / JTBD-03`, `D-11`): ahora citan RES-05, DEC-09 y RES-06 | — |
 
 ## Cargado en Jiku
 
@@ -260,6 +263,11 @@ existente es opcional: si se decide mantener uno a propósito, queda como decisi
 | Contrato OpenAPI 3.1 verificado por tests, con `x-roles` | OpenAPI 3.0.3, sin validación en los tests ni `x-roles` | Validar las respuestas de los tests de integración contra el contrato; pasar a 3.1 | Medio |
 | Convenciones del esquema | `varchar(n)`, columnas sin `NOT NULL`, sin `created_at`/`updated_at` mantenidos por trigger, nombres de claves de GORM, emails sin normalizar, sin marcas `[pii]` | Aplicarlas en las tablas nuevas y al tocar las existentes | Medio |
 | Escáner de secretos y auditoría de dependencias en el CI | No hay | gitleaks y `govulncheck` / `npm audit` en el CI | Bajo |
+| Tiempo controlado en los tests (un reloj inyectable) | La api llama a `time.Now()` directamente (vencimientos, fechas de inicio, sesiones); los tests no controlan el reloj | Un reloj inyectable en los servicios que dependen del tiempo | Medio |
+| Respuestas por defecto de la entrada: recorte de espacios, `409 invalid_state` para una acción que la etapa no permite, `422 reference_not_found` para una referencia inexistente en el cuerpo | El texto no se recorta (salvo dos campos); una acción que la etapa no permite responde casi siempre `400` (`INVALID_EVENT_STAGE`, `INVALID_REGISTRATION_STAGE`); una propuesta inexistente en el ranking, `404` | Aplicarlo en las operaciones nuevas y al tocar las existentes, junto con el formato de errores | Medio |
+| `CHANGELOG.md` con la sección `[Sin publicar]` y cada entrada citando su requerimiento de Jiku (`#622`) | La sección se llama `[Unreleased]` y las entradas citan `REQ-00n` | Renombrar la sección; las entradas nuevas citan su requerimiento | Bajo |
+| Imágenes en el registro de la plataforma (GitHub Container Registry), sin secretos | Se publican en Docker Hub, con `DOCKERHUB_USERNAME` y `DOCKERHUB_TOKEN` | Publicar en GHCR con el token del job, o decidir quedarse en Docker Hub | Bajo |
+| Documentación para personas en `docs/`, en el idioma del producto | La documentación pública de uso e instalación está en `documentation/`, en inglés | Pasarla a `docs/` en español, o decidir mantenerla así (por ejemplo, por ser un proyecto abierto) | Medio |
 
 ## Otras mejoras sugeridas
 
@@ -278,6 +286,7 @@ existente es opcional: si se decide mantener uno a propósito, queda como decisi
 | El build de la web en el CI ignora los warnings | Los warnings se acumulan sin que nadie los vea | Bajo |
 | Que el test de S3 use el Garage de Compose en vez de testcontainers | Una sola forma de levantar la infraestructura de los tests | Bajo |
 | `cmd/migrate -rollback` elige la última migración por fecha de aplicación | Con migraciones aplicadas en el mismo instante puede deshacer otra | Bajo |
+| Quitar o actualizar las referencias al análisis anterior en comentarios y nombres de tests (`REQ-00n`, `S-0nn`, `D-n`, `DA-n`, `CA-n`, `TS-nn`…) | Citan documentos que la adopción borró (siguen en la historia de git, en `7ff8b00`); los tests se renombran con los IDs nuevos a medida que se tocan | Bajo |
 
 ## Contradicciones
 

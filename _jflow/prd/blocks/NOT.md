@@ -23,7 +23,7 @@ last_requirement: NOT-11
 | NOT-08 | El autor envía el recordatorio de propuesta | Web y email | Los inscritos sin propuesta | La fecha estimada de cierre, si hay. Email: «[OpenParallax] Falta tu propuesta en el evento «{evento}»» | initial |
 | NOT-09 | El autor envía el recordatorio de ranking | Web y email | Los evaluadores sin ranking | La fecha estimada de cierre, si hay. Email: «[OpenParallax] Falta tu ranking en el evento «{evento}»» | initial |
 | NOT-10 | Alguien pide recuperar la contraseña | Email | El dueño de la cuenta | El enlace para definir una contraseña nueva, que vence en 1 hora. Email: «[OpenParallax] Recuperación de contraseña» | initial |
-| NOT-11 | Cualquiera de las anteriores | — | — | Los avisos se envían después de la operación y sin bloquearla: si fallan, se registran y la operación no cambia. Por email solo si el envío está habilitado | initial |
+| NOT-11 | Cualquiera de las anteriores | — | — | Los avisos se envían después de la operación y no la cambian si fallan: se registran. Los emails de NOT-01 a NOT-09 se mandan en segundo plano; el de recuperación (NOT-10) se manda dentro del pedido, que espera al servidor SMTP. Por email solo si el envío está habilitado | initial |
 
 ## Not notified
 

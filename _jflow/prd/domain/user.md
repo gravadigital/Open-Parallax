@@ -10,7 +10,7 @@ describes: Persona con cuenta, con contraseña, con Google o creada al inscribir
 
 | Attribute | Type | Required | Constraints | Personal data | Origin |
 |---|---|---|---|---|---|
-| nombre | texto | sí | 2 a 100 caracteres al registrarse; único solo entre cuentas creadas con Google | sí | initial |
+| nombre | texto | sí | 2 a 100 caracteres al registrarse; al crear una cuenta con Google no puede coincidir con el de ninguna cuenta (entre cuentas con contraseña puede repetirse) | sí | initial |
 | apellido | texto | no | — | sí | initial |
 | email | email | sí | único (distingue mayúsculas); formato validado | sí | initial |
 | contraseña | texto | no | al menos 8 caracteres y hasta 72 bytes; se guarda su hash bcrypt. Vacía en cuentas de Google y en las creadas al inscribirse | no | initial |

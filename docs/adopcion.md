@@ -12,7 +12,7 @@
 | Listo para especificar e implementar | Sí: el repositorio cumple el mínimo (M1–M9), verificado |
 | Correcciones hechas en la adopción | 16; en el producto, solo las URLs de Google configurables y una traducción que pide un test existente |
 | Cargado en Jiku | 15 incidencias de seguridad (ver «Cargado en Jiku») |
-| En este informe | 25 bugs, 1 comportamiento a confirmar, 19 defaults sugeridos, 14 otras mejoras |
+| En este informe | 26 bugs, 1 comportamiento a confirmar, 19 defaults sugeridos, 14 otras mejoras |
 | Cobertura por ID | 23 de 196 IDs con un test que los nombra: solo los tests end to end de la adopción llevan IDs; los tests anteriores (más de 1.300) no |
 
 ## Línea de base
@@ -67,7 +67,7 @@ lo pide.
 | — | Emails de los inscritos visibles para cualquier usuario | Cualquier cuenta lista nombre y email de los inscritos de cualquier evento (INS-04). Confirmado como error |
 | — | El organizador puede votar en nombre de los participantes | El autor y los administradores envían rankings, borradores y propuestas por cualquier inscrito: pueden fabricar el resultado (VOT-09, INS-06). Confirmado como error |
 | — | El rol global organizer actúa sobre cualquier evento | Configura la votación, genera asignaciones y recalcula resultados de eventos ajenos, y ve la calidad de los evaluadores (VOT-13, RES-06). Confirmado como error |
-| — | Enumeración de cuentas en el registro y el login | Las respuestas distintas revelan si un email tiene cuenta y de qué tipo (ACC-E3, ACC-E4 a ACC-E6). Confirmado como error |
+| — | Enumeración de cuentas en el registro, el login y la recuperación | Las respuestas distintas revelan si un email tiene cuenta y de qué tipo (ACC-E3, ACC-E4 a ACC-E6); en la recuperación, la respuesta es igual pero tarda más si la cuenta existe, porque espera el envío del email (ACC-05). Confirmado como error |
 | — | Cualquier usuario lee los datos de cualquier otro | `GET /api/v1/users/{id}` devuelve nombre, email y rol de cualquier cuenta a cualquier sesión (ACC-08); ya figuraba como defecto conocido |
 | — | Apropiación de cuentas por la vinculación con Google | Una cuenta creada con un email ajeno, sin verificarlo, queda vinculada al Google de su dueño cuando este entra, y el atacante conserva su contraseña (ACC-04) |
 | — | Credenciales y datos personales en los logs | En modo debug (el default del código y de `make dev`) se registra la cadena de conexión con la contraseña y el SQL con hashes y tokens de recuperación; los emails se registran siempre. La web escribe en la consola del navegador el email del usuario al restaurar la sesión y el nombre elegido con Google |
@@ -99,7 +99,7 @@ No son de seguridad, así que no se cargaron en Jiku. La definición los documen
 
 ### B-03 Un evento cancelado sigue funcionando
 
-- **Qué pasa:** en la api, un evento cancelado sigue aceptando inscripciones, propuestas, rankings y cambios de etapa; la pausa bloquea las inscripciones, las propuestas y los recordatorios, pero no los rankings ni los cambios de etapa. La web sí cierra el evento cancelado (EXP-08, EVE-15) y, pausado, oculta el ranking y avisa que no se puede votar (EVE-14): la regla vive solo en la web, así que por la api se saltea. La web, además, no ofrece cancelar.
+- **Qué pasa:** en la api, un evento cancelado sigue aceptando inscripciones, propuestas, rankings y cambios de etapa; la pausa bloquea las inscripciones, las propuestas y los recordatorios, pero no los rankings ni los cambios de etapa. La web sí cierra el evento cancelado (EXP-08, EVE-15) y, pausado, oculta el ranking y avisa que no se puede votar (EVE-14): la regla vive solo en la web, así que por la api se saltea. La web, además, no ofrece cancelar. Y un evento pausado que se cancela queda pausado para siempre: un evento cancelado no se puede reanudar (EVE-09, EVE-E16).
 - **Por qué parece un error:** confirmado como error en la adopción.
 - **Dónde:** EVE-09, EVE-10, EVE-14, EVE-15, EXP-08; `services/api/internal/handlers/event_handler.go:1086`, `attachment_handler.go:135`.
 - **Gravedad sugerida:** media.
@@ -134,7 +134,7 @@ No son de seguridad, así que no se cargaron en Jiku. La definición los documen
 
 ### B-08 Los emails pueden fallar en silencio
 
-- **Qué pasa:** el envío informa éxito aunque fallen todos los destinatarios; el asunto no se codifica (RFC 2047); no funciona con un servidor sin STARTTLS, y en ese caso además deja abierta la conexión (`email_service.go:191-194`); se manda sin reintento en segundo plano y se pierde si la api se reinicia.
+- **Qué pasa:** el email de recuperación se manda dentro del pedido, sin tiempo límite: si el servidor SMTP no responde, el pedido queda colgado. El envío informa éxito aunque fallen todos los destinatarios; el asunto no se codifica (RFC 2047); no funciona con un servidor sin STARTTLS, y en ese caso además deja abierta la conexión (`email_service.go:191-194`); los avisos de eventos se mandan sin reintento en segundo plano y se pierden si la api se reinicia.
 - **Por qué parece un error:** nadie se entera de que un aviso no llegó.
 - **Dónde:** NOT-11; `services/api/internal/email/email_service.go:147-166,209-219`.
 - **Gravedad sugerida:** media.
@@ -246,6 +246,13 @@ No son de seguridad, así que no se cargaron en Jiku. La definición los documen
 - **Qué pasa:** al inscribirse, cualquier error al buscar la cuenta por email se toma como que no existe, y se intenta crearla: una falla de la base termina en `USER_CREATE_ERROR` o choca con el email único.
 - **Por qué parece un error:** el mensaje no dice qué falló, y con la base intermitente puede intentar crear cuentas que ya existen.
 - **Dónde:** INS-01, INS-E19; `services/api/internal/handlers/event_handler.go:1095-1114`, `services/api/internal/storage/postgres/user_repository.go:89-95`.
+- **Gravedad sugerida:** baja.
+
+### B-26 Los datos para compartir apuntan a una imagen que no existe
+
+- **Qué pasa:** `GET /api/v1/events/{id}/share` devuelve como imagen `{FRONTEND_URL}/og-image.png`, que la web no tiene: nginx responde la página de la web en su lugar. La web tampoco usa esta operación.
+- **Por qué parece un error:** quien use esos datos para una vista previa en redes obtiene una imagen rota.
+- **Dónde:** EXP-03; `services/api/internal/handlers/event_handler.go:1970`.
 - **Gravedad sugerida:** baja.
 
 ## Comportamientos a confirmar

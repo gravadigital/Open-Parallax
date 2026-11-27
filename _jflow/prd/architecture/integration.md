@@ -16,7 +16,7 @@
 | web → api | HTTP + JSON, sesión por `Authorization: Bearer` | síncrona | Toda la funcionalidad | initial |
 | web → api | HTTP, consulta periódica cada 60 s | síncrona | Cantidad de notificaciones sin leer | initial |
 | api → Google | HTTPS | síncrona | Verificar el token de Google | initial |
-| api → SMTP | SMTP | asíncrona, sin reintento | Emails | initial |
+| api → SMTP | SMTP | asíncrona y sin reintento para los avisos de eventos; síncrona, dentro del pedido, para la recuperación de contraseña | Emails | initial |
 | api → S3 | HTTP (API S3) | síncrona | Guardar, leer y borrar archivos | initial |
 
 ## External integrations

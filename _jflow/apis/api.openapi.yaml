@@ -781,10 +781,10 @@ paths:
                     type: object
                     properties:
                       title: { type: string }
-                      description: { type: string, description: Truncada a 197 caracteres + '...' si supera 200 }
+                      description: { type: string, description: "Si supera 200 bytes, sus primeros 197 bytes más '...' (puede cortar una letra con tilde)" }
                       share_url: { type: string }
                       shareable_link: { type: string }
-                      image_url: { type: string }
+                      image_url: { type: string, description: '`{FRONTEND_URL}/og-image.png`, una imagen que la web no tiene' }
                       stage: { $ref: '#/components/schemas/Stage' }
                       start_date: { type: string, format: date }
                       end_date: { type: string, format: date }
@@ -1137,7 +1137,7 @@ paths:
       summary: Pausar o reanudar el evento
       description: |
         Sin body. Es un **toggle**: invierte el estado actual de `is_paused`.
-        No se puede pausar un evento cancelado.
+        No se puede pausar ni reanudar un evento cancelado.
 
         Nota: `data.name` y `data.stage` se leen del objeto previo al update.
 

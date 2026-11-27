@@ -22,7 +22,7 @@ last_failure: EVE-E24
 | EVE-06 | El autor avanza el evento una etapa por vez: Creación → Participación → Votación → Resultados, sin saltos ni retrocesos | U-03 | initial |
 | EVE-07 | Abrir la inscripción (pasar a Participación) y abrir la votación piden una fecha estimada de cierre de hoy en adelante, que se muestra a los participantes; la web propone 3, 7 o 14 días | — | initial |
 | EVE-08 | El autor pospone la fecha estimada de cierre de la etapa en curso (Participación o Votación); nunca la adelanta | U-03 | initial |
-| EVE-09 | El autor pausa y reanuda el evento; mientras está pausado nadie se inscribe ni sube propuestas. Un evento cancelado no se pausa | U-03 | initial |
+| EVE-09 | El autor pausa y reanuda el evento; mientras está pausado nadie se inscribe ni sube propuestas. Un evento cancelado no se pausa ni se reanuda: si estaba pausado, queda pausado | U-03 | initial |
 | EVE-10 | El autor cancela el evento, sin vuelta atrás; la api lo permite pero la web no ofrece la acción. Cancelado, el evento sigue aceptando inscripciones, propuestas, rankings y cambios de etapa | U-03 | initial |
 | EVE-11 | El autor envía un recordatorio a los pendientes: en Participación, a los inscritos sin propuesta; en Votación, a los evaluadores sin ranking. No con el evento pausado o cancelado | U-03 | initial |
 | EVE-12 | En la web, el autor gestiona el evento en una pantalla con las métricas (inscritos, propuestas, rankings enviados, cierre), la tabla de participantes con su email, su propuesta para descargar y si votó, y el paso siguiente de la etapa; otro usuario que entra ahí ve «No tienes permiso para gestionar este evento» | U-03 | initial |
@@ -49,7 +49,7 @@ last_failure: EVE-E24
 | EVE-E13 | Se cambia el cierre de una etapa que no es la actual | `400 INVALID_STAGE_FOR_EDIT` | initial |
 | EVE-E14 | La fecha nueva adelanta el cierre | `400 CANNOT_ADVANCE_DEADLINE`; la web: «El cierre solo se puede posponer…» | initial |
 | EVE-E15 | El evento ya está cancelado | `409 ALREADY_CANCELLED` | initial |
-| EVE-E16 | Se pausa un evento cancelado | `409 EVENT_CANCELLED` | initial |
+| EVE-E16 | Se pausa o se reanuda un evento cancelado | `409 EVENT_CANCELLED` | initial |
 | EVE-E17 | Se envía un recordatorio con el evento pausado o cancelado | `409 EVENT_PAUSED_OR_CANCELLED` | initial |
 | EVE-E18 | El tipo de recordatorio no corresponde a la etapa (propuesta en Participación, ranking en Votación) | `409 INVALID_EVENT_STAGE`, con la etapa actual | initial |
 | EVE-E19 | No hay pendientes a quienes recordar | `409 NO_PENDING_RECIPIENTS` | initial |

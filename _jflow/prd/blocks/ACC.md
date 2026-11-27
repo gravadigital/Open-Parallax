@@ -18,7 +18,7 @@ last_failure: ACC-E14
 | ACC-02 | Un usuario inicia sesión con email y contraseña y recibe una sesión que vale 24 horas, sin renovación | U-02 | initial |
 | ACC-03 | Un visitante entra con su cuenta de Google: si ya tiene cuenta, inicia sesión; si es nueva, elige el nombre que lo identifica (3 a 100 caracteres en la web) y se crea la cuenta, sin contraseña | U-01 | initial |
 | ACC-04 | Al entrar con Google, si no hay una cuenta con esa identidad de Google pero sí una con el mismo email, la identidad de Google queda vinculada a esa cuenta | — | initial |
-| ACC-05 | Un usuario pide recuperar la contraseña con su email y recibe por email un enlace que vence en 1 hora y sirve una sola vez; la respuesta es la misma exista o no la cuenta | U-01 | initial |
+| ACC-05 | Un usuario pide recuperar la contraseña con su email y recibe por email un enlace que vence en 1 hora y sirve una sola vez; la respuesta es la misma exista o no la cuenta, pero si existe tarda lo que tarda el envío del email | U-01 | initial |
 | ACC-06 | Con el enlace, el usuario define una contraseña nueva; es también como una cuenta creada al inscribirse en un evento define su primera contraseña | U-01 | initial |
 | ACC-07 | Toda cuenta nueva tiene el rol global participant; los roles admin y organizer solo se asignan escribiendo en la base | — | initial |
 | ACC-08 | Un usuario con sesión consulta el nombre, apellido, email y rol de cualquier usuario por su identificador | U-02 | initial |

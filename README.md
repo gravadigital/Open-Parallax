@@ -3,89 +3,115 @@
 [![CI](https://github.com/gravadigital/Open-Parallax/actions/workflows/ci.yml/badge.svg)](https://github.com/gravadigital/Open-Parallax/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Distributed peer review for calls where proposals outnumber the people available to judge
-them. Instead of a committee, the participants rank each other's proposals — and evaluating
-carefully is what moves your own proposal up.
+Evaluación distribuida entre pares para convocatorias con más propuestas que personas disponibles
+para evaluarlas. En lugar de un comité, los participantes ordenan las propuestas de los demás, y
+evaluar con cuidado es lo que hace subir la propia propuesta.
 
 ```
-browser ── HTTP ──> web ── HTTP + JWT ──> api ──> PostgreSQL
-                  (React SPA)             (Go)  ├─> Garage S3 (proposal files)
-                                                └─> SMTP  (notifications)
+navegador ── HTTP ──> web ── HTTP + JWT ──> api ──> PostgreSQL
+                    (SPA React)             (Go)  ├─> S3 Garage (archivos de las propuestas)
+                                                  └─> SMTP (avisos por email)
 ```
 
-The interesting part is the **voting engine**, an implementation of Merrifield & Saari (2009),
-*Telescope time without tears*. Each participant ranks `m` proposals that are not their own; a
-Modified Borda Count combines the ranks into a global ranking; and each evaluator is scored on
-how close they came to the consensus. **Good evaluators see their own proposal rise, careless
-ones see it fall** — which is what makes it worth evaluating well.
+Lo central es el **motor de votación**, una implementación de Merrifield & Saari (2009), *Telescope
+time without tears*. Cada participante ordena `m` propuestas que no son la suya; un Modified Borda
+Count combina las posiciones en un ranking global, y cada evaluador recibe un puntaje según qué tan
+cerca estuvo del consenso. **Quien evalúa bien ve subir su propia propuesta; quien evalúa mal la ve
+bajar**: por eso conviene evaluar en serio.
 
-The rule the result depends on — **nobody evaluates their own proposal** — is enforced twice:
-in the Go code and by PostgreSQL triggers, so no write that bypasses the api can break it.
+La regla de la que depende el resultado, **nadie evalúa su propia propuesta**, se aplica dos veces:
+en el código Go y en triggers de PostgreSQL, así que ninguna escritura que saltee la api puede
+romperla.
 
-## What it does
+## Qué hace
 
-Events that move through `creation → participation → voting → results`; public registration
-through a shareable link; one proposal per participant; the configurable assignment and
-ranking; the published results; and email notifications at every stage change. Login by email
-and password, or with Google.
+Eventos que pasan por `creación → participación → votación → resultados`; inscripción pública con
+un enlace para compartir; una propuesta por participante; reparto y ranking configurables;
+resultados publicados; y avisos en la web y por email en cada cambio de etapa. Se entra con email y
+contraseña, o con Google.
 
-Full description in [documentation/features.md](documentation/features.md).
+Descripción completa en [documentation/features.md](documentation/features.md) (en inglés).
 
-## Structure
+## Cómo levantarlo
 
-| Directory                        | What it is                                               |
-| -------------------------------- | -------------------------------------------------------- |
-| [services/api/](services/api/)   | HTTP service in Go: events, identity, files, voting      |
-| [services/web/](services/web/)   | The user interface: a React single-page app              |
-| [docker-compose.yml](docker-compose.yml) | The Docker Compose stack for running it locally   |
-| [documentation/](documentation/) | Using and running OpenParallax — the public documentation   |
-| [docs/](docs/)                   | Internal docs: architecture, decisions, flows, product   |
+Solo hace falta Docker (con Compose) y `make`. No hay nada que configurar antes:
 
-## Getting started
-
-Requires **Docker**. Nothing to configure first:
-
-```sh
-make up       # builds and starts everything
+```bash
+make up      # construye y levanta todo, y espera a que cada servicio esté sano
+make down    # lo baja, conservando los datos
+make logs    # sigue los logs
 ```
 
-The web is at http://localhost:3000 and the api at http://localhost:8080. `make stop` stops it
-keeping the data.
+| Qué | Dónde |
+|---|---|
+| La web | http://localhost:3000 |
+| La api | http://localhost:8080 (`/health` para su estado) |
+| Mailpit: los emails que manda el producto | http://localhost:8025 |
+| pgAdmin (opcional: `docker compose --profile tools up -d pgadmin`) | http://localhost:5050 |
 
-To work on the code, run the database and storage in Docker and each part by hand:
+Para usarlo en local, crea una cuenta desde la web («Crear cuenta»): cualquier cuenta puede crear
+eventos. Los emails (recuperación de contraseña, avisos) no salen de la máquina: llegan a Mailpit.
 
-```sh
-make infra    # database + Garage
-make api      # needs Go 1.26
-make web      # needs Node.js 22
-make test
-```
+La configuración está en `.env` (no se versiona), que se crea copiando
+[`.env.example`](.env.example): ahí están todas las variables con su default y para qué sirven. Si
+un puerto choca con otro proyecto, cámbialo ahí (`API_PORT=8090`, por ejemplo).
 
-Run `make` to list every command. Details in
+**Login con Google (opcional).** Sin `GOOGLE_CLIENT_ID` solo se entra con email y contraseña. Para
+activarlo, crea un *OAuth client ID* de tipo *Web application* en
+[Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials), agrega
+`http://localhost:3000` como *Authorized JavaScript origin* y pon su Client ID en `GOOGLE_CLIENT_ID`
+de tu `.env`.
+
+**Roles admin y organizer.** Solo se asignan escribiendo en la base (`users.role`); toda cuenta nueva
+es `participant`.
+
+## Comandos
+
+| Comando | Qué hace |
+|---|---|
+| `make check` | Lint, typecheck y todos los tests (unitarios, de integración y end to end) |
+| `make test` | Todos los tests (`S=api` o `S=web` para uno solo); reportes JUnit en `reports/junit/` |
+| `make test-e2e` | Levanta el producto con la configuración de test y corre los tests end to end |
+| `make dev` | Levanta la base, el storage y Mailpit, y corre api y web a mano (la web con recarga en caliente) |
+| `make migrate` | Aplica las migraciones (la api también las aplica al arrancar) |
+| `make reset` | Borra todo, datos incluidos |
+| `make help` | Lista el resto |
+
+Para trabajar en el código hacen falta también **Go** (versión en
+[`services/api/go.mod`](services/api/go.mod)) y **Node.js 22**
+([`services/web/.nvmrc`](services/web/.nvmrc)). Más detalle en
 [documentation/installation.md](documentation/installation.md).
 
-## Documentation
+## Estructura
 
-Two sets of documentation, for two audiences:
-
-**[documentation/](documentation/README.md)** — using and running OpenParallax. English, brief,
-stable. Start with its README: it maps how the parts fit together.
-
-| | |
+| Carpeta | Qué es |
 |---|---|
-| [features.md](documentation/features.md) | what the product does, and how the voting works |
-| [installation.md](documentation/installation.md) · [configuration.md](documentation/configuration.md) | how to run and configure it |
-| [api-reference.md](documentation/api-reference.md) | the HTTP endpoints |
-| [_jflow/apis/api.openapi.yaml](_jflow/apis/api.openapi.yaml) | the HTTP contract (OpenAPI 3.0) |
+| [services/api/](services/api/) | Servicio HTTP en Go: eventos, identidad, archivos, votación |
+| [services/web/](services/web/) | La interfaz: una SPA en React |
+| [infra/](infra/) | Configuración de Garage y el seed de los tests end to end |
+| [docker-compose.yml](docker-compose.yml) | El producto completo, en local |
+| [_jflow/](_jflow/) | La definición del producto: qué hace, reglas, decisiones, contratos |
+| [docs/](docs/) | La guía de operación y el reporte de adopción |
+| [documentation/](documentation/README.md) | La documentación pública de uso e instalación (en inglés) |
 
-**[docs/](docs/)** — the internal working documentation: architecture per service,
-conventions, decision records and flows. Written in Spanish, for the team that builds
-OpenParallax. It follows the grava-workflow methodology in [`.claude/`](.claude/).
+## Documentación
 
-## Contributing
+- [`docs/operacion.md`](docs/operacion.md): cómo operarlo — salud, procesos, configuración, alertas.
+- [`docs/adopcion.md`](docs/adopcion.md): el reporte de la adopción de jiku flow — bugs sospechados,
+  comportamientos a confirmar y mejoras sugeridas.
+- [`documentation/`](documentation/README.md): uso, instalación, configuración y referencia de la
+  api, en inglés.
+- [`CHANGELOG.md`](CHANGELOG.md): los cambios por versión.
+- La definición del producto (qué hace, reglas y decisiones) está en
+  [`_jflow/prd/index.md`](_jflow/prd/index.md), y el contrato HTTP en
+  [`_jflow/apis/api.openapi.yaml`](_jflow/apis/api.openapi.yaml). Los requerimientos, con su
+  especificación, están en Jiku.
+- [`AGENTS.md`](AGENTS.md): la guía para los agentes que trabajan en el repositorio.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+## Contribuir
 
-## License
+Ver [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Licencia
 
 [MIT](LICENSE) © Grava.

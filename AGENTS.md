@@ -1,6 +1,8 @@
-# {{fill: product name}}
+# OpenParallax
 
-{{fill: what the product is, in two lines}}
+Distributed peer review for calls with more proposals than evaluators: participants rank each
+other's proposals and a Modified Borda Count (Merrifield & Saari, 2009) builds the official ranking.
+Adopted into jiku flow in #622 (see `docs/adopcion.md`).
 
 This repository uses **jiku flow**: every change belongs to a Jiku requirement, whose
 specification (scope, proposal, acceptance criteria) lives in Jiku; the product definition — what is
@@ -8,24 +10,32 @@ built, its rules and why — lives in `_jflow/`. Read this guide before touching
 
 ## Running
 
-Everything runs with Docker Compose and is driven by `make`. Docker is the only thing to install.
+Everything runs with Docker Compose and is driven by `make`. `make up` needs only Docker; the checks
+(`make check`) also need Go (version in `services/api/go.mod`) and Node.js 22 (`services/web/.nvmrc`),
+as CI has them. The end-to-end tests run Playwright in its Docker image.
 
 | Command | What it does |
 |---|---|
 | `make up` / `make down` | Start / stop the whole product |
 | `make logs` | Follow the logs |
-| `make dev` | Start with hot reload |
+| `make dev` | Database, storage and Mailpit in Docker; api (`go run`) and web (`npm start`, hot reload) by hand |
 | `make test` | Every test; JUnit reports in `reports/junit/` |
 | `make test-unit` · `make test-integration` · `make test-e2e` | One test level |
 | `make lint` · `make typecheck` · `make fmt` | Static checks and formatting |
-| `make check` | `lint` + `typecheck` + `test`: what CI runs, and what must pass before closing any work |
-| `make migrate` | Apply the migrations |
+| `make check` | `lint` + `typecheck` + `test`: what must pass before closing any work. CI runs its fast part (lint, typecheck, unit, integration) |
+| `make migrate` | Apply the migrations (the api also applies them when it starts) |
+| `make test-e2e` | Brings the product up with `docker-compose.test.yml` (fake Google, seeded admin and organizer) and runs the end-to-end tests |
 
 `S={service}` limits any command to one service: `make test S=api`.
 
 ## Services
 
-{{fill: table Service | Folder | What it is. Each folder has its own AGENTS.md with the stack, the commands and the canonical examples}}
+| Service | Folder | What it is |
+|---|---|---|
+| api | `services/api/` | Go HTTP service: the whole domain (events, accounts, proposals, voting, notifications); the only one with state |
+| web | `services/web/` | React SPA (Create React App), the only surface; no business logic of its own |
+
+Each folder has its own AGENTS.md with the stack, the commands and the canonical examples.
 
 ## Where things are
 
@@ -35,7 +45,6 @@ Everything runs with Docker Compose and is driven by `make`. Docker is the only 
 | Contracts of each service | `_jflow/apis/` |
 | Database schemas | `_jflow/db-schemas/` |
 | Flows across services | `_jflow/flows/` |
-| The original discovery (history, frozen) | `_jflow/discovery/` |
 | Specification of a requirement | In Jiku: `python3 .claude/scripts/jflow.py spec show {id}` |
 | Documentation for people | `README.md`, `CHANGELOG.md`, `docs/`: the operations guide and, with external integrators, the integration guide (`operacion.md`, `integracion.md` when the product language is Spanish; `operations.md`, `integration.md` otherwise) |
 | Code | `services/{service}/` |
@@ -74,8 +83,10 @@ requirement (`/jflow-spec`) or a small change (`/jflow-fix`).
   by WhatsApp (#812)`.
 - **The guides stay true:** a change to a command, a URL, a service, a background process or a practice
   updates `README.md`, the operations guide and `AGENTS.md` in the same branch.
-- **Observability is not optional:** every service logs JSON with `trace_id`, exposes health with
-  version and dependency checks, and uses OpenTelemetry (see `.claude/specs/engineering.md`).
+- **Observability is not optional for new work:** the engineering default is JSON logs with
+  `trace_id`, health with version and dependency checks, and OpenTelemetry
+  (`.claude/specs/engineering.md`). The adopted services do not have it yet (`docs/adopcion.md`):
+  do not assume it exists.
 
 ## Never
 

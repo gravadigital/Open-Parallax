@@ -35,7 +35,7 @@ time.
 | `POSTGRES_PORT` | `5432` | Published port of the database |
 | `STORAGE_PORT` | `3900` | Published port of the storage's S3 API |
 | `JWT_SECRET` | a fixed development value | Signs the session tokens |
-| `EMAIL_ENABLED` | `false` | Set to `true` to send email; needs the `SMTP_*` variables below |
+| `EMAIL_ENABLED` | `true` | Email goes to the local Mailpit (http://localhost:8025, `MAILPIT_PORT`); `false` sends none. A real server needs the `SMTP_*` variables below |
 | `GIN_MODE` | `release` (`debug` with `make api`) | `debug` for verbose api logs |
 | `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | `openparallax_db` / `openparallax` / `openparallax_password` | Database credentials |
 | `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` / `S3_BUCKET` | `GKopenparallaxlocal01` / a fixed development value / `openparallax` | The api's storage key and bucket. Garage creates both on start. The ID needs 8 or more characters (`A-Z a-z 0-9 - _ .`) and the secret 16 or more |

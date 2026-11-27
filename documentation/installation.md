@@ -70,8 +70,10 @@ make web      # 3. the web with npm start, on :3000
 ## Tests
 
 ```sh
-make test               # api (go vet + go test -race) and web (Jest) — no Docker needed
+make test-unit          # api (go test -race) and web (Jest) — no Docker needed
 make test-integration   # api integration tests, against the stack's PostgreSQL and a Garage of their own
+make test-e2e           # brings the product up with the test overrides and runs the end-to-end tests
+make check              # lint + typecheck + every test level
 ```
 
 The integration tests use their own database, `openparallax_test`, inside the stack's PostgreSQL,

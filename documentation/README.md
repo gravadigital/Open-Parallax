@@ -4,9 +4,9 @@ Distributed peer review for calls where proposals outnumber the people available
 them: the participants rank each other's proposals, and evaluating carefully is what moves your
 own proposal up.
 
-This is the documentation for **using and running OpenParallax**. The internal working
-documentation — architecture per service, conventions, decision records, flows — lives in
-[`docs/`](../docs/) and is written in Spanish for the team that builds it.
+This is the documentation for **using and running OpenParallax**. The product definition —
+rules, decisions, contracts, flows — lives in [`_jflow/`](../_jflow/), and the operations guide in
+[`docs/operacion.md`](../docs/operacion.md); both are written in Spanish for the team that builds it.
 
 | | |
 |---|---|

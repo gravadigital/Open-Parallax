@@ -28,9 +28,9 @@ Read [documentation/README.md](documentation/README.md) first. The short version
 - **`web`** is a React single-page app built with Create React App. It has no business logic:
   everything it shows comes from the api, through the services in `services/web/src/services/api.ts`.
 
-The per-service conventions — how a handler is written, how errors are shaped, how state is
-managed in the web — are in [`_jflow/`](_jflow/), in Spanish. Follow
-them: the api diverges from the usual Go stack on purpose, and a change written for another
+How to work in the repository is in [`AGENTS.md`](AGENTS.md) and in each service's
+`AGENTS.md`; the product definition — rules, decisions, contracts — is in [`_jflow/`](_jflow/), in
+Spanish. The api diverges from the usual Go stack on purpose, and a change written for another
 stack will not fit.
 
 ## Before touching voting or assignments
@@ -72,8 +72,10 @@ so an existing database needs a migration with the `ALTER`. Implement `Down` as 
 Every change that touches behaviour needs tests.
 
 ```sh
-make test               # api and web unit tests — what CI runs
+make test-unit          # api and web unit tests
 make test-integration   # api integration tests, against the local stack's PostgreSQL
+make test-e2e           # end-to-end tests of the api and the web, against the product up
+make check              # lint + typecheck + every test level
 ```
 
 | Project | Runner | Needs Docker |
@@ -81,6 +83,8 @@ make test-integration   # api integration tests, against the local stack's Postg
 | `api` unit | `go test`, testify, hand-written mocks | no |
 | `api` integration | `go test -tags=integration` | yes |
 | `web` | Jest + Testing Library | no |
+| `api` end to end | `go test -tags=e2e`, an HTTP client against `make up` | yes |
+| `web` end to end | Playwright, in its Docker image, against `make up` | yes |
 
 In the api, the mocks live in `mocks_*_test.go` next to the tests. **Adding a method to a
 repository interface means adding it to the mock**, or the package stops compiling. Check the
@@ -92,8 +96,8 @@ In the web, query by what the user sees (`getByRole`, `getByText`), not by CSS c
 
 - **Go:** `gofmt`. `go vet` runs in CI.
 - **Comments explain why**, not what the code does.
-- **Comments and documentation in English.** The internal docs in `docs/` are in Spanish, and
-  the interface currently mixes both languages.
+- **Comments in English.** The product definition in `_jflow/` and the guides in `docs/` are in
+  Spanish.
 - No `console.log` left in the web.
 
 ## Pull requests
@@ -101,7 +105,7 @@ In the web, query by what the user sees (`getByRole`, `getByText`), not by CSS c
 - Branch off `dev` and keep the change focused on one thing.
 - Say what problem it solves. If it fixes a bug, say how it reproduced.
 - Update `CHANGELOG.md` under `[Unreleased]` for anything a user would notice.
-- Make sure `make test` passes. CI runs the same suites.
+- Make sure `make check` passes. CI runs its lint, typecheck, unit and integration part.
 
 If you are planning something large, open an issue first so we can agree on the approach.
 

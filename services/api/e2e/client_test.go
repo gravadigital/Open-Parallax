@@ -160,6 +160,15 @@ func createEvent(t *testing.T, organizer user) string {
 
 func upload(t *testing.T, eventID string, participant user, filename, content string) string {
 	t.Helper()
+	r := send(t, uploadRequest(t, eventID, participant, filename, content), participant.Token)
+	expect(t, r, http.StatusCreated, "upload proposal of "+participant.Email)
+	return str(r.Body, "data", "id")
+}
+
+// uploadRequest builds the multipart upload of a text proposal for participant; the caller sends
+// it with the token of whoever uploads.
+func uploadRequest(t *testing.T, eventID string, participant user, filename, content string) *http.Request {
+	t.Helper()
 	var buf bytes.Buffer
 	w := multipart.NewWriter(&buf)
 	part, err := w.CreatePart(map[string][]string{
@@ -175,9 +184,7 @@ func upload(t *testing.T, eventID string, participant user, filename, content st
 	req, _ := http.NewRequest(http.MethodPost,
 		fmt.Sprintf("%s/api/v1/events/%s/participant/%s/attachment", apiURL, eventID, participant.ID), &buf)
 	req.Header.Set("Content-Type", w.FormDataContentType())
-	r := send(t, req, participant.Token)
-	expect(t, r, http.StatusCreated, "upload proposal of "+participant.Email)
-	return str(r.Body, "data", "id")
+	return req
 }
 
 // mailTo waits for an email to the address whose subject contains subject, and

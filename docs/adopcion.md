@@ -8,12 +8,12 @@
 
 | | |
 |---|---|
-| Definición | 8 bloques (ACC, EVE, EXP, INS, VOT, RES, NOT, BAN), 10 entidades, 40 operaciones, 12 invariantes, 15 garantías, 23 decisiones (9 de producto, 14 técnicas), 4 flujos |
+| Definición | 8 bloques (ACC, EVE, EXP, INS, VOT, RES, NOT, BAN), 10 entidades, 40 operaciones, 11 invariantes, 14 garantías, 23 decisiones (9 de producto, 14 técnicas), 4 flujos |
 | Listo para especificar e implementar | Sí: el repositorio cumple el mínimo (M1–M9), verificado |
 | Correcciones hechas en la adopción | 16; en el producto, solo las URLs de Google configurables y una traducción que pide un test existente |
 | Cargado en Jiku | 16 incidencias de seguridad (ver «Cargado en Jiku») |
-| En este informe | 33 bugs, 1 comportamiento a confirmar, 19 defaults sugeridos, 14 otras mejoras |
-| Cobertura por ID | 23 de 199 IDs con un test que los nombra: solo los tests end to end de la adopción llevan IDs; los tests anteriores (más de 1.300) no |
+| En este informe | 34 bugs, 1 comportamiento a confirmar, 19 defaults sugeridos, 14 otras mejoras |
+| Cobertura por ID | 23 de 197 IDs con un test que los nombra: solo los tests end to end de la adopción llevan IDs; los tests anteriores (más de 1.300) no |
 
 ## Línea de base
 
@@ -78,7 +78,7 @@ lo pide.
 | — | Token de recuperación guardado sin hash | Quien lea la base puede cambiar la contraseña de cualquier cuenta con un pedido vigente; ya figuraba como defecto conocido |
 | — | Detalles internos en las respuestas de error | Algunos errores devuelven el mensaje de la base o del parser del token |
 | — | Los resultados públicos revelan quién no evaluó | Cualquiera, sin sesión, ve qué propuestas quedaron excluidas por no evaluar y de quién son, aunque el detalle de los ajustes está reservado al autor, los administradores y el dueño de cada propuesta (RES-05, DEC-04) |
-| — | Eventos en Creación detectables | Crear un evento con el nombre de uno oculto responde que ya existe, y pedir los resultados de uno oculto responde `403` con su etapa en vez de `404` (RES-E1): los dos revelan que existe |
+| — | Eventos en Creación detectables | Crear un evento con el nombre de uno oculto responde que ya existe, y subir una propuesta, pedir la asignación, enviar el ranking o pedir los resultados de uno oculto responde `400` o `403` con su etapa en vez de `404`, y las operaciones que controlan permisos le responden `403` a quien no es el autor (EVE-E22): todo eso revela que existe |
 
 ## Bugs sospechados
 
@@ -128,9 +128,9 @@ No son de seguridad, así que no se cargaron en Jiku. La definición los documen
 
 ### B-07 Reglas sin protección ante pedidos simultáneos
 
-- **Qué pasa:** el cupo, una propuesta por inscrito y el nombre único se controlan en Go sin restricción en la base ni bloqueo; dos pedidos simultáneos pueden romperlos. Una propuesta duplicada hace fallar después la apertura de la votación con un 500. Un email duplicado simultáneo da 500 en vez de 409.
-- **Por qué parece un error:** las garantías GAR-11 a GAR-13 no resisten concurrencia.
-- **Dónde:** INV-09 a INV-11; `event_handler.go:1150-1181`, `attachment_handler.go:189-202`.
+- **Qué pasa:** el cupo y el nombre único se controlan en Go sin restricción en la base ni bloqueo; dos pedidos simultáneos pueden romperlos. Un email duplicado simultáneo da 500 en vez de 409.
+- **Por qué parece un error:** las garantías GAR-12 y GAR-13 no resisten concurrencia.
+- **Dónde:** INV-10, INV-11; `event_handler.go:1150-1181`.
 - **Gravedad sugerida:** media.
 
 ### B-08 Los emails pueden fallar en silencio
@@ -300,6 +300,13 @@ No son de seguridad, así que no se cargaron en Jiku. La definición los documen
 - **Qué pasa:** en Resultados, la web muestra como ranking enviado el que guardó el navegador al enviarlo o, si no lo tiene (otro navegador), el último borrador, que puede tener cambios que nunca se enviaron.
 - **Dónde:** RES-07; `services/web/src/pages/event-detail/useRankingVote.ts:53-57`.
 - **Gravedad sugerida:** baja.
+
+### B-34 Un inscrito puede subir varias propuestas y bloquear la votación
+
+- **Qué pasa:** el control de una propuesta por inscrito nunca funciona: la consulta que lo hace pide una relación que la propuesta no tiene, falla siempre, y el error se ignora. Una segunda subida del mismo inscrito responde `201`. Con dos propuestas suyas, abrir la votación falla con `500 VOTING_SETUP_ERROR`, y solo él puede borrar una: el autor queda bloqueado. Dos subidas en el mismo segundo comparten además el nombre en el almacenamiento.
+- **Por qué parece un error:** la regla de una propuesta por inscrito existe (INS-E15) y no se cumple; el único test de esa regla usa un repositorio simulado.
+- **Dónde:** INS-05, INS-E15; `services/api/internal/storage/postgres/attachment_repository.go:170`, `services/api/internal/handlers/attachment_handler.go:189-190,281`.
+- **Gravedad sugerida:** alta: un participante puede impedir que su evento abra la votación.
 
 ## Comportamientos a confirmar
 

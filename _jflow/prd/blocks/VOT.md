@@ -38,10 +38,10 @@ last_failure: VOT-E21
 | VOT-E4 | m es mayor que las propuestas que cada evaluador puede recibir | `400 M_EXCEEDS_EVALUABLE` | initial |
 | VOT-E5 | m está fuera de las cotas de la regla, o las evaluaciones mínimas por propuesta superan m | `400 MATH_CONSTRAINT_VIOLATION` o `CONFIG_INVALID` | initial |
 | VOT-E6 | La sanción o su penalización no son válidas | `400 INVALID_SANCTION` | initial |
-| VOT-E7 | Se pide la asignación fuera de Votación y Resultados | `400`, con la etapa actual | initial |
+| VOT-E7 | Se pide la asignación fuera de Votación y Resultados (también de un evento en Creación ajeno, que acá no se oculta) | `400`, con la etapa actual | initial |
 | VOT-E8 | El participante no está inscrito en el evento | `403` «Participant is not registered for this event» | initial |
 | VOT-E9 | El participante no tiene asignación | `404 NO_ASSIGNMENT` (asignación) o `ASSIGNMENT_NOT_FOUND` (borrador) | initial |
-| VOT-E10 | Se envía el ranking fuera de Votación | `400` «Voting is only allowed during voting stage»; la web: «La votación ya cerró. No se puede modificar el ranking.» | initial |
+| VOT-E10 | Se envía el ranking fuera de Votación (también a un evento en Creación ajeno, que acá no se oculta) | `400` «Voting is only allowed during voting stage»; la web: «La votación ya cerró. No se puede modificar el ranking.» | initial |
 | VOT-E11 | El ranking no incluye cada propuesta asignada una vez, repite posiciones, no las numera de 1 a m, incluye una propuesta no asignada o de otro evento, o cita otra asignación | `400`, con el motivo (y la cantidad esperada y la recibida si no coinciden) | initial |
 | VOT-E12 | La asignación o una propuesta del ranking no existen | `404` | initial |
 | VOT-E13 | No hay borrador guardado | `404 DRAFT_NOT_FOUND` | initial |
@@ -51,7 +51,7 @@ last_failure: VOT-E21
 | VOT-E17 | Ya hay asignaciones (paso separado) | `409 ASSIGNMENTS_EXIST` | initial |
 | VOT-E18 | Se configura fuera de Participación y Votación, o se generan asignaciones fuera de Votación | `400 INVALID_EVENT_STAGE` | initial |
 | VOT-E19 | Quien configura o genera asignaciones no es el autor, un organizador global ni un administrador | `403 FORBIDDEN` (`{error, message}`) | initial |
-| VOT-E20 | Falla interna al preparar o guardar la votación, el ranking o el borrador, o al leer | `500 VOTING_SETUP_ERROR`, `ATTACHMENTS_ERROR`, `PARTICIPANTS_ERROR`, `DB_SAVE_ERROR`, `GENERATION_FAILED`, `CONFIG_LOOKUP_ERROR`, `RETRIEVAL_ERROR`, `DRAFT_SAVE_ERROR`, `DRAFT_GET_ERROR`, «Failed to save votes», «Failed to get votes» o «Failed to get assignments» (también con un identificador de evento mal formado en las estadísticas) | initial |
+| VOT-E20 | Falla interna al preparar o guardar la votación (por ejemplo, un inscrito con dos propuestas aparece dos veces entre los evaluadores), el ranking o el borrador, o al leer | `500 VOTING_SETUP_ERROR`, `ATTACHMENTS_ERROR`, `PARTICIPANTS_ERROR`, `DB_SAVE_ERROR`, `GENERATION_FAILED`, `CONFIG_LOOKUP_ERROR`, `RETRIEVAL_ERROR`, `DRAFT_SAVE_ERROR`, `DRAFT_GET_ERROR`, «Failed to save votes», «Failed to get votes» o «Failed to get assignments» (también con un identificador de evento mal formado en las estadísticas) | initial |
 | VOT-E21 | Un valor de la configuración está fuera de rango: m fuera de 1 a 50, un umbral fuera de 0 a 1, n fuera de 1 a 10 o las evaluaciones mínimas fuera de 1 a 20 | `400 INVALID_PAYLOAD`, con el detalle | initial |
 
 ## Examples

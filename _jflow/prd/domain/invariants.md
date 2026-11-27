@@ -10,7 +10,6 @@
 | INV-06 | Un evento tiene a lo sumo una configuración de votación y un registro de resultados | Configuración de votación, Resultados | VOT, RES | initial |
 | INV-07 | La fecha de fin de un evento no es anterior a la de inicio, y la de inicio no se pone en el pasado | Evento | EVE | initial |
 | INV-08 | Dos cuentas no comparten email, identidad de Google ni token de recuperación | Usuario | ACC | initial |
-| INV-09 | Un inscrito tiene a lo sumo una propuesta por evento | Propuesta | INS | initial |
 | INV-10 | Un evento no tiene más inscritos que su cupo | Evento, Inscripción | INS, EVE | initial |
 | INV-11 | Dos eventos no tienen el mismo nombre | Evento | EVE | initial |
 | INV-12 | Una asignación está completa si y solo si su evaluador votó todas sus propuestas, y el contador de votos de cada propuesta es la cantidad de sus votos | Asignación, Voto, Propuesta | VOT | initial |

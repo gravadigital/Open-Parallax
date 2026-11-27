@@ -11,7 +11,7 @@ describes: Archivo que un inscrito presenta al evento y que otros evalúan
 | Attribute | Type | Required | Constraints | Personal data | Origin |
 |---|---|---|---|---|---|
 | evento | referencia | sí | — | no | initial |
-| participante | referencia | sí | una por participante y evento | no | initial |
+| participante | referencia | sí | una por participante y evento según la regla, sin control efectivo (INS-05) | no | initial |
 | nombre original | texto | sí | el del archivo subido | no | initial |
 | nombre guardado | texto | sí | `{evento}_{participante}_{instante}{extensión}` | no | initial |
 | ubicación | texto | sí | clave del archivo en el almacenamiento | no | initial |

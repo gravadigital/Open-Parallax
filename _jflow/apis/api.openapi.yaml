@@ -1260,7 +1260,7 @@ paths:
       summary: Subir la propuesta de un participante
       description: |
         Solo durante la etapa `participation`, y solo el propio participante, el autor del
-        evento o un `admin`. **Una sola propuesta por participante por evento.** El creador del evento no
+        evento o un `admin`. Una sola propuesta por participante por evento según la regla, pero el control no funciona (falla siempre y se ignora): una segunda subida responde 201. El creador del evento no
         puede subir propuestas.
       parameters:
         - $ref: '#/components/parameters/EventId'

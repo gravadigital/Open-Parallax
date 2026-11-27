@@ -250,7 +250,7 @@ No son de seguridad, así que no se cargaron en Jiku. La definición los documen
 
 ### B-26 Los datos para compartir apuntan a una imagen que no existe
 
-- **Qué pasa:** `GET /api/v1/events/{id}/share` devuelve como imagen `{FRONTEND_URL}/og-image.png`, que la web no tiene: nginx responde la página de la web en su lugar. La web tampoco usa esta operación.
+- **Qué pasa:** `GET /api/v1/events/{id}/share` devuelve como imagen `{FRONTEND_URL}/og-image.png`, que la web no tiene: nginx responde `404`. La web tampoco usa esta operación.
 - **Por qué parece un error:** quien use esos datos para una vista previa en redes obtiene una imagen rota.
 - **Dónde:** EXP-03; `services/api/internal/handlers/event_handler.go:1970`.
 - **Gravedad sugerida:** baja.

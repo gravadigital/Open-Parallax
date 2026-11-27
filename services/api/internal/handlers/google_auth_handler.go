@@ -27,11 +27,18 @@ type GoogleAuthHandler struct {
 
 // NewGoogleAuthHandler creates a new GoogleAuthHandler.
 func NewGoogleAuthHandler(userRepo postgres.UserRepository, cfg *config.Config) *GoogleAuthHandler {
+	verifier := newGoogleAccessTokenVerifier(cfg.Google.ClientID)
+	if cfg.Google.TokenInfoURL != "" {
+		verifier.tokenInfoURL = cfg.Google.TokenInfoURL
+	}
+	if cfg.Google.UserInfoURL != "" {
+		verifier.userInfoURL = cfg.Google.UserInfoURL
+	}
 	return &GoogleAuthHandler{
 		userRepo:    userRepo,
 		cfg:         cfg,
 		log:         logger.Handler("google_auth"),
-		verifyToken: newGoogleAccessTokenVerifier(cfg.Google.ClientID).verify,
+		verifyToken: verifier.verify,
 	}
 }
 

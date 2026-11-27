@@ -10,3 +10,5 @@ README.md
 .env.production.local
 npm-debug.log*
 
+coverage
+e2e

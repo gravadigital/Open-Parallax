@@ -14,6 +14,7 @@ volumes:
   database:
   storage-meta:
   storage-data:
+  mailpit-certs:
 
 services:
   database:
@@ -102,20 +103,27 @@ services:
       S3_PRESIGN_ENDPOINT: http://localhost:${STORAGE_PORT:-3900}
       # Vacío = sólo login con email y contraseña.
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      # Con EMAIL_ENABLED=false no se manda ningún mail (recuperación de contraseña,
-      # avisos de cambio de etapa).
-      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
-      SMTP_HOST: ${SMTP_HOST:-}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      # Por defecto los mails van a Mailpit (http://localhost:8025): nada sale de la
+      # máquina. Con EMAIL_ENABLED=false no se manda ningún mail.
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-true}
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-openparallax}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-local}
       SMTP_SECURE: ${SMTP_SECURE:-false}
-      EMAIL_FROM: ${EMAIL_FROM:-}
+      EMAIL_FROM: ${EMAIL_FROM:-no-reply@openparallax.local}
       EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-OpenParallax}
+      # La api siempre negocia STARTTLS y verifica el certificado: confía además en el
+      # certificado local de Mailpit (Go suma SSL_CERT_DIR a los del sistema).
+      SSL_CERT_DIR: /mailpit-certs
+    volumes:
+      - mailpit-certs:/mailpit-certs:ro
     depends_on:
       database:
         condition: service_healthy
       storage:
+        condition: service_healthy
+      mailpit:
         condition: service_healthy
 
   # La configuración entra al arrancar, no al construir: el contenedor la escribe en
@@ -135,6 +143,46 @@ services:
       - "${WEB_PORT:-3000}:80"
     depends_on:
       - api
+
+  # Certificado autofirmado para el STARTTLS de Mailpit, válido para el host "mailpit".
+  # Se genera una sola vez en el volumen mailpit-certs; la api lo monta como CA.
+  mailpit-cert:
+    image: alpine/openssl:3.5.9
+    container_name: openparallax-local-mailpit-cert
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        test -s /certs/cert.pem ||
+        (openssl req -x509 -newkey rsa:2048 -nodes -days 3650
+        -keyout /certs/key.pem -out /certs/cert.pem
+        -subj /CN=mailpit -addext subjectAltName=DNS:mailpit
+        && chmod 644 /certs/key.pem /certs/cert.pem)
+    volumes:
+      - mailpit-certs:/certs
+
+  # Captura todos los mails que manda la api: http://localhost:8025. Acepta cualquier
+  # usuario y contraseña SMTP.
+  mailpit:
+    image: axllent/mailpit:v1.34.0
+    container_name: openparallax-local-mailpit
+    restart: unless-stopped
+    environment:
+      MP_SMTP_TLS_CERT: /certs/cert.pem
+      MP_SMTP_TLS_KEY: /certs/key.pem
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+    ports:
+      - "${MAILPIT_PORT:-8025}:8025"
+    volumes:
+      - mailpit-certs:/certs:ro
+    depends_on:
+      mailpit-cert:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
   # Opcional: docker compose --profile tools up -d pgadmin
   pgadmin:

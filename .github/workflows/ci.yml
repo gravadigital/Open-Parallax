@@ -27,16 +27,14 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.workflow == 'CI' }}
 
-# Go y Node son toolchains distintas, con caches y setup propios, así que no hay
-# un único `npm test` que los cubra como en un monorepo de un solo lenguaje: son
-# dos jobs que corren en paralelo. Un rojo en web no oculta el estado de api.
+# Go y Node son toolchains distintas, con caches y setup propios: son dos jobs que
+# corren en paralelo, y un rojo en web no oculta el estado de api. Cada job corre los
+# mismos targets de make que se corren en local (la parte rápida de `make check`); los
+# tests end to end corren solo en local (ver _jflow/prd/architecture/testing.md).
 jobs:
   api:
     name: api (Go)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: services/api
 
     steps:
       - uses: actions/checkout@v4
@@ -48,26 +46,27 @@ jobs:
 
       - name: Versions agree across the monorepo
         run: ./scripts/set-version.sh --check
-        working-directory: .
 
-      - name: Build
-        run: go build ./...
+      - name: Lint and typecheck
+        run: make lint typecheck S=api
 
-      - name: Vet
-        run: go vet ./...
+      # Los unitarios no tocan base ni red. Los de integración corren contra el
+      # PostgreSQL de docker-compose.yml, con las migraciones aplicadas; el de S3
+      # levanta su propio Garage con testcontainers.
+      - name: Unit and integration tests
+        run: make test-unit test-integration S=api
 
-      # Los unitarios no tocan base ni red: corren en menos de un segundo. Los de
-      # integración viven detrás del build tag `integration` y NO corren acá,
-      # porque necesitan un PostgreSQL. Ver _jflow/prd/architecture/testing.md.
-      - name: Test
-        run: go test -race ./...
+      - name: Test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-api
+          path: reports/junit/
+          if-no-files-found: ignore
 
   web:
     name: web (React)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: services/web
 
     steps:
       - uses: actions/checkout@v4
@@ -76,20 +75,24 @@ jobs:
         with:
           node-version-file: services/web/.nvmrc
           cache: npm
-          cache-dependency-path: services/web/package-lock.json
+          cache-dependency-path: |
+            services/web/package-lock.json
+            services/web/e2e/package-lock.json
 
-      - name: Install
-        run: npm ci
+      - name: Lint and typecheck
+        run: make lint typecheck S=web
 
+      - name: Unit tests
+        run: make test-unit test-integration S=web
+
+      # Construye la imagen, que compila el bundle con `npm run build`.
       - name: Build
-        run: npm run build
-        env:
-          # El build de CRA falla ante cualquier warning si CI=true, y Actions lo
-          # setea solo. Acá se compila para verificar que compila, no para trabar
-          # el merge por un import sin usar.
-          CI: false
+        run: make build S=web
 
-      # CRA corre Jest en modo watch salvo con CI=true, que Actions ya setea: acá hace
-      # una sola pasada y falla si falla algún test.
-      - name: Test
-        run: npm test
+      - name: Test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-web
+          path: reports/junit/
+          if-no-files-found: ignore

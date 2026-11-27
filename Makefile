@@ -1,58 +1,49 @@
-# Entry point for working on OpenParallax locally. Run `make` to list the commands.
+# The single entry point for running OpenParallax. Run `make` to list the commands.
 #
-# Everything runs against the stack in docker-compose.yml, so there is one
-# database and one S3 storage (Garage) whether the api runs in a container or with `go run`.
+# Each target delegates to services/{api,web}/Makefile; `S=api` (or `S=web`) limits it
+# to one service. Everything runs against the stack in docker-compose.yml, so there is
+# one database, one S3 storage (Garage) and one Mailpit whether the api runs in a
+# container or with `go run`.
 #
-# No .env is needed. .env is optional and is read both by docker compose and
-# by this Makefile, so a GOOGLE_CLIENT_ID set there reaches every way of running.
+# No .env is needed. An optional .env (see .env.example) is read both by docker compose
+# and by these Makefiles.
 
-COMPOSE := docker compose -f docker-compose.yml
+SERVICES := api web
+S        ?= $(SERVICES)
+
+COMPOSE      := docker compose
+COMPOSE_TEST := docker compose -f docker-compose.yml -f docker-compose.test.yml
 
 -include .env
 
-# Same defaults as docker-compose.yml. The api's own defaults in Go
-# (openparallax / openparallax_db, local file storage) do not match the stack, so
-# running it outside Docker needs these passed explicitly.
-POSTGRES_DB       ?= openparallax_db
-POSTGRES_USER     ?= openparallax
-POSTGRES_PASSWORD ?= openparallax_password
-POSTGRES_PORT     ?= 5432
-S3_ACCESS_KEY_ID     ?= GKopenparallaxlocal01
-S3_SECRET_ACCESS_KEY ?= openparallax-local-secret-0123456789
-S3_BUCKET            ?= openparallax
-STORAGE_PORT         ?= 3900
-API_PORT          ?= 8080
-WEB_PORT          ?= 3000
-JWT_SECRET        ?= openparallax-local-dev-secret-no-usar-en-produccion
-GOOGLE_CLIENT_ID  ?=
+API_PORT     ?= 8080
+WEB_PORT     ?= 3000
+MAILPIT_PORT ?= 8025
 
-API_ENV = \
-	DB_HOST=localhost DB_PORT=$(POSTGRES_PORT) DB_SSLMODE=disable \
-	DB_USER=$(POSTGRES_USER) DB_PASSWORD=$(POSTGRES_PASSWORD) DB_NAME=$(POSTGRES_DB) \
-	STORAGE_PROVIDER=s3 S3_ENDPOINT=http://localhost:$(STORAGE_PORT) S3_REGION=garage \
-	S3_ACCESS_KEY_ID=$(S3_ACCESS_KEY_ID) S3_SECRET_ACCESS_KEY=$(S3_SECRET_ACCESS_KEY) S3_BUCKET=$(S3_BUCKET) \
-	PORT=$(API_PORT) FRONTEND_URL=http://localhost:$(WEB_PORT) GIN_MODE=debug \
-	JWT_SECRET='$(JWT_SECRET)' GOOGLE_CLIENT_ID=$(GOOGLE_CLIENT_ID)
+# Runs the target in every selected service, stopping at the first failure.
+each = $(foreach s,$(S),$(MAKE) -C services/$(s) $(1) &&) true
 
 .DEFAULT_GOAL := help
-.PHONY: help up stop down reset logs infra api web test test-integration
+.PHONY: help up down stop reset logs infra dev api web build migrate \
+	test test-unit test-integration test-e2e test-perf e2e-up lint typecheck fmt check
 
 help: ## List the commands
-	@awk 'BEGIN {FS = ":.*## "} /^[a-z-]+:.*## / { printf "  make %-18s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*## "} /^[a-z0-9-]+:.*## / { printf "  make %-18s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-# --- The whole stack in Docker ------------------------------------------------
+# --- The whole product in Docker -----------------------------------------------
 
-up: ## Build and start everything in Docker
-	$(COMPOSE) up -d --build
+up: ## Build and start the whole product
+	$(COMPOSE) up -d --build --wait
 	@echo
-	@echo "  web    http://localhost:$(WEB_PORT)"
-	@echo "  api    http://localhost:$(API_PORT)"
-
-stop: ## Stop everything, keeping the data
-	$(COMPOSE) stop
+	@echo "  web      http://localhost:$(WEB_PORT)"
+	@echo "  api      http://localhost:$(API_PORT)"
+	@echo "  mailpit  http://localhost:$(MAILPIT_PORT)"
 
 down: ## Remove the containers, keeping the data
 	$(COMPOSE) down
+
+stop: ## Stop everything, keeping the data
+	$(COMPOSE) stop
 
 reset: ## Remove everything, data included
 	$(COMPOSE) down -v
@@ -60,39 +51,60 @@ reset: ## Remove everything, data included
 logs: ## Follow the logs (one service: make logs s=api)
 	$(COMPOSE) logs -f $(s)
 
-# --- Running api and web by hand ----------------------------------------------
+build: ## Build the images
+	$(call each,build)
 
-# The api and web containers are stopped so `make api` and `make web` can take
-# their ports. The storage (Garage) creates the bucket on start, before it reports healthy, so
-# --wait returns with the bucket in place: the api checks it and does not create it.
-infra: ## Start only the database and the storage, to run api and web by hand
-	-@$(COMPOSE) stop api web 2>/dev/null
-	$(COMPOSE) up -d --wait database storage
-
-api: ## Run the api with go run, against `make infra`
-	cd services/api && $(API_ENV) go run ./cmd/api
-
-web: services/web/node_modules ## Run the web with npm start, against `make api`
-	cd services/web && BROWSER=none PORT=$(WEB_PORT) \
-		REACT_APP_API_URL=http://localhost:$(API_PORT) \
-		REACT_APP_GOOGLE_CLIENT_ID=$(GOOGLE_CLIENT_ID) \
-		npm start
-
-# --- Tests --------------------------------------------------------------------
-
-test: services/web/node_modules ## Unit tests of api and web (no Docker needed)
-	cd services/api && go vet ./... && go test -race ./...
-	cd services/web && CI=true npm test
-
-# Uses its own database in the stack's PostgreSQL, so running the migrations
-# under test never touches the data you work with.
-test-integration: ## Integration tests of the api, against the stack's database
+migrate: ## Apply the database migrations (the api also applies them when it starts)
 	$(COMPOSE) up -d --wait database
-	@$(COMPOSE) exec -T database psql -U $(POSTGRES_USER) -d $(POSTGRES_DB) -tAc \
-		"SELECT 1 FROM pg_database WHERE datname = 'openparallax_test'" | grep -q 1 || \
-		$(COMPOSE) exec -T database createdb -U $(POSTGRES_USER) openparallax_test
-	cd services/api && $(API_ENV) TEST_DB_NAME=openparallax_test go test -tags=integration -count=1 ./...
+	$(MAKE) -C services/api migrate
 
-services/web/node_modules: services/web/package-lock.json
-	cd services/web && npm ci
-	@touch $@
+# --- Running api and web by hand -------------------------------------------------
+
+# The api and web containers are stopped so the hand-run ones can take their ports.
+infra: ## Start only the database, the storage and Mailpit
+	-@$(COMPOSE) stop api web 2>/dev/null
+	$(COMPOSE) up -d --wait database storage mailpit
+
+dev: infra ## Run api (go run) and web (npm start, hot reload) by hand, against `make infra`
+	$(MAKE) -j2 api web
+
+api: ## Run only the api by hand (against `make infra`)
+	$(MAKE) -C services/api dev
+
+web: ## Run only the web by hand (against `make api`)
+	$(MAKE) -C services/web dev
+
+# --- Checks ----------------------------------------------------------------------
+
+lint: ## Static checks
+	$(call each,lint)
+
+typecheck: ## Type checks
+	$(call each,typecheck)
+
+fmt: ## Format the code
+	$(call each,fmt)
+
+test-unit: ## Unit tests → reports/junit/{service}-unit.xml
+	$(call each,test-unit)
+
+test-integration: ## Integration tests, against the Compose database → reports/junit/
+	$(call each,test-integration)
+
+# Brings the product up with the test overrides (fake Google, seeded test identities)
+# and waits until the api answers. Recreates api and web if `make up` was running.
+e2e-up:
+	$(COMPOSE_TEST) up -d --build --wait database storage mailpit fake-google api web
+	@for i in $$(seq 1 120); do curl -sf http://localhost:$(API_PORT)/health >/dev/null && exit 0; sleep 1; done; \
+		echo "the api did not answer on http://localhost:$(API_PORT)/health" >&2; exit 1
+	$(COMPOSE_TEST) run --rm --no-deps e2e-seed
+
+test-e2e: e2e-up ## End-to-end tests of every entry, against the product up → reports/junit/
+	$(call each,test-e2e)
+
+test-perf: ## Performance tests (not part of `make check`)
+	$(call each,test-perf)
+
+test: test-unit test-integration test-e2e ## Every test level
+
+check: lint typecheck test ## What must pass before a change is done

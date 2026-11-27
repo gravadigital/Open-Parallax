@@ -1,0 +1,53 @@
+# Overrides for the end-to-end tests, on top of docker-compose.yml:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.test.yml up -d --build
+#
+# `make test-e2e` applies them. They add the test identities and replace the external
+# systems that have no local version:
+#   - fake-google: Google's tokeninfo/userinfo, so the Google sign-in runs with no real
+#     account (services/api/e2e/fakegoogle). The api is pointed at it by configuration.
+#   - e2e-seed: the users with the global roles admin and organizer, which only exist by
+#     writing users.role in the database (infra/e2e/seed.sql).
+# Email goes to Mailpit and files to Garage, as in `make up`.
+services:
+  fake-google:
+    build:
+      context: ./services/api
+      dockerfile: e2e/fakegoogle/Dockerfile
+    container_name: openparallax-local-fake-google
+    environment:
+      FAKE_GOOGLE_CLIENT_ID: e2e-google-client
+
+  api:
+    environment:
+      GOOGLE_CLIENT_ID: e2e-google-client
+      GOOGLE_TOKENINFO_URL: http://fake-google:8080/tokeninfo
+      GOOGLE_USERINFO_URL: http://fake-google:8080/userinfo
+    depends_on:
+      fake-google:
+        condition: service_started
+
+  web:
+    environment:
+      GOOGLE_CLIENT_ID: e2e-google-client
+
+  # Waits until the api answers /health (it applies the migrations before serving), then
+  # seeds the test identities. Idempotent.
+  e2e-seed:
+    image: postgres:15-alpine
+    container_name: openparallax-local-e2e-seed
+    environment:
+      PGHOST: database
+      PGUSER: ${POSTGRES_USER:-openparallax}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-openparallax_password}
+      PGDATABASE: ${POSTGRES_DB:-openparallax_db}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        for i in $$(seq 1 120); do wget -qO- http://api:8080/health >/dev/null 2>&1 && break; sleep 1; done;
+        psql -v ON_ERROR_STOP=1 -f /seed/seed.sql
+    volumes:
+      - ./infra/e2e/seed.sql:/seed/seed.sql:ro
+    depends_on:
+      api:
+        condition: service_started

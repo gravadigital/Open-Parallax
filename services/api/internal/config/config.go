@@ -61,6 +61,10 @@ type Config struct {
 
 	Google struct {
 		ClientID string
+		// Endpoints used to verify access tokens. They default to Google's and are
+		// configurable only so the end-to-end tests can point them to a fake server.
+		TokenInfoURL string
+		UserInfoURL  string
 	}
 
 	Auth struct {
@@ -112,6 +116,8 @@ func Load() *Config {
 	config.Email.FromName = getEnv("EMAIL_FROM_NAME", "OpenParallax")
 	config.Email.Secure = getEnvAsBool("SMTP_SECURE", false)
 	config.Google.ClientID = getEnv("GOOGLE_CLIENT_ID", "")
+	config.Google.TokenInfoURL = getEnv("GOOGLE_TOKENINFO_URL", "https://oauth2.googleapis.com/tokeninfo")
+	config.Google.UserInfoURL = getEnv("GOOGLE_USERINFO_URL", "https://www.googleapis.com/oauth2/v3/userinfo")
 	config.Auth.JWTSecret = getEnv("JWT_SECRET", "")
 
 	return config
@@ -121,7 +127,7 @@ func Load() *Config {
 // other binaries (cmd/migrate) load the same config but do not need them.
 func (c *Config) Validate() error {
 	if c.Auth.JWTSecret == "" {
-		return errors.New("JWT_SECRET is required: set it to a long random value (the Makefile and deploy/docker-compose.yml set one for local development)")
+		return errors.New("JWT_SECRET is required: set it to a long random value (the Makefile and docker-compose.yml set one for local development)")
 	}
 	return nil
 }

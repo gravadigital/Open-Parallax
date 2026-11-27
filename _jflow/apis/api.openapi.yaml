@@ -119,7 +119,7 @@ paths:
                 name: { type: string, minLength: 2, maxLength: 100 }
                 lastname: { type: string }
                 email: { type: string, format: email }
-                password: { type: string, minLength: 8, format: password }
+                password: { type: string, minLength: 8, format: password, description: 'Al menos 8 caracteres (si no, `INVALID_PAYLOAD`) y hasta 72 bytes (si no, `INVALID_PASSWORD`)' }
       responses:
         '201':
           description: Usuario creado
@@ -246,7 +246,7 @@ paths:
               required: [token, password]
               properties:
                 token: { type: string, description: Token de 64 caracteres hex, válido 1 hora }
-                password: { type: string, minLength: 8, format: password }
+                password: { type: string, minLength: 8, format: password, description: 'Al menos 8 caracteres (si no, `INVALID_PAYLOAD`) y hasta 72 bytes (si no, `INVALID_PASSWORD`)' }
       responses:
         '200':
           description: Password actualizada
@@ -2674,6 +2674,9 @@ components:
         adjusted_rank: { type: integer, description: 'Posición tras aplicar incentivos por calidad; 0 si `unevaluated` o `excluded`' }
         vote_count: { type: integer }
         average_rank: { type: number, format: double }
+        unevaluated:
+          type: boolean
+          description: 'Nadie la votó: sin posición en G ni en G′ (`global_rank` y `adjusted_rank` 0), al final de la lista (se omite si es false)'
         non_evaluator:
           type: boolean
           description: Su autor no completó su ranking (se omite si es false)

@@ -13,7 +13,7 @@ describes: Persona con cuenta, con contraseña, con Google o creada al inscribir
 | nombre | texto | sí | 2 a 100 caracteres al registrarse; único solo entre cuentas creadas con Google | sí | initial |
 | apellido | texto | no | — | sí | initial |
 | email | email | sí | único (distingue mayúsculas); formato validado | sí | initial |
-| contraseña | texto | no | al menos 8 caracteres; se guarda su hash bcrypt. Vacía en cuentas de Google y en las creadas al inscribirse | no | initial |
+| contraseña | texto | no | al menos 8 caracteres y hasta 72 bytes; se guarda su hash bcrypt. Vacía en cuentas de Google y en las creadas al inscribirse | no | initial |
 | identidad de Google | texto | no | única | sí | initial |
 | rol global | enum | no | participant, organizer o admin; participant al crear la cuenta | no | initial |
 | token de recuperación | texto | no | 64 caracteres hexadecimales, único, guardado tal cual | no | initial |

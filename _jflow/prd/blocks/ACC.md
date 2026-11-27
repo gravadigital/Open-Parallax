@@ -22,7 +22,7 @@ last_failure: ACC-E14
 | ACC-06 | Con el enlace, el usuario define una contraseña nueva; es también como una cuenta creada al inscribirse en un evento define su primera contraseña | U-01 | initial |
 | ACC-07 | Toda cuenta nueva tiene el rol global participant; los roles admin y organizer solo se asignan escribiendo en la base | — | initial |
 | ACC-08 | Un usuario con sesión consulta el nombre, apellido, email y rol de cualquier usuario por su identificador | U-02 | initial |
-| ACC-09 | Las contraseñas tienen al menos 8 caracteres | — | initial |
+| ACC-09 | Las contraseñas tienen al menos 8 caracteres y hasta 72 bytes | — | initial |
 | ACC-10 | En la web, cuando la sesión vence, se cierra sin recargar la página; una pantalla que requiere sesión lleva a iniciar sesión y, después, vuelve a donde estaba | U-02 | initial |
 | ACC-11 | El nombre elegido al crear una cuenta con Google no puede coincidir con el de otra cuenta | — | initial |
 
@@ -30,8 +30,8 @@ last_failure: ACC-E14
 
 | ID | Condition | Result | Origin |
 |---|---|---|---|
-| ACC-E1 | Faltan datos o no cumplen su formato (nombre, email, contraseña, token) | `400 INVALID_PAYLOAD`, con el detalle de cada campo | initial |
-| ACC-E2 | La contraseña tiene menos de 8 caracteres | `400 INVALID_PASSWORD` | initial |
+| ACC-E1 | Faltan datos o no cumplen su formato (nombre, email, contraseña de menos de 8 caracteres, token) | `400 INVALID_PAYLOAD`, con el detalle de cada campo | initial |
+| ACC-E2 | La contraseña supera los 72 bytes (una de menos de 8 caracteres es ACC-E1) | `400 INVALID_PASSWORD`; la web: «La contraseña no cumple los requisitos. Elige una más segura.» | initial |
 | ACC-E3 | Ya hay una cuenta con ese email | `409 EMAIL_ALREADY_EXISTS`; la web: «Ya hay una cuenta con este email. Inicia sesión o recupera tu contraseña.» | initial |
 | ACC-E4 | El email no tiene cuenta o la contraseña no es la suya | `401 INVALID_CREDENTIALS`; la web: «El correo o la contraseña no son correctos.» | initial |
 | ACC-E5 | La cuenta se creó con Google y no tiene contraseña | `401 OAUTH_ACCOUNT_NO_PASSWORD` | initial |

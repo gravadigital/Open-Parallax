@@ -15,6 +15,10 @@ import (
 // what was assigned and sends their ranking, and the organizer publishes the results.
 // The stage changes reach the participants by email (Mailpit).
 func TestEventLifecycleThroughHTTP(t *testing.T) {
+	t.Run("[EVE-01][EVE-06][INS-01][INS-05][VOT-02][VOT-06][VOT-08][INS-09][RES-01][RES-05][NOT-01] an event goes through its whole lifecycle over HTTP", testEventLifecycleThroughHTTP)
+}
+
+func testEventLifecycleThroughHTTP(t *testing.T) {
 	organizer := signUp(t, "Organizadora")
 	eventID := createEvent(t, organizer)
 

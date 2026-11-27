@@ -11,6 +11,10 @@ import (
 // The admin (seeded by infra/e2e/seed.sql) logs in with email and password and, with
 // that token, sees an event still in creation that nobody else can see.
 func TestAdminIdentitySeesEventsInCreation(t *testing.T) {
+	t.Run("[EVE-13][EXP-02] the admin sees an event still in creation that others cannot", testAdminIdentitySeesEventsInCreation)
+}
+
+func testAdminIdentitySeesEventsInCreation(t *testing.T) {
 	organizer := signUp(t, "Organizador")
 	eventID := createEvent(t, organizer)
 	other := signUp(t, "Curioso")
@@ -26,6 +30,10 @@ func TestAdminIdentitySeesEventsInCreation(t *testing.T) {
 // A user with the global role organizer (seeded) gets through the organizer check on
 // an event that is not theirs: the request reaches the stage rule, not a 403.
 func TestOrganizerRoleIdentityActsOnAnyEvent(t *testing.T) {
+	t.Run("[VOT-13] a global organizer gets through the permission check of any event", testOrganizerRoleIdentityActsOnAnyEvent)
+}
+
+func testOrganizerRoleIdentityActsOnAnyEvent(t *testing.T) {
 	author := signUp(t, "Autora")
 	eventID := createEvent(t, author)
 
@@ -44,6 +52,10 @@ func TestOrganizerRoleIdentityActsOnAnyEvent(t *testing.T) {
 // Sign-in with Google, against the fake Google of docker-compose.test.yml: a new Google
 // account chooses its name and gets a session; the next time it is an existing user.
 func TestGoogleSignIn(t *testing.T) {
+	t.Run("[ACC-03][ACC-07][ACC-E9] sign-in with Google creates the account and then logs in", testGoogleSignIn)
+}
+
+func testGoogleSignIn(t *testing.T) {
 	sub := unique("google-sub")
 	email := strings.ToLower(unique("google")) + "@example.com"
 	token := "e2e:" + sub + ":" + email + ":Usuaria Google"
@@ -75,6 +87,10 @@ func TestGoogleSignIn(t *testing.T) {
 // Password recovery through the email (Mailpit): the link in the email sets a new
 // password, and the user logs in with it.
 func TestPasswordRecoveryByEmail(t *testing.T) {
+	t.Run("[ACC-05][ACC-06][NOT-10] password recovery through the emailed link", testPasswordRecoveryByEmail)
+}
+
+func testPasswordRecoveryByEmail(t *testing.T) {
 	u := signUp(t, "Olvidadiza")
 
 	r := do(t, http.MethodPost, "/api/v1/users/forgot-password", "", map[string]any{"email": u.Email})

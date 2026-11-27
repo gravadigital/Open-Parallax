@@ -15,7 +15,7 @@ const unique = (prefix: string) => `${prefix} ${Date.now()}`;
 // The main path of the web surface: a person creates an account, creates an event
 // with the wizard, opens registration, and anyone (without a session) can see the
 // event and the button to register.
-test('an organizer creates an event, opens registration and the public sees it', async ({ page, browser }) => {
+test('[ACC-01][EVE-01][EVE-02][EVE-06][EVE-07][EXP-02] an organizer creates an event, opens registration and the public sees it', async ({ page, browser }) => {
   const errors = failOnConsoleErrors(page);
   const email = `organizer.${Date.now()}@example.com`;
 

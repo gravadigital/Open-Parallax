@@ -5,7 +5,7 @@ surfaces: [Web]
 covers: Inscribirse en un evento, subir, reemplazar y eliminar la propuesta, y ver y descargar las propuestas
 entities: [Inscripción, Propuesta, Usuario]
 last_requirement: INS-09
-last_failure: INS-E19
+last_failure: INS-E20
 ---
 
 # INS — Inscripción y propuestas
@@ -17,10 +17,10 @@ last_failure: INS-E19
 | INS-01 | Cualquiera, sin sesión, inscribe un nombre (2 a 100 caracteres) y un email en un evento en Participación: si el email no tiene cuenta, se crea una sin contraseña; si la tiene, esa cuenta queda inscrita y el nombre enviado se ignora. La respuesta devuelve el identificador, el nombre y el email de la cuenta (para una cuenta existente, su nombre guardado) | U-01 | initial |
 | INS-02 | En la web, inscribirse pide sesión y usa el nombre y el email de la cuenta | U-02 | initial |
 | INS-03 | No se inscribe con el evento pausado, con el cupo completo, al autor ni a quien ya está inscrito. La etapa y la pausa se controlan antes de buscar o crear la cuenta; el autor, la inscripción previa y el cupo, después: una inscripción rechazada por esos motivos deja creada la cuenta sin contraseña de un email nuevo | — | initial |
-| INS-04 | Cualquier usuario con sesión lista los inscritos de un evento, sin el autor, con nombre, email y rol | U-02 | initial |
-| INS-05 | Un inscrito sube su propuesta durante Participación, con el evento sin pausar: un archivo de hasta **tamaño máximo de propuesta**, de tipo JPG, PNG, GIF, WebP, PDF, TXT, DOC o DOCX, con una descripción opcional de hasta 1000 bytes (una letra con tilde cuenta dos). Una sola por inscrito y evento; el autor no sube | U-02 | initial |
+| INS-04 | Cualquier usuario con sesión lista los inscritos de un evento, sin el autor, con identificador, nombre, email, rol en el evento (siempre participante) y la fecha de alta de la cuenta (no la de la inscripción); un evento en Creación ajeno no existe | U-02 | initial |
+| INS-05 | Un inscrito sube su propuesta durante Participación, con el evento sin pausar: un archivo de hasta **tamaño máximo de propuesta**, de tipo JPG, PNG, GIF, WebP, PDF, TXT, DOC o DOCX, con una descripción opcional de hasta 1000 bytes (una letra con tilde cuenta dos), sin espacios en los extremos. Una sola por inscrito y evento; el autor no sube | U-02 | initial |
 | INS-06 | El autor o un administrador sube, en nombre de un inscrito, su propuesta | U-03 | initial |
-| INS-07 | El dueño elimina su propuesta durante Participación; la web la reemplaza eliminándola y subiendo la nueva | U-02 | initial |
+| INS-07 | El dueño elimina su propuesta durante Participación, también con el evento pausado; la web la reemplaza eliminándola y subiendo la nueva, y si la subida falla queda sin propuesta | U-02 | initial |
 | INS-08 | El autor y los administradores ven todas las propuestas del evento; cada inscrito, solo la suya | U-03 | initial |
 | INS-09 | Descargan una propuesta su dueño, el autor y los administradores, con su nombre original, y un evaluador que la tiene asignada, durante Votación o Resultados, con un nombre neutro («propuesta-N») | U-02 | initial |
 
@@ -33,12 +33,12 @@ last_failure: INS-E19
 | INS-E3 | El evento está pausado al inscribirse o al subir la propuesta | `403 EVENT_PAUSED` | initial |
 | INS-E4 | El email es el del autor del evento | `400 CREATOR_CANNOT_REGISTER` | initial |
 | INS-E5 | El email ya está inscrito | `409 ALREADY_REGISTERED` | initial |
-| INS-E6 | El cupo está completo | `400 MAX_PARTICIPANTS_REACHED` | initial |
+| INS-E6 | El cupo está completo | `400 MAX_PARTICIPANTS_REACHED`, con la cantidad actual y el cupo | initial |
 | INS-E7 | Se sube o elimina una propuesta fuera de Participación | `400 INVALID_EVENT_STAGE` (al subir, con la etapa actual) | initial |
 | INS-E8 | La subida no trae archivo | `400 NO_FILE` | initial |
 | INS-E9 | La descripción supera los 1000 bytes | `400 DESCRIPTION_TOO_LONG` | initial |
-| INS-E10 | El archivo supera el **tamaño máximo de propuesta** | `400 FILE_TOO_LARGE`; la web lo rechaza antes: «El archivo supera los 10 MB.» | initial |
-| INS-E11 | El tipo del archivo no está permitido o su nombre no es válido | `400 INVALID_FILE_TYPE` o `INVALID_FILENAME`; la web: «Ese formato no está permitido. Usa JPG, PNG, GIF, WebP, PDF, TXT, DOC o DOCX.» | initial |
+| INS-E10 | El archivo supera el **tamaño máximo de propuesta** | `400 FILE_TOO_LARGE`, con el máximo y el tamaño recibido; la web lo rechaza antes: «El archivo supera los 10 MB.» | initial |
+| INS-E11 | El tipo del archivo no está permitido o su nombre no es válido | `400 INVALID_FILE_TYPE` (con el tipo recibido y los permitidos) o `INVALID_FILENAME`; la web rechaza antes los tipos no permitidos: «Ese formato no está permitido. Usa JPG, PNG, GIF, WebP, PDF, TXT, DOC o DOCX.» | initial |
 | INS-E12 | El autor intenta subir o eliminar una propuesta propia | `403 CREATOR_CANNOT_UPLOAD` o `CREATOR_CANNOT_DELETE` | initial |
 | INS-E13 | Quien figura como dueño de la propuesta no está inscrito | `403 NOT_REGISTERED` | initial |
 | INS-E14 | El participante no existe | `404 PARTICIPANT_NOT_FOUND` | initial |
@@ -47,3 +47,4 @@ last_failure: INS-E19
 | INS-E17 | Quien descarga o elimina no tiene permiso sobre la propuesta | `403 FORBIDDEN` | initial |
 | INS-E18 | Faltan o no son válidos los identificadores del participante, o quien opera sobre los recursos de un participante no es él, el autor ni un administrador | `400 MISSING_PARAMETERS` o `INVALID_PARTICIPANT_ID`, o `400 BAD_REQUEST` (`{error, message}`); `403 FORBIDDEN` (`{error, message}`) | initial |
 | INS-E19 | Falla interna al crear la cuenta, inscribir, guardar o borrar el archivo, o leer | `500 USER_CREATE_ERROR`, `PARTICIPANT_CHECK_ERROR`, `REGISTRATION_ERROR`, `FILE_SAVE_ERROR`, `DB_SAVE_ERROR`, `EVENT_LOOKUP_ERROR`, `DB_DELETE_ERROR` o `RETRIEVAL_ERROR` | initial |
+| INS-E20 | El archivo está vacío (la api no lo controla y la base lo rechaza) | `500 DB_SAVE_ERROR` | initial |

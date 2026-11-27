@@ -13,13 +13,13 @@ last_requirement: NOT-11
 
 | ID | Event | Channel | Recipient | Content | Origin |
 |---|---|---|---|---|---|
-| NOT-01 | El evento cambia de etapa | Web y email | Los inscritos, sin el autor | La etapa nueva; en Participación y Votación, la fecha estimada de cierre; en Votación, si puede votar y cuántas propuestas le tocan; en Resultados, su puesto. Email: «[OpenParallax] El evento «{evento}» avanzó a la etapa {etapa}» | initial |
+| NOT-01 | El evento cambia de etapa | Web y email | Los inscritos, sin el autor | La etapa nueva; en Votación, la fecha estimada de cierre, si puede votar y cuántas propuestas le tocan; en Resultados, su puesto y el total si su propuesta tiene posición. Al pasar a Participación no hay inscritos a quienes avisar. Email (solo la etapa): «[OpenParallax] El evento «{evento}» avanzó a la etapa {etapa}» | initial |
 | NOT-02 | El evento se cancela | Web y email | Los inscritos, sin el autor | Email: «[OpenParallax] El evento «{evento}» fue cancelado» | initial |
-| NOT-03 | El evento se pausa | Web y email | Los inscritos, sin el autor | Que no se puede inscribir ni enviar archivos durante la pausa. Email: «[OpenParallax] El evento «{evento}» fue pausado» | initial |
+| NOT-03 | El evento se pausa | Web y email | Los inscritos, sin el autor | Web: que el organizador lo pausó. Email: «[OpenParallax] El evento «{evento}» fue pausado», que dice que durante la pausa no se puede inscribir ni enviar archivos | initial |
 | NOT-04 | Se pospone la fecha estimada de cierre | Web y email | Los inscritos, sin el autor | La etapa y la nueva fecha. Email: «[OpenParallax] Cambio de fecha estimada en el evento «{evento}»» | initial |
-| NOT-05 | Alguien se inscribe | Web | El autor | La inscripción; mientras no la lee, las nuevas inscripciones del mismo evento se suman a esa misma notificación | initial |
+| NOT-05 | Alguien se inscribe | Web | El autor | La inscripción; mientras no la lee, las nuevas inscripciones del mismo evento se suman a esa misma notificación, que vuelve al principio de la lista con la fecha de la última inscripción | initial |
 | NOT-06 | Alguien se inscribe | Web | El inscrito | La confirmación de su inscripción | initial |
-| NOT-07 | Un evaluador envía su ranking | Web | Ese evaluador | La confirmación del envío | initial |
+| NOT-07 | Un evaluador envía su ranking | Web | Ese evaluador | La confirmación del envío, o de que actualizó uno anterior | initial |
 | NOT-08 | El autor envía el recordatorio de propuesta | Web y email | Los inscritos sin propuesta | La fecha estimada de cierre, si hay. Email: «[OpenParallax] Falta tu propuesta en el evento «{evento}»» | initial |
 | NOT-09 | El autor envía el recordatorio de ranking | Web y email | Los evaluadores sin ranking | La fecha estimada de cierre, si hay. Email: «[OpenParallax] Falta tu ranking en el evento «{evento}»» | initial |
 | NOT-10 | Alguien pide recuperar la contraseña | Email | El dueño de la cuenta | El enlace para definir una contraseña nueva, que vence en 1 hora. Email: «[OpenParallax] Recuperación de contraseña» | initial |

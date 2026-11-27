@@ -13,7 +13,7 @@ describes: El ranking a medio armar de un evaluador, para retomarlo
 | evento | referencia | sí | — | no | initial |
 | asignación | referencia | sí | uno por asignación y evaluador | no | initial |
 | evaluador | referencia | sí | — | no | initial |
-| ranking | texto | sí | lista de propuesta y posición, sin validar | no | initial |
+| ranking | texto | sí | lista de propuesta y posición, sin validar contra la asignación (solo que cada propuesta sea un identificador válido) | no | initial |
 
 ## Relationships
 

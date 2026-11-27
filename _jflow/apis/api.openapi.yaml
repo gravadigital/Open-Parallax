@@ -37,7 +37,8 @@ info:
     Los endpoints públicos de eventos usan `OptionalJWTAuthMiddleware`: si llega un
     `Authorization` válido identifican al usuario; si falta o es inválido siguen como
     anónimo (nunca responden 401 por esto). Un evento en `creation` responde
-    `404 EVENT_NOT_FOUND` a quien no sea su autor ni `admin`.
+    `404 EVENT_NOT_FOUND` a quien no sea su autor ni `admin`, salvo `GET /distributed-results`,
+    que responde 403 con `current_stage`.
 
 servers:
   - url: http://localhost:8080
@@ -78,7 +79,7 @@ paths:
                 type: object
                 properties:
                   status: { type: string, example: ok }
-                  service: { type: string, example: api }
+                  service: { type: string, example: openparallax-api }
                   version:
                     type: string
                     example: '0.2.0'
@@ -382,8 +383,8 @@ paths:
           description: '`USERNAME_ALREADY_EXISTS`'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
-          x-failure: [ACC-E10, ACC-E14]
-          description: '`GOOGLE_API_ERROR`, `INTERNAL_ERROR`'
+          x-failure: [ACC-E10, ACC-E14, ACC-E15]
+          description: '`GOOGLE_API_ERROR`, `INTERNAL_ERROR` (también si el email o la identidad de Google ya tienen cuenta)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
 
   /api/v1/users/{user_id}:
@@ -395,7 +396,7 @@ paths:
       summary: Obtener usuario
       description: |
         **No verifica ownership**: cualquier usuario autenticado puede leer cualquier otro.
-        Tampoco valida el formato del UUID.
+        Tampoco valida el formato del UUID: un `user_id` mal formado responde 404 USER_NOT_FOUND.
       parameters:
         - $ref: '#/components/parameters/UserId'
       responses:
@@ -490,11 +491,11 @@ paths:
                             result_total: { type: integer, nullable: true }
         '400':
           x-failure: [EXP-E2, EXP-E4]
-          description: '`INVALID_PAYLOAD` — `scope` inválido (`details`: `scope must be one of: participating, all`); `INVALID_USER_ID` — `user_id` con formato inválido'
+          description: '`INVALID_PAYLOAD` — `scope` inválido (`details`: `scope must be one of: participating, all`); `INVALID_USER_ID` — `user_id` con formato inválido (solo un admin con `scope=all`)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           x-failure: [ACC-E13, EXP-E3]
-          description: '`NO_AUTH_TOKEN`, `UNAUTHORIZED_ACCESS` (accediendo a eventos ajenos; semánticamente debería ser 403)'
+          description: '`UNAUTHORIZED_ACCESS` (ApiError): eventos ajenos sin `scope` o con `participating`, también para un admin (semánticamente debería ser 403). Sin sesión responde el middleware (`UNAUTHORIZED`, forma `{error, message}`); `NO_AUTH_TOKEN` no se alcanza'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '403':
           x-failure: [EXP-E3]
@@ -529,14 +530,14 @@ paths:
         - name: limit
           in: query
           schema: { type: integer, default: 10, minimum: 1, maximum: 100 }
-          description: Solo se acepta entre 1 y 100
+          description: Solo se acepta entre 1 y 100; fuera de ese rango o no numérico se ignora (vale 10)
         - name: stage
           in: query
           schema: { $ref: '#/components/schemas/Stage' }
         - name: q
           in: query
           schema: { type: string }
-          description: 'Búsqueda case-insensitive por `name` u `organizer`'
+          description: 'Búsqueda case-insensitive por `name` o por el `organizer` guardado (no por el nombre del autor)'
       responses:
         '200':
           description: Lista paginada
@@ -641,7 +642,7 @@ paths:
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           x-failure: [ACC-E13, EVE-E8]
-          description: '`UNAUTHORIZED`, `USER_NOT_FOUND`'
+          description: '`UNAUTHORIZED` (del middleware, forma `{error, message}`), `USER_NOT_FOUND` (ApiError, el usuario de la sesión ya no existe)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '409':
           x-failure: [EVE-E7]
@@ -700,7 +701,7 @@ paths:
       tags: [event]
       summary: Editar datos del evento
       description: |
-        Solo el autor (`RequireEventOwner`) y solo en `creation` o `participation`.
+        Solo el autor o un `admin` (`RequireEventOwner`), y solo en `creation` o `participation`, también con el evento pausado o cancelado.
         Al menos un campo. Las fechas no se editan acá.
 
         Si el body trae **solo** `cover_color`, se acepta en cualquier etapa y
@@ -984,15 +985,17 @@ paths:
                       assignments_count: { type: integer }
                       total_attachments: { type: integer }
         '400':
-          x-failure: [EVE-E21, EVE-E1, EVE-E11, EVE-E12, VOT-E1, VOT-E2, VOT-E3, VOT-E4, VOT-E5, VOT-E6]
+          x-failure: [EVE-E21, EVE-E1, EVE-E11, EVE-E12, VOT-E1, VOT-E2, VOT-E3, VOT-E4, VOT-E5, VOT-E6, VOT-E21]
           description: |
             `MISSING_EVENT_ID`, `INVALID_EVENT_ID`, `INVALID_PAYLOAD`, `INVALID_STAGE`,
             `INVALID_TRANSITION` (+ `current_stage`, `requested_stage`),
             `MISSING_ESTIMATED_DATE`, `INVALID_DATE_FORMAT`, `INVALID_ESTIMATED_DATE`,
             `INSUFFICIENT_ATTACHMENTS` (+ `current_count`, `required_minimum: 3`),
             `MISSING_VOTING_CONFIG`, `INVALID_THRESHOLDS`, `M_EXCEEDS_EVALUABLE`,
-            `MATH_CONSTRAINT_VIOLATION`. (`INSUFFICIENT_PARTICIPANTS` y `NO_ATTACHMENTS` dejan
-            de usarse en esta transición.)
+            `MATH_CONSTRAINT_VIOLATION`, y el código INVALID_SANCTION si la sanción o su penalización
+            no son válidas. `INVALID_PAYLOAD` también si `voting_config` trae valores fuera de rango,
+            aunque la etapa pedida no sea `voting`. (`INSUFFICIENT_PARTICIPANTS` y `NO_ATTACHMENTS`
+            dejan de usarse en esta transición.)
             `BAD_REQUEST` (id con formato inválido, del middleware de permisos).
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
@@ -1007,7 +1010,7 @@ paths:
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
           x-failure: [EVE-E23, VOT-E20]
-          description: '`PARTICIPANTS_ERROR`, `ATTACHMENTS_ERROR`, `DB_UPDATE_ERROR`, `RETRIEVAL_ERROR`, `VOTING_SETUP_ERROR`'
+          description: '`ATTACHMENTS_ERROR`, `DB_UPDATE_ERROR`, `RETRIEVAL_ERROR`, `VOTING_SETUP_ERROR`'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
 
   /api/v1/events/{event_id}/estimated-end-date:
@@ -1055,9 +1058,10 @@ paths:
             `INVALID_EVENT_ID`, `INVALID_PAYLOAD`, `INVALID_STAGE`, `INVALID_DATE_FORMAT`,
             `INVALID_ESTIMATED_DATE`.
 
-            `CANNOT_ADVANCE_DEADLINE` — solo se puede posponer el deadline de una etapa que
-            todavía no terminó, nunca adelantarlo. `details` es un objeto
-            `{current_date, requested_date}`.
+            `CANNOT_ADVANCE_DEADLINE` — la fecha nueva es anterior al cierre actual y ese cierre
+            todavía no pasó (si ya pasó, se acepta cualquier fecha de hoy en adelante; la misma
+            fecha se acepta). `details` es un objeto `{current_date, requested_date}`.
+            `INVALID_STAGE` trae acá `valid_stages: [participation, voting]`.
 
             `INVALID_STAGE_FOR_EDIT` — `details` es un **objeto**
             `{current_stage, requested_stage}`, no un string.
@@ -1181,7 +1185,7 @@ paths:
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '409':
           x-failure: [EVE-E16]
-          description: '`EVENT_CANCELLED` — no se puede pausar un evento cancelado'
+          description: '`EVENT_CANCELLED` — no se puede pausar ni reanudar un evento cancelado'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
           x-failure: [EVE-E23]
@@ -1228,8 +1232,8 @@ paths:
                             id: { type: string, format: uuid }
                             name: { type: string }
                             email: { type: string, format: email }
-                            role: { type: string, enum: [creator, participant] }
-                            created_at: { type: string, format: date-time }
+                            role: { type: string, enum: [creator, participant], description: 'Siempre participant: el autor se excluye' }
+                            created_at: { type: string, format: date-time, description: 'Fecha de alta de la cuenta, no de la inscripción' }
                   count: { type: integer }
         '400':
           x-failure: [EVE-E21]
@@ -1255,8 +1259,8 @@ paths:
       tags: [attachment]
       summary: Subir la propuesta de un participante
       description: |
-        Solo durante la etapa `participation`, y solo el propio participante o el autor del
-        evento. **Una sola propuesta por participante por evento.** El creador del evento no
+        Solo durante la etapa `participation`, y solo el propio participante, el autor del
+        evento o un `admin`. **Una sola propuesta por participante por evento.** El creador del evento no
         puede subir propuestas.
       parameters:
         - $ref: '#/components/parameters/EventId'
@@ -1316,7 +1320,7 @@ paths:
           x-failure: [ACC-E13]
         '403':
           x-failure: [INS-E3, INS-E12, INS-E13, INS-E18]
-          description: '`EVENT_PAUSED`, `CREATOR_CANNOT_UPLOAD`, `NOT_REGISTERED`'
+          description: '`EVENT_PAUSED`, `CREATOR_CANNOT_UPLOAD`, `NOT_REGISTERED`; `FORBIDDEN` (forma `{error, message}`, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '404':
           x-failure: [EVE-E22, INS-E14]
@@ -1327,8 +1331,8 @@ paths:
           description: '`DUPLICATE_ATTACHMENT` (+ `existing_attachment_id`)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
-          x-failure: [INS-E19]
-          description: '`FILE_SAVE_ERROR`, `DB_SAVE_ERROR`'
+          x-failure: [INS-E19, INS-E20]
+          description: '`FILE_SAVE_ERROR`, `DB_SAVE_ERROR` (también con un archivo vacío: la base exige tamaño mayor que 0)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
 
   /api/v1/events/{event_id}/attachments:
@@ -1339,8 +1343,8 @@ paths:
       tags: [attachment]
       summary: Listar propuestas del evento
       description: |
-        No valida el formato del UUID ni la existencia del evento: un evento inexistente
-        devuelve `200` con `data: []`.
+        No valida la existencia del evento: uno inexistente devuelve `200` con `data: []`; un
+        `event_id` con formato inválido responde `500 RETRIEVAL_ERROR`.
 
         Los nombres de campo difieren de los de la subida: acá `original_name` y `file_size`,
         allá `filename` y `size`.
@@ -1381,7 +1385,7 @@ paths:
           description: '`EVENT_NOT_FOUND` — el evento existe, está en `creation` y quien consulta no es su autor ni `admin`'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
-          x-failure: [INS-E19]
+          x-failure: [INS-E19, EVE-E21]
           description: '`RETRIEVAL_ERROR`'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
 
@@ -1395,7 +1399,7 @@ paths:
       description: |
         Pueden descargarla su dueño, el autor del evento o un `admin`, y quien la tiene
         en su asignación del mismo evento en etapa `voting` o `results` (DEC-T10, INS-09). El
-        permiso se verifica en el handler (`canDownload`), no con un middleware de ruta.
+        permiso se verifica en el handler (`downloadName`), no con un middleware de ruta.
 
         **Anonimato:** para el evaluador, `Content-Disposition` usa un nombre neutro
         `propuesta-{n}.{ext}` (n = posición en `attachment_ids`), nunca el nombre original.
@@ -1507,9 +1511,12 @@ paths:
                           quality_good_threshold: { type: number, example: 0.6 }
                           quality_bad_threshold: { type: number, example: 0.3 }
                           adjustment_magnitude: { type: integer, example: 3 }
+                          non_evaluator_sanction: { type: string, example: exclusion }
+                          non_evaluator_penalty: { type: integer, example: 10 }
         '400':
-          $ref: '#/components/responses/MiddlewareBadRequest'
           x-failure: [EVE-E21, INS-E18]
+          description: '`INVALID_EVENT_ID` (para un admin, del handler), `BAD_REQUEST` (id con formato inválido, del middleware de permisos)'
+          content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
           x-failure: [ACC-E13]
@@ -1519,6 +1526,10 @@ paths:
         '404':
           x-failure: [EVE-E22]
           description: '`EVENT_NOT_FOUND`, `NOT_FOUND` (evento inexistente, del middleware de permisos)'
+          content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
+        '500':
+          x-failure: [VOT-E20]
+          description: '`PARTICIPANTS_ERROR`, `ATTACHMENTS_ERROR`'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
 
   /api/v1/events/{event_id}/voting-config:
@@ -1640,9 +1651,18 @@ paths:
                   maximum: 20
                   description: |
                     Opcional. Si se omite se aplica `min(3, attachments_per_evaluator)`.
+                non_evaluator_sanction:
+                  type: string
+                  enum: [exclusion, penalty]
+                  description: Opcional; exclusion por defecto
+                non_evaluator_penalty:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                  description: Opcional; 10 por defecto
       responses:
         '201':
-          description: Configuración creada
+          description: Configuración creada (`data` no incluye `updated_at`)
           content:
             application/json:
               schema:
@@ -1659,12 +1679,12 @@ paths:
                       max_evaluations: { type: integer }
                       min_evaluations: { type: integer }
         '400':
-          x-failure: [EVE-E21, VOT-E14, VOT-E3, VOT-E18, VOT-E1, VOT-E4, VOT-E5, VOT-E6]
+          x-failure: [EVE-E21, VOT-E14, VOT-E3, VOT-E18, VOT-E1, VOT-E4, VOT-E5, VOT-E6, VOT-E21]
           description: |
             `MISSING_EVENT_ID`, `INVALID_EVENT_ID`, `INVALID_PAYLOAD`, `INVALID_THRESHOLDS`,
             `INVALID_EVENT_STAGE`, `INSUFFICIENT_ATTACHMENTS` (+ `current_count`,
-            `required_minimum: 3`), `M_EXCEEDS_EVALUABLE`, `MATH_CONSTRAINT_VIOLATION`
-            `BAD_REQUEST` (id con formato inválido, del middleware de permisos).
+            `required_minimum: 3`), `M_EXCEEDS_EVALUABLE`, `MATH_CONSTRAINT_VIOLATION`, el código
+            INVALID_SANCTION, `BAD_REQUEST` (id con formato inválido, del middleware de permisos).
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -1753,7 +1773,7 @@ paths:
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
           x-failure: [VOT-E20]
-          description: '`PARTICIPANTS_ERROR`, `ATTACHMENTS_ERROR`, `GENERATION_FAILED`, `DB_SAVE_ERROR`'
+          description: '`ATTACHMENTS_ERROR`, `GENERATION_FAILED`, `DB_SAVE_ERROR`'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
 
   /api/v1/events/{event_id}/participants/{participant_id}/assignment:
@@ -1894,13 +1914,13 @@ paths:
       summary: Guardar borrador del ranking
       description: |
         Guardado parcial mientras el participante arma su ranking, para no perder el progreso.
-        A diferencia del envío definitivo, **no** valida duplicados ni consecutividad.
+        A diferencia del envío definitivo, **no** valida duplicados, consecutividad, que las
+        propuestas sean de la asignación ni que la posición sea positiva (solo que cada
+        `attachment_id` sea un UUID).
 
-        Un borrador por par (asignación, participante): el guardado es un upsert. Se acepta
-        también con la asignación completa mientras el evento esté en `voting`.
-
-        Nota: `updated_at` en la respuesta sale del objeto previo al upsert, así que suele
-        venir como fecha cero.
+        Un borrador por par (asignación, participante): el guardado es un upsert. No comprueba
+        la etapa: se acepta en cualquiera mientras exista la asignación, también con la
+        asignación completa.
       parameters:
         - $ref: '#/components/parameters/EventId'
         - $ref: '#/components/parameters/ParticipantId'
@@ -1918,7 +1938,7 @@ paths:
                     type: object
                     properties:
                       attachment_id: { type: string, format: uuid }
-                      rank: { type: integer, minimum: 1 }
+                      rank: { type: integer, description: 'Sin validar: se acepta 0 o negativa' }
       responses:
         '200':
           description: Borrador guardado
@@ -2022,7 +2042,8 @@ paths:
         cómo evaluó su autor, así que solo se incluye para la propuesta del usuario autenticado,
         o para todas si quien pide es el autor del evento o un admin (token opcional). No incluye la calidad Q de los
         evaluadores (`participant_qualities`): es un endpoint anónimo y el Q de cada persona no
-        es público.
+        es público. `excluded` llega para todas las propuestas, así que quién quedó fuera por
+        no evaluar es público. Un evento en `creation` ajeno no se oculta: responde 403.
 
         **Solo lectura:** devuelve la fila guardada en `voting_results` (calculada al entrar a
         la etapa `results`, o por `POST .../distributed-results/recalculate`). No escribe ni
@@ -2070,11 +2091,11 @@ paths:
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
         '403':
           x-failure: [RES-E1]
-          description: Etapa distinta de `results` (+ `current_stage`). Semánticamente debería ser 400.
+          description: Etapa distinta de `results` (+ `current_stage`), también para un evento en `creation` ajeno (no se oculta con 404). Semánticamente debería ser 400.
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
         '404':
           x-failure: [RES-E3, RES-E2]
-          description: Evento inexistente, o `RESULTS_NOT_CALCULATED` si todavía no se guardó el ranking
+          description: 'Evento inexistente (`{error}`), o `RESULTS_NOT_CALCULATED` en `error`, con `message` y sin `code`, si todavía no se guardó el ranking'
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
 
   /api/v1/events/{event_id}/distributed-results/recalculate:
@@ -2114,7 +2135,7 @@ paths:
           x-failure: [ACC-E13]
         '403':
           x-failure: [VOT-E19, RES-E1]
-          description: Sin permiso sobre el evento, o etapa distinta de `results` (+ `current_stage`)
+          description: Sin permiso sobre el evento (`MiddlewareError`, `FORBIDDEN`), o etapa distinta de `results` (`LegacyError` + `current_stage`)
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
         '404':
           x-failure: [RES-E3, RES-E4]
@@ -2133,8 +2154,11 @@ paths:
       tags: [vote]
       summary: Estadísticas de avance de la votación
       description: |
-        Progreso de la votación sin recalcular resultados. No valida el UUID ni la existencia
-        del evento.
+        Progreso de la votación sin recalcular resultados. No comprueba que el evento exista (uno
+        inexistente da estadísticas vacías); un `event_id` que no es UUID responde 500
+        «Failed to get votes». `average_quality_score`, `participants_with_good_quality` y
+        `participants_with_bad_quality` valen siempre 0: `assignments.quality_score` nunca se
+        escribe.
 
         Los umbrales de calidad usados acá están **hardcodeados** (≥0.7 bueno, ≤0.3 malo) y no
         coinciden con los configurables por evento.
@@ -2182,7 +2206,7 @@ paths:
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '500':
           x-failure: [VOT-E20]
-          description: Fallo al obtener votos o asignaciones
+          description: Fallo al obtener votos o asignaciones, también con un `event_id` que no es UUID
           content: { application/json: { schema: { $ref: '#/components/schemas/LegacyError' } } }
 
   /api/v1/events/{event_id}/reminders:
@@ -2193,7 +2217,7 @@ paths:
       tags: [event]
       summary: Recordatorio manual a pendientes
       description: |
-        Solo el autor (`RequireEventOwner`). `file` solo en `participation`
+        Solo el autor o un `admin` (`RequireEventOwner`). `file` solo en `participation`
         (destinatarios = inscriptos sin propuesta); `vote` solo en `voting` (destinatarios =
         asignaciones sin completar). Envía email en segundo plano y una notificación
         `file_reminder` / `vote_reminder` por destinatario. Orden de validaciones: `event_id`,
@@ -2227,7 +2251,7 @@ paths:
                   code: { type: string, example: REMINDER_SENT }
         '400':
           x-failure: [EVE-E1]
-          description: '`INVALID_PAYLOAD`, `BAD_REQUEST` (id con formato inválido, del middleware de permisos)'
+          description: '`INVALID_EVENT_ID` (para un admin), `INVALID_PAYLOAD`, `BAD_REQUEST` (id con formato inválido, del middleware de permisos)'
           content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } }
         '401':
           $ref: '#/components/responses/MiddlewareUnauthorized'
@@ -2598,7 +2622,7 @@ components:
           type: number
           format: double
           nullable: true
-          description: 'Q_i del evaluador, en [0,1]'
+          description: 'Siempre null: nunca se escribe; Q vive en voting_results.participant_qualities'
         expertise_match_score: { type: number, format: double, nullable: true }
         conflict_of_interest: { type: boolean }
         created_at: { type: string, format: date-time }

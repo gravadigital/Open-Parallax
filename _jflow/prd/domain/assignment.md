@@ -19,7 +19,7 @@ describes: Las m propuestas que un evaluador tiene que ordenar en un evento
 | Attribute | Calculation rule | Origin |
 |---|---|---|
 | completa | verdadero cuando el evaluador votó todas sus propuestas; se actualiza con cada voto | initial |
-| fecha de completitud | instante en que quedó completa | initial |
+| fecha de completitud | instante del último envío del ranking; un reenvío la renueva | initial |
 
 ## Relationships
 

@@ -12,8 +12,8 @@
 | Listo para especificar e implementar | Sí: el repositorio cumple el mínimo (M1–M9), verificado |
 | Correcciones hechas en la adopción | 16; en el producto, solo las URLs de Google configurables y una traducción que pide un test existente |
 | Cargado en Jiku | 15 incidencias de seguridad (ver «Cargado en Jiku») |
-| En este informe | 26 bugs, 1 comportamiento a confirmar, 19 defaults sugeridos, 14 otras mejoras |
-| Cobertura por ID | 23 de 196 IDs con un test que los nombra: solo los tests end to end de la adopción llevan IDs; los tests anteriores (más de 1.300) no |
+| En este informe | 35 bugs, 1 comportamiento a confirmar, 19 defaults sugeridos, 14 otras mejoras |
+| Cobertura por ID | 23 de 199 IDs con un test que los nombra: solo los tests end to end de la adopción llevan IDs; los tests anteriores (más de 1.300) no |
 
 ## Línea de base
 
@@ -162,7 +162,7 @@ No son de seguridad, así que no se cargaron en Jiku. La definición los documen
 
 ### B-12 Estadísticas de calidad que nunca se calculan
 
-- **Qué pasa:** el avance de la votación informa calidad media y evaluadores buenos y malos sobre una columna que nunca se escribe, con umbrales fijos 0,7 y 0,3; un identificador mal formado da 500.
+- **Qué pasa:** el avance de la votación informa calidad media y evaluadores buenos y malos sobre una columna que nunca se escribe (`assignments.quality_score`), con umbrales fijos 0,7 y 0,3: los tres valen siempre 0. Un identificador mal formado da 500, y un evento inexistente da estadísticas vacías.
 - **Por qué parece un error:** los números son siempre vacíos o ceros.
 - **Dónde:** VOT-10; `distributed_vote_handler.go:1034-1038,1064-1078`.
 - **Gravedad sugerida:** baja.
@@ -253,6 +253,65 @@ No son de seguridad, así que no se cargaron en Jiku. La definición los documen
 - **Qué pasa:** `GET /api/v1/events/{id}/share` devuelve como imagen `{FRONTEND_URL}/og-image.png`, que la web no tiene: nginx responde `404`. La web tampoco usa esta operación.
 - **Por qué parece un error:** quien use esos datos para una vista previa en redes obtiene una imagen rota.
 - **Dónde:** EXP-03; `services/api/internal/handlers/event_handler.go:1970`.
+- **Gravedad sugerida:** baja.
+
+### B-27 Emails que la api acepta y la base rechaza
+
+- **Qué pasa:** la api valida el email con un formato más amplio que la restricción de la base (solo letras, dígitos y `._%+-`, dominio terminado en 2 o más letras). Un email con apóstrofo, letras con tilde o un dominio de una letra pasa la api y la base lo rechaza: crear la cuenta, inscribirse o entrar con Google termina en `500`.
+- **Por qué parece un error:** un dato inválido debería rechazarse con un `400` que lo explique.
+- **Dónde:** ACC-E14, INS-E19; `services/api/internal/storage/migrations/004_constraints_and_triggers.go:218`.
+- **Gravedad sugerida:** baja.
+
+### B-28 Un archivo vacío termina en error interno
+
+- **Qué pasa:** la subida no controla que el archivo tenga contenido; la base lo rechaza y la api responde `500 DB_SAVE_ERROR`.
+- **Dónde:** INS-E20; `services/api/internal/handlers/attachment_handler.go`.
+- **Gravedad sugerida:** baja.
+
+### B-29 Un identificador de evento mal formado da 500 al listar propuestas
+
+- **Qué pasa:** `GET /api/v1/events/{id}/attachments` con un identificador que no es UUID responde `500 RETRIEVAL_ERROR` (las estadísticas de la votación, igual: B-12).
+- **Dónde:** INS-08; `services/api/internal/storage/postgres/attachment_repository.go:139-143`.
+- **Gravedad sugerida:** baja.
+
+### B-30 Los resultados públicos dicen quién no evaluó
+
+- **Qué pasa:** el ajuste de cada propuesta se oculta a quien no es su autor, pero la marca de excluida por no evaluar llega para todas, con el nombre del autor de la propuesta; la web las lista en público bajo «Fuera del ranking».
+- **Por qué parece un error:** el ajuste se oculta justamente porque revela cómo evaluó cada persona (DEC-04); la exclusión revela lo mismo.
+- **Dónde:** RES-05; `services/api/internal/domain/vote/vote.go:138-143`, `services/web/src/components/voting/event-results/EventResults.tsx:197-210`.
+- **Gravedad sugerida:** media.
+
+### B-31 Los resultados no ocultan un evento en Creación
+
+- **Qué pasa:** pedir los resultados de un evento en Creación ajeno responde `403` con su etapa, en vez de `404` como el resto de las operaciones públicas.
+- **Por qué parece un error:** revela que el evento existe.
+- **Dónde:** RES-E1; `services/api/internal/handlers/distributed_vote_handler.go:889-899`.
+- **Gravedad sugerida:** baja.
+
+### B-32 La web cierra la sesión ante cualquier 401
+
+- **Qué pasa:** cualquier respuesta 401 cierra la sesión en la web, no solo la de sesión vencida: también pedir eventos ajenos o crear un evento con un usuario que ya no existe. Subir y descargar propuestas, en cambio, no la cierran aunque la sesión haya vencido.
+- **Dónde:** ACC-10, ACC-E13; `services/web/src/config/api.ts:158-172,186-231`.
+- **Gravedad sugerida:** baja.
+
+### B-33 Una cuenta de Google puede tener contraseña
+
+- **Qué pasa:** la recuperación de contraseña no distingue las cuentas de Google: con el enlace, una cuenta de Google define una contraseña y entra de las dos formas. El login, en cambio, le responde que use Google mientras no la tenga.
+- **Por qué parece un error:** el login trata las cuentas de Google como sin contraseña, y la recuperación les da una.
+- **Dónde:** ACC-06, ACC-E5; `services/api/internal/handlers/user_handler.go:498-600`.
+- **Gravedad sugerida:** baja.
+
+### B-34 «Hoy» no es el mismo día en todas las fechas
+
+- **Qué pasa:** la fecha de inicio del evento se compara con el día local del servidor, y los cierres estimados con el día UTC; la web, además, exige un cierre posterior a hoy en el calendario del navegador.
+- **Por qué parece un error:** cerca de la medianoche, la misma fecha es válida para una regla y no para otra.
+- **Dónde:** EVE-03, EVE-07, EVE-E12; `services/api/internal/handlers/event_handler.go:295,579,921`.
+- **Gravedad sugerida:** baja.
+
+### B-35 El ranking que se muestra como enviado puede ser un borrador
+
+- **Qué pasa:** en Resultados, la web muestra como ranking enviado el que guardó el navegador al enviarlo o, si no lo tiene (otro navegador), el último borrador, que puede tener cambios que nunca se enviaron.
+- **Dónde:** RES-07; `services/web/src/pages/event-detail/useRankingVote.ts:53-57`.
 - **Gravedad sugerida:** baja.
 
 ## Comportamientos a confirmar

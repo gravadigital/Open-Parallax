@@ -15,9 +15,9 @@ describes: Archivo que un inscrito presenta al evento y que otros evalúan
 | nombre original | texto | sí | el del archivo subido | no | initial |
 | nombre guardado | texto | sí | `{evento}_{participante}_{instante}{extensión}` | no | initial |
 | ubicación | texto | sí | clave del archivo en el almacenamiento | no | initial |
-| tamaño | número | sí | mayor que 0 y hasta el **tamaño máximo de propuesta** | no | initial |
+| tamaño | número | sí | hasta el **tamaño máximo de propuesta**; mayor que 0 solo en la base (la api no lo controla) | no | initial |
 | tipo | texto | sí | JPG, PNG, GIF, WebP, PDF, TXT, DOC o DOCX, según lo declara quien sube | no | initial |
-| descripción | texto | no | hasta 1000 bytes | no | initial |
+| descripción | texto | no | hasta 1000 bytes; se guarda sin espacios en los extremos | no | initial |
 | fecha de subida | fecha y hora | sí | — | no | initial |
 
 ## Derived attributes

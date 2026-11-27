@@ -16,8 +16,8 @@ last_failure: BAN-E3
 |---|---|---|---|
 | BAN-01 | Un usuario lista sus notificaciones de los últimos 90 días, de la más nueva a la más vieja, de a 1 a 50 (10 en el panel de la campana, 20 en la página), con la cantidad sin leer y el cursor de la página siguiente | U-02 | initial |
 | BAN-02 | La web muestra la cantidad sin leer en la campana: la consulta cada 60 segundos con la pestaña visible, al volver a la pestaña y al navegar | U-02 | initial |
-| BAN-03 | El usuario marca una notificación como leída (repetirlo no cambia nada) o todas a la vez; abrirla en la web lleva a su evento | U-02 | initial |
-| BAN-04 | Una notificación guarda su tipo y sus datos, no su texto: la web lo arma en el idioma elegido; un tipo que la web no conoce no se muestra | — | initial |
+| BAN-03 | El usuario marca una notificación como leída (repetirlo no cambia nada) o todas a la vez; abrirla en la web lleva a su evento (la de inscripciones, a su gestión) | U-02 | initial |
+| BAN-04 | Una notificación guarda su tipo y sus datos, no su texto: la web lo arma en el idioma elegido; un tipo que la web no conoce, o uno sin los datos que necesita, no se muestra | — | initial |
 | BAN-05 | La página de notificaciones muestra interruptores «Avisarme también por email» que solo cambian en pantalla y no se guardan, y una tarjeta «Recordatorios» que anuncia un aviso 24 horas antes de cada cierre que no existe | — | initial |
 
 ## Failure conditions

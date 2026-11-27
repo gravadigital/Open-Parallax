@@ -1,0 +1,1188 @@
+package handlers
+
+import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/gravadigital/openparallax/api/internal/config"
+	"github.com/gravadigital/openparallax/api/internal/domain/attachment"
+	"github.com/gravadigital/openparallax/api/internal/domain/event"
+	"github.com/gravadigital/openparallax/api/internal/domain/notification"
+	"github.com/gravadigital/openparallax/api/internal/domain/participant"
+	"github.com/gravadigital/openparallax/api/internal/domain/vote"
+	"github.com/gravadigital/openparallax/api/internal/email"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// testEventHandlerSet bundles the mock repositories an EventHandler needs.
+type testEventHandlerSet struct {
+	eventRepo      *mockEventRepository
+	userRepo       *mockUserRepository
+	attachmentRepo *mockAttachmentRepository
+	voteRepo       *mockVoteRepository
+	setupRepo      *mockVotingSetupRepository
+	notifRepo      *mockNotificationRepository
+	handler        *EventHandler
+}
+
+func newTestEventHandlerSet() *testEventHandlerSet {
+	s := &testEventHandlerSet{
+		eventRepo:      newMockEventRepository(),
+		userRepo:       newMockUserRepository(),
+		attachmentRepo: newMockAttachmentRepository(),
+		voteRepo:       newMockVoteRepository(),
+		notifRepo:      newMockNotificationRepository(),
+	}
+	s.setupRepo = &mockVotingSetupRepository{eventRepo: s.eventRepo}
+	// Email disabled by default config, so goroutine-fired notifications are
+	// no-ops and won't panic or block on a real SMTP connection.
+	s.handler = NewEventHandler(s.eventRepo, s.userRepo, s.attachmentRepo, s.voteRepo, s.setupRepo, email.NewEmailService(&config.Config{}), nil, &config.Config{}, notification.NewService(s.notifRepo))
+	return s
+}
+
+func dateStr(t time.Time) string {
+	return t.Format("2006-01-02")
+}
+
+// setEventParticipantCount seeds n participants for an event so stage-advance
+// validation tests can exercise the minimum-participants rule without
+// building full registration flows.
+func setEventParticipantCount(s *testEventHandlerSet, eventID string, n int) {
+	roles := make([]*participant.UserWithEventRole, 0, n)
+	for i := 0; i < n; i++ {
+		u := participant.NewParticipant("P", "articipant", uuid.NewString()+"@example.com")
+		s.userRepo.addUser(u)
+		roles = append(roles, &participant.UserWithEventRole{User: *u, EventRole: "participant"})
+	}
+	s.userRepo.setEventParticipants(eventID, roles)
+}
+
+// performAuthedRequest is like performRequest but also injects a "user_id"
+// into the Gin context, mimicking the JWT auth middleware.
+func performAuthedRequest(t *testing.T, method string, handlerFunc gin.HandlerFunc, params gin.Params, userID string, body interface{}) *httptest.ResponseRecorder {
+	t.Helper()
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	var bodyReader *bytes.Reader
+	if body != nil {
+		b, err := json.Marshal(body)
+		require.NoError(t, err)
+		bodyReader = bytes.NewReader(b)
+	} else {
+		bodyReader = bytes.NewReader(nil)
+	}
+
+	req := httptest.NewRequest(method, "/test", bodyReader)
+	req.Header.Set("Content-Type", "application/json")
+	c.Request = req
+	c.Params = params
+	if userID != "" {
+		c.Set("user_id", userID)
+	}
+
+	handlerFunc(c)
+	return w
+}
+
+// ---------------------------------------------------------------------------
+// CreateEvent
+// ---------------------------------------------------------------------------
+
+func TestCreateEvent_Success(t *testing.T) {
+	s := newTestEventHandlerSet()
+	author := participant.NewOrganizer("Ana", "Author", "author@example.com")
+	s.userRepo.addUser(author)
+
+	body := map[string]interface{}{
+		"name":        "Star Party",
+		"description": "An evening of stargazing.",
+		"start_date":  dateStr(time.Now().AddDate(0, 0, 5)),
+		"end_date":    dateStr(time.Now().AddDate(0, 0, 6)),
+		"organizer":   "Astro Club",
+	}
+	w := performAuthedRequest(t, http.MethodPost, s.handler.CreateEvent, nil, author.ID.String(), body)
+
+	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
+	resp := jsonBody(t, w)
+	assert.Equal(t, "EVENT_CREATED", resp["code"])
+}
+
+func TestCreateEvent_RejectsUnauthenticated(t *testing.T) {
+	s := newTestEventHandlerSet()
+	body := map[string]interface{}{
+		"name":        "Star Party",
+		"description": "An evening of stargazing.",
+		"start_date":  dateStr(time.Now().AddDate(0, 0, 5)),
+		"end_date":    dateStr(time.Now().AddDate(0, 0, 6)),
+	}
+	w := performAuthedRequest(t, http.MethodPost, s.handler.CreateEvent, nil, "", body)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestCreateEvent_RejectsPastStartDate(t *testing.T) {
+	s := newTestEventHandlerSet()
+	author := participant.NewOrganizer("Ana", "Author", "author@example.com")
+	s.userRepo.addUser(author)
+
+	body := map[string]interface{}{
+		"name":        "Star Party",
+		"description": "An evening of stargazing.",
+		"start_date":  dateStr(time.Now().AddDate(0, 0, -1)),
+		"end_date":    dateStr(time.Now().AddDate(0, 0, 1)),
+	}
+	w := performAuthedRequest(t, http.MethodPost, s.handler.CreateEvent, nil, author.ID.String(), body)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "PAST_START_DATE", jsonBody(t, w)["code"])
+}
+
+func TestCreateEvent_RejectsEndBeforeStart(t *testing.T) {
+	s := newTestEventHandlerSet()
+	author := participant.NewOrganizer("Ana", "Author", "author@example.com")
+	s.userRepo.addUser(author)
+
+	body := map[string]interface{}{
+		"name":        "Star Party",
+		"description": "An evening of stargazing.",
+		"start_date":  dateStr(time.Now().AddDate(0, 0, 5)),
+		"end_date":    dateStr(time.Now().AddDate(0, 0, 1)),
+	}
+	w := performAuthedRequest(t, http.MethodPost, s.handler.CreateEvent, nil, author.ID.String(), body)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "INVALID_DATE_RANGE", jsonBody(t, w)["code"])
+}
+
+func TestCreateEvent_RejectsDurationTooShort(t *testing.T) {
+	s := newTestEventHandlerSet()
+	author := participant.NewOrganizer("Ana", "Author", "author@example.com")
+	s.userRepo.addUser(author)
+
+	sameDay := dateStr(time.Now().AddDate(0, 0, 3))
+	body := map[string]interface{}{
+		"name":        "Star Party",
+		"description": "An evening of stargazing.",
+		"start_date":  sameDay,
+		"end_date":    sameDay,
+	}
+	w := performAuthedRequest(t, http.MethodPost, s.handler.CreateEvent, nil, author.ID.String(), body)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "DURATION_TOO_SHORT", jsonBody(t, w)["code"])
+}
+
+func TestCreateEvent_RejectsDurationTooLong(t *testing.T) {
+	s := newTestEventHandlerSet()
+	author := participant.NewOrganizer("Ana", "Author", "author@example.com")
+	s.userRepo.addUser(author)
+
+	body := map[string]interface{}{
+		"name":        "Star Party",
+		"description": "An evening of stargazing.",
+		"start_date":  dateStr(time.Now().AddDate(0, 0, 1)),
+		"end_date":    dateStr(time.Now().AddDate(2, 0, 0)),
+	}
+	w := performAuthedRequest(t, http.MethodPost, s.handler.CreateEvent, nil, author.ID.String(), body)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "DURATION_TOO_LONG", jsonBody(t, w)["code"])
+}
+
+func TestCreateEvent_RejectsDuplicateName(t *testing.T) {
+	s := newTestEventHandlerSet()
+	author := participant.NewOrganizer("Ana", "Author", "author@example.com")
+	s.userRepo.addUser(author)
+	existing := event.NewEvent("Star Party", "desc", author.ID, time.Now(), time.Now().AddDate(0, 0, 1), "org")
+	s.eventRepo.addEvent(existing)
+
+	body := map[string]interface{}{
+		"name":        "Star Party",
+		"description": "An evening of stargazing.",
+		"start_date":  dateStr(time.Now().AddDate(0, 0, 5)),
+		"end_date":    dateStr(time.Now().AddDate(0, 0, 6)),
+	}
+	w := performAuthedRequest(t, http.MethodPost, s.handler.CreateEvent, nil, author.ID.String(), body)
+
+	assert.Equal(t, http.StatusConflict, w.Code)
+	assert.Equal(t, "DUPLICATE_EVENT_NAME", jsonBody(t, w)["code"])
+}
+
+func TestCreateEvent_RejectsMaxParticipantsBelowOne(t *testing.T) {
+	s := newTestEventHandlerSet()
+	author := participant.NewOrganizer("Ana", "Author", "author@example.com")
+	s.userRepo.addUser(author)
+
+	body := map[string]interface{}{
+		"name":             "Star Party",
+		"description":      "An evening of stargazing.",
+		"start_date":       dateStr(time.Now().AddDate(0, 0, 5)),
+		"end_date":         dateStr(time.Now().AddDate(0, 0, 6)),
+		"max_participants": 0,
+	}
+	w := performAuthedRequest(t, http.MethodPost, s.handler.CreateEvent, nil, author.ID.String(), body)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "INVALID_MAX_PARTICIPANTS", jsonBody(t, w)["code"])
+}
+
+func TestCreateEvent_RejectsMaxParticipantsAboveLimit(t *testing.T) {
+	s := newTestEventHandlerSet()
+	author := participant.NewOrganizer("Ana", "Author", "author@example.com")
+	s.userRepo.addUser(author)
+
+	body := map[string]interface{}{
+		"name":             "Star Party",
+		"description":      "An evening of stargazing.",
+		"start_date":       dateStr(time.Now().AddDate(0, 0, 5)),
+		"end_date":         dateStr(time.Now().AddDate(0, 0, 6)),
+		"max_participants": 101,
+	}
+	w := performAuthedRequest(t, http.MethodPost, s.handler.CreateEvent, nil, author.ID.String(), body)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "MAX_PARTICIPANTS_LIMIT_EXCEEDED", jsonBody(t, w)["code"])
+}
+
+func TestCreateEvent_AcceptsValidMaxParticipants(t *testing.T) {
+	s := newTestEventHandlerSet()
+	author := participant.NewOrganizer("Ana", "Author", "author@example.com")
+	s.userRepo.addUser(author)
+
+	body := map[string]interface{}{
+		"name":             "Star Party",
+		"description":      "An evening of stargazing.",
+		"start_date":       dateStr(time.Now().AddDate(0, 0, 5)),
+		"end_date":         dateStr(time.Now().AddDate(0, 0, 6)),
+		"max_participants": 50,
+	}
+	w := performAuthedRequest(t, http.MethodPost, s.handler.CreateEvent, nil, author.ID.String(), body)
+
+	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
+	data := jsonBody(t, w)["event"].(map[string]interface{})
+	assert.Equal(t, float64(50), data["max_participants"])
+}
+
+// ---------------------------------------------------------------------------
+// UpdateEventStage — the stage machine gate for voting eligibility
+// ---------------------------------------------------------------------------
+
+func TestUpdateEventStage_RejectsInvalidTransition(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	e.Stage = event.StageCreation
+	s.eventRepo.addEvent(e)
+
+	body := map[string]interface{}{"stage": "voting"} // creation -> voting is not allowed directly
+	w := performAuthedRequest(t, http.MethodPatch, s.handler.UpdateEventStage,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", body)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "INVALID_TRANSITION", jsonBody(t, w)["code"])
+}
+
+func TestUpdateEventStage_RequiresEstimatedDateForParticipation(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	e.Stage = event.StageCreation
+	s.eventRepo.addEvent(e)
+
+	body := map[string]interface{}{"stage": "participation"}
+	w := performAuthedRequest(t, http.MethodPatch, s.handler.UpdateEventStage,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", body)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "MISSING_ESTIMATED_DATE", jsonBody(t, w)["code"])
+}
+
+// openVotingFixture seeds an event in participation with `inscribed`
+// participants, of whom the first `proposals` uploaded a proposal.
+type openVotingFixture struct {
+	event       *event.Event
+	users       []*participant.User
+	attachments []*attachment.Attachment
+}
+
+func seedOpenVoting(s *testEventHandlerSet, inscribed, proposals int) openVotingFixture {
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	e.Stage = event.StageParticipation
+	s.eventRepo.addEvent(e)
+
+	f := openVotingFixture{event: e}
+	roles := make([]*participant.UserWithEventRole, inscribed)
+	for i := 0; i < inscribed; i++ {
+		u := participant.NewParticipant("P", "articipant", uuid.NewString()+"@example.com")
+		s.userRepo.addUser(u)
+		f.users = append(f.users, u)
+		roles[i] = &participant.UserWithEventRole{User: *u, EventRole: "participant"}
+		if i < proposals {
+			a := attachmentFor(e.ID, u.ID)
+			s.attachmentRepo.addAttachment(a)
+			f.attachments = append(f.attachments, a)
+		}
+	}
+	s.userRepo.setEventParticipants(e.ID.String(), roles)
+	return f
+}
+
+func patchStage(t *testing.T, s *testEventHandlerSet, eventID uuid.UUID, body map[string]interface{}) *httptest.ResponseRecorder {
+	t.Helper()
+	return performAuthedRequest(t, http.MethodPatch, s.handler.UpdateEventStage,
+		gin.Params{{Key: "event_id", Value: eventID.String()}}, "", body)
+}
+
+func votingBody(date string, cfg map[string]interface{}) map[string]interface{} {
+	body := map[string]interface{}{"stage": "voting", "estimated_end_date": date}
+	if cfg != nil {
+		body["voting_config"] = cfg
+	}
+	return body
+}
+
+func TestUpdateEventStage_OpensVotingInOneOperation(t *testing.T) {
+	s := newTestEventHandlerSet()
+	f := seedOpenVoting(s, 4, 3)
+	date := dateStr(time.Now().AddDate(0, 0, 3))
+
+	w := patchStage(t, s, f.event.ID, votingBody(date, map[string]interface{}{"attachments_per_evaluator": 2}))
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	resp := jsonBody(t, w)
+	assert.Equal(t, "STAGE_UPDATED", resp["code"])
+	assert.Equal(t, map[string]interface{}{"from": "participation", "to": "voting"}, resp["transition"])
+	data := resp["data"].(map[string]interface{})
+	assert.Equal(t, "voting", data["stage"])
+	assert.Equal(t, date, data["voting_estimated_end_date"])
+
+	voting := resp["voting"].(map[string]interface{})
+	assert.Equal(t, float64(3), voting["assignments_count"])
+	assert.Equal(t, float64(3), voting["total_attachments"])
+	cfg := voting["configuration"].(map[string]interface{})
+	assert.Equal(t, float64(2), cfg["attachments_per_evaluator"])
+	assert.Equal(t, 0.6, cfg["quality_good_threshold"])
+	assert.Equal(t, 0.3, cfg["quality_bad_threshold"])
+	assert.Equal(t, float64(3), cfg["adjustment_magnitude"])
+	assert.Equal(t, float64(2), cfg["min_evaluations_per_file"])
+	assert.Equal(t, f.event.ID.String(), cfg["event_id"])
+	assert.NotEmpty(t, cfg["id"])
+	assert.NotEqual(t, "0001-01-01T00:00:00Z", cfg["created_at"])
+	assert.NotEqual(t, "0001-01-01T00:00:00Z", cfg["updated_at"])
+	assert.Equal(t, 1, s.setupRepo.calls)
+	assert.Zero(t, s.eventRepo.stageUpdates, "the stage is written inside OpenVoting")
+}
+
+func TestUpdateEventStage_OnlyParticipantsWithProposalEvaluate(t *testing.T) {
+	s := newTestEventHandlerSet()
+	f := seedOpenVoting(s, 4, 3)
+
+	w := patchStage(t, s, f.event.ID, votingBody(dateStr(time.Now().AddDate(0, 0, 3)), map[string]interface{}{"attachments_per_evaluator": 2}))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+
+	require.Len(t, s.setupRepo.assignments, 3)
+	owners := map[uuid.UUID]uuid.UUID{} // attachment -> owner
+	for _, a := range f.attachments {
+		owners[a.ID] = a.ParticipantID
+	}
+	for _, a := range s.setupRepo.assignments {
+		assert.NotEqual(t, f.users[3].ID, a.ParticipantID, "participant without proposal must not evaluate")
+		assert.Len(t, a.AttachmentIDs, 2)
+		for _, id := range a.GetAttachmentUUIDs() {
+			assert.NotEqual(t, a.ParticipantID, owners[id], "own proposal assigned")
+		}
+	}
+}
+
+func TestUpdateEventStage_RejectsVotingWithFewerThanThreeProposals(t *testing.T) {
+	for _, proposals := range []int{2, 0} {
+		s := newTestEventHandlerSet()
+		f := seedOpenVoting(s, 5, proposals)
+
+		w := patchStage(t, s, f.event.ID, votingBody(dateStr(time.Now().AddDate(0, 0, 3)), map[string]interface{}{"attachments_per_evaluator": 2}))
+
+		require.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
+		resp := jsonBody(t, w)
+		assert.Equal(t, "INSUFFICIENT_ATTACHMENTS", resp["code"])
+		assert.Equal(t, float64(proposals), resp["current_count"])
+		assert.Equal(t, float64(3), resp["required_minimum"])
+		assert.Zero(t, s.setupRepo.calls)
+	}
+}
+
+func TestUpdateEventStage_ThreeInscribedIsNoLongerTheRule(t *testing.T) {
+	s := newTestEventHandlerSet()
+	f := seedOpenVoting(s, 10, 3)
+
+	w := patchStage(t, s, f.event.ID, votingBody(dateStr(time.Now().AddDate(0, 0, 3)), map[string]interface{}{"attachments_per_evaluator": 2}))
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	voting := jsonBody(t, w)["voting"].(map[string]interface{})
+	assert.Equal(t, float64(3), voting["assignments_count"])
+	assert.Equal(t, float64(3), voting["total_attachments"])
+}
+
+func TestUpdateEventStage_RejectsVotingWithoutConfiguration(t *testing.T) {
+	s := newTestEventHandlerSet()
+	f := seedOpenVoting(s, 3, 3)
+
+	w := patchStage(t, s, f.event.ID, votingBody(dateStr(time.Now().AddDate(0, 0, 3)), nil))
+
+	require.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "MISSING_VOTING_CONFIG", jsonBody(t, w)["code"])
+	assert.Zero(t, s.setupRepo.calls)
+}
+
+func TestUpdateEventStage_VotingConfigurationDefaultsAndRules(t *testing.T) {
+	tests := []struct {
+		name       string
+		inscribed  int
+		cfg        map[string]interface{}
+		wantStatus int
+		wantCode   string
+		check      func(t *testing.T, cfg map[string]interface{}, assignments float64)
+	}{
+		{
+			name: "default min evaluations is min(3, m) with k=4", inscribed: 4,
+			cfg: map[string]interface{}{"attachments_per_evaluator": 3}, wantStatus: http.StatusOK,
+			check: func(t *testing.T, cfg map[string]interface{}, assignments float64) {
+				assert.Equal(t, float64(3), cfg["min_evaluations_per_file"])
+				assert.Equal(t, float64(4), assignments)
+			},
+		},
+		{
+			name: "coverage not reachable", inscribed: 3,
+			cfg:        map[string]interface{}{"attachments_per_evaluator": 2, "min_evaluations_per_file": 3},
+			wantStatus: http.StatusBadRequest, wantCode: "MATH_CONSTRAINT_VIOLATION",
+		},
+		{
+			name: "m above k-1", inscribed: 3,
+			cfg: map[string]interface{}{"attachments_per_evaluator": 3}, wantStatus: http.StatusBadRequest, wantCode: "M_EXCEEDS_EVALUABLE",
+		},
+		{
+			name: "m below the minimum", inscribed: 3,
+			cfg: map[string]interface{}{"attachments_per_evaluator": 1}, wantStatus: http.StatusBadRequest, wantCode: "MATH_CONSTRAINT_VIOLATION",
+		},
+		{
+			name: "equal thresholds", inscribed: 3,
+			cfg:        map[string]interface{}{"attachments_per_evaluator": 2, "quality_good_threshold": 0.5, "quality_bad_threshold": 0.5},
+			wantStatus: http.StatusBadRequest, wantCode: "INVALID_THRESHOLDS",
+		},
+		{
+			name: "gap below 0.1 against the default", inscribed: 3,
+			cfg:        map[string]interface{}{"attachments_per_evaluator": 2, "quality_good_threshold": 0.35},
+			wantStatus: http.StatusBadRequest, wantCode: "INVALID_THRESHOLDS",
+		},
+		{
+			name: "inverted thresholds", inscribed: 3,
+			cfg:        map[string]interface{}{"attachments_per_evaluator": 2, "quality_good_threshold": 0.3, "quality_bad_threshold": 0.6},
+			wantStatus: http.StatusBadRequest, wantCode: "INVALID_THRESHOLDS",
+		},
+		{
+			name: "gap of exactly 0.1", inscribed: 3,
+			cfg:        map[string]interface{}{"attachments_per_evaluator": 2, "quality_good_threshold": 0.7, "quality_bad_threshold": 0.6},
+			wantStatus: http.StatusOK,
+			check: func(t *testing.T, cfg map[string]interface{}, _ float64) {
+				assert.Equal(t, 0.7, cfg["quality_good_threshold"])
+				assert.Equal(t, 0.6, cfg["quality_bad_threshold"])
+			},
+		},
+		{
+			name: "m of zero", inscribed: 3,
+			cfg: map[string]interface{}{"attachments_per_evaluator": 0}, wantStatus: http.StatusBadRequest, wantCode: "INVALID_PAYLOAD",
+		},
+		{
+			name: "m of 51", inscribed: 3,
+			cfg: map[string]interface{}{"attachments_per_evaluator": 51}, wantStatus: http.StatusBadRequest, wantCode: "INVALID_PAYLOAD",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newTestEventHandlerSet()
+			f := seedOpenVoting(s, tt.inscribed, tt.inscribed)
+
+			w := patchStage(t, s, f.event.ID, votingBody(dateStr(time.Now().AddDate(0, 0, 3)), tt.cfg))
+
+			require.Equal(t, tt.wantStatus, w.Code, w.Body.String())
+			resp := jsonBody(t, w)
+			if tt.wantCode != "" {
+				assert.Equal(t, tt.wantCode, resp["code"])
+				assert.Zero(t, s.setupRepo.calls)
+				return
+			}
+			voting := resp["voting"].(map[string]interface{})
+			tt.check(t, voting["configuration"].(map[string]interface{}), voting["assignments_count"].(float64))
+		})
+	}
+}
+
+func TestUpdateEventStage_VotingSetupFailureReturns500WithoutWritingTheStage(t *testing.T) {
+	s := newTestEventHandlerSet()
+	f := seedOpenVoting(s, 4, 3)
+	s.setupRepo.eventRepo = nil
+	s.setupRepo.OpenVotingFunc = func(string, *time.Time, *vote.VotingConfiguration, []*vote.Assignment) error {
+		return errors.New("insert assignments")
+	}
+
+	w := patchStage(t, s, f.event.ID, votingBody(dateStr(time.Now().AddDate(0, 0, 3)), map[string]interface{}{"attachments_per_evaluator": 2}))
+
+	require.Equal(t, http.StatusInternalServerError, w.Code, w.Body.String())
+	resp := jsonBody(t, w)
+	assert.Equal(t, "VOTING_SETUP_ERROR", resp["code"])
+	assert.NotContains(t, resp, "data")
+	assert.Equal(t, event.StageParticipation, f.event.Stage)
+	assert.Zero(t, s.eventRepo.stageUpdates)
+}
+
+func TestUpdateEventStage_OpeningReplacesAnExistingConfiguration(t *testing.T) {
+	s := newTestEventHandlerSet()
+	f := seedOpenVoting(s, 3, 3)
+	// A configuration created earlier through the deprecated endpoint is
+	// replaced inside OpenVoting, so the handler must not reject it.
+	date := dateStr(time.Now().AddDate(0, 0, 3))
+
+	w := patchStage(t, s, f.event.ID, votingBody(date, map[string]interface{}{"attachments_per_evaluator": 2, "min_evaluations_per_file": 2}))
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.Equal(t, 2, s.setupRepo.config.MinEvaluationsPerFile)
+	assert.Equal(t, f.event.ID.String(), s.setupRepo.eventID)
+}
+
+func TestUpdateEventStage_IgnoresVotingConfigOutsideVoting(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	e.Stage = event.StageCreation
+	s.eventRepo.addEvent(e)
+
+	body := map[string]interface{}{
+		"stage": "participation", "estimated_end_date": dateStr(time.Now().AddDate(0, 0, 3)),
+		"voting_config": map[string]interface{}{"attachments_per_evaluator": 2},
+	}
+	w := patchStage(t, s, e.ID, body)
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.NotContains(t, jsonBody(t, w), "voting")
+	assert.Zero(t, s.setupRepo.calls)
+	assert.Equal(t, 1, s.eventRepo.stageUpdates)
+}
+
+func TestUpdateEventStage_OpensVotingWithExclusionByDefault(t *testing.T) {
+	s := newTestEventHandlerSet()
+	f := seedOpenVoting(s, 3, 3)
+
+	w := patchStage(t, s, f.event.ID, votingBody(dateStr(time.Now().AddDate(0, 0, 3)), map[string]interface{}{"attachments_per_evaluator": 2}))
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	require.NotNil(t, s.setupRepo.config)
+	assert.Equal(t, vote.SanctionExclusion, s.setupRepo.config.NonEvaluatorSanction)
+	assert.Equal(t, vote.DefaultNonEvaluatorPenalty, s.setupRepo.config.NonEvaluatorPenalty)
+}
+
+func TestUpdateEventStage_OpensVotingWithPenalty(t *testing.T) {
+	s := newTestEventHandlerSet()
+	f := seedOpenVoting(s, 3, 3)
+
+	w := patchStage(t, s, f.event.ID, votingBody(dateStr(time.Now().AddDate(0, 0, 3)), map[string]interface{}{
+		"attachments_per_evaluator": 2, "non_evaluator_sanction": "penalty", "non_evaluator_penalty": 7,
+	}))
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.Equal(t, vote.SanctionPenalty, s.setupRepo.config.NonEvaluatorSanction)
+	assert.Equal(t, 7, s.setupRepo.config.NonEvaluatorPenalty)
+}
+
+func TestUpdateEventStage_RejectsInvalidSanction(t *testing.T) {
+	for name, cfg := range map[string]map[string]interface{}{
+		"unknown sanction": {"attachments_per_evaluator": 2, "non_evaluator_sanction": "warning"},
+		"penalty of zero":  {"attachments_per_evaluator": 2, "non_evaluator_sanction": "penalty", "non_evaluator_penalty": 0},
+	} {
+		t.Run(name, func(t *testing.T) {
+			s := newTestEventHandlerSet()
+			f := seedOpenVoting(s, 3, 3)
+
+			w := patchStage(t, s, f.event.ID, votingBody(dateStr(time.Now().AddDate(0, 0, 3)), cfg))
+
+			require.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
+			assert.Equal(t, "INVALID_SANCTION", jsonBody(t, w)["code"])
+			assert.Zero(t, s.setupRepo.calls)
+		})
+	}
+}
+
+// The preview and the opening must agree on which m is acceptable.
+func TestUpdateEventStage_AcceptsRecommendedMAndRejectsBelowMinimum(t *testing.T) {
+	tests := []struct{ k, recommended, belowMin int }{{3, 2, 1}, {4, 3, 1}, {10, 7, 5}}
+	for _, tt := range tests {
+		minM, _, recommendedM := vote.VotingBounds(tt.k)
+		require.Equal(t, tt.recommended, recommendedM)
+		require.Equal(t, tt.belowMin, minM-1)
+
+		s := newTestEventHandlerSet()
+		f := seedOpenVoting(s, tt.k, tt.k)
+		w := patchStage(t, s, f.event.ID, votingBody(dateStr(time.Now().AddDate(0, 0, 3)), map[string]interface{}{"attachments_per_evaluator": recommendedM}))
+		assert.Equal(t, http.StatusOK, w.Code, "k=%d recommended: %s", tt.k, w.Body.String())
+
+		s = newTestEventHandlerSet()
+		f = seedOpenVoting(s, tt.k, tt.k)
+		w = patchStage(t, s, f.event.ID, votingBody(dateStr(time.Now().AddDate(0, 0, 3)), map[string]interface{}{"attachments_per_evaluator": tt.belowMin}))
+		require.Equal(t, http.StatusBadRequest, w.Code, "k=%d below min", tt.k)
+		assert.Equal(t, "MATH_CONSTRAINT_VIOLATION", jsonBody(t, w)["code"])
+	}
+}
+
+func TestUpdateEventStage_RejectsPastEstimatedDate(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	e.Stage = event.StageCreation
+	s.eventRepo.addEvent(e)
+
+	body := map[string]interface{}{"stage": "participation", "estimated_end_date": dateStr(time.Now().AddDate(0, 0, -2))}
+	w := performAuthedRequest(t, http.MethodPatch, s.handler.UpdateEventStage,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", body)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "INVALID_ESTIMATED_DATE", jsonBody(t, w)["code"])
+}
+
+// ---------------------------------------------------------------------------
+// UpdateEstimatedEndDate — includes the disabled "no advancing deadlines"
+// business rule (dead code: `if false && ...`), which we document rather
+// than silently rely on.
+// ---------------------------------------------------------------------------
+
+func TestUpdateEstimatedEndDate_RejectsWrongStage(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	e.Stage = event.StageVoting
+	s.eventRepo.addEvent(e)
+
+	body := map[string]interface{}{"stage": "participation", "estimated_end_date": dateStr(time.Now().AddDate(0, 0, 3))}
+	w := performAuthedRequest(t, http.MethodPatch, s.handler.UpdateEstimatedEndDate,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", body)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "INVALID_STAGE_FOR_EDIT", jsonBody(t, w)["code"])
+}
+
+// TestUpdateEstimatedEndDate_RejectsAdvancingDeadline is a regression test
+// for a fix applied after review: the handler used to have a fully-written
+// check to reject advancing a deadline earlier than it already is, but it
+// was guarded behind `if false && ...` and so never actually ran - the
+// organizer could silently advance a deadline for a stage already in
+// progress. The guard has been removed so the restriction is enforced again:
+// once a stage's estimated end date is set and hasn't passed yet, it can
+// only be postponed, never brought forward.
+func TestUpdateEstimatedEndDate_RejectsAdvancingDeadline(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 10), "org")
+	e.Stage = event.StageParticipation
+	farFuture := time.Now().AddDate(0, 0, 8)
+	e.ParticipationEstimatedEndDate = &farFuture
+	s.eventRepo.addEvent(e)
+
+	// Try to move the deadline earlier than the current one.
+	nearer := time.Now().AddDate(0, 0, 2)
+	body := map[string]interface{}{"stage": "participation", "estimated_end_date": dateStr(nearer)}
+	w := performAuthedRequest(t, http.MethodPatch, s.handler.UpdateEstimatedEndDate,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", body)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
+	assert.Equal(t, "CANNOT_ADVANCE_DEADLINE", jsonBody(t, w)["code"])
+}
+
+func TestUpdateEstimatedEndDate_AllowsPostponingDeadline(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 10), "org")
+	e.Stage = event.StageParticipation
+	current := time.Now().AddDate(0, 0, 2)
+	e.ParticipationEstimatedEndDate = &current
+	s.eventRepo.addEvent(e)
+
+	// Move the deadline later than the current one.
+	later := time.Now().AddDate(0, 0, 8)
+	body := map[string]interface{}{"stage": "participation", "estimated_end_date": dateStr(later)}
+	w := performAuthedRequest(t, http.MethodPatch, s.handler.UpdateEstimatedEndDate,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", body)
+
+	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.Equal(t, "ESTIMATED_DATE_UPDATED", jsonBody(t, w)["code"])
+}
+
+// TestUpdateEstimatedEndDate_AllowsAdvancingWhenNoCurrentDeadline covers the
+// case where the stage has no estimated end date set yet - there is nothing
+// to "advance", so the restriction (which only applies when currentDate !=
+// nil) must not block setting an initial date.
+func TestUpdateEstimatedEndDate_AllowsAdvancingWhenNoCurrentDeadline(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 10), "org")
+	e.Stage = event.StageParticipation // ParticipationEstimatedEndDate left nil
+	s.eventRepo.addEvent(e)
+
+	body := map[string]interface{}{"stage": "participation", "estimated_end_date": dateStr(time.Now().AddDate(0, 0, 2))}
+	w := performAuthedRequest(t, http.MethodPatch, s.handler.UpdateEstimatedEndDate,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", body)
+
+	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
+}
+
+// ---------------------------------------------------------------------------
+// RegisterParticipant
+// ---------------------------------------------------------------------------
+
+func newRegisterableEvent() (*event.Event, uuid.UUID) {
+	authorID := uuid.New()
+	e := event.NewEvent("Event", "desc", authorID, time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	e.Stage = event.StageParticipation
+	return e, authorID
+}
+
+func TestRegisterParticipant_Success(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e, _ := newRegisterableEvent()
+	s.eventRepo.addEvent(e)
+
+	body := map[string]interface{}{"participant_name": "New Person", "participant_email": "new@example.com"}
+	w := performRequest(t, http.MethodPost, s.handler.RegisterParticipant,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", body)
+
+	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
+	assert.Equal(t, "PARTICIPANT_REGISTERED", jsonBody(t, w)["code"])
+}
+
+func TestRegisterParticipant_RejectsWrongStage(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e, _ := newRegisterableEvent()
+	e.Stage = event.StageVoting
+	s.eventRepo.addEvent(e)
+
+	body := map[string]interface{}{"participant_name": "New Person", "participant_email": "new@example.com"}
+	w := performRequest(t, http.MethodPost, s.handler.RegisterParticipant,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", body)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "INVALID_REGISTRATION_STAGE", jsonBody(t, w)["code"])
+}
+
+func TestRegisterParticipant_RejectsPausedEvent(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e, _ := newRegisterableEvent()
+	e.IsPaused = true
+	s.eventRepo.addEvent(e)
+
+	body := map[string]interface{}{"participant_name": "New Person", "participant_email": "new@example.com"}
+	w := performRequest(t, http.MethodPost, s.handler.RegisterParticipant,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", body)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+	assert.Equal(t, "EVENT_PAUSED", jsonBody(t, w)["code"])
+}
+
+func TestRegisterParticipant_RejectsCreatorSelfRegistration(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e, authorID := newRegisterableEvent()
+	s.eventRepo.addEvent(e)
+	author := &participant.User{ID: authorID, Name: "Author", Email: "author@example.com", Role: participant.RoleOrganizer}
+	s.userRepo.addUser(author)
+
+	body := map[string]interface{}{"participant_name": "Author", "participant_email": "author@example.com"}
+	w := performRequest(t, http.MethodPost, s.handler.RegisterParticipant,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", body)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "CREATOR_CANNOT_REGISTER", jsonBody(t, w)["code"])
+}
+
+func TestRegisterParticipant_RejectsDuplicateRegistration(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e, _ := newRegisterableEvent()
+	s.eventRepo.addEvent(e)
+	existing := participant.NewParticipant("Existing", "Person", "existing@example.com")
+	s.userRepo.addUser(existing)
+	s.eventRepo.byParticipant[existing.ID.String()] = []*event.Event{e}
+
+	body := map[string]interface{}{"participant_name": "Existing", "participant_email": "existing@example.com"}
+	w := performRequest(t, http.MethodPost, s.handler.RegisterParticipant,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", body)
+
+	assert.Equal(t, http.StatusConflict, w.Code)
+	assert.Equal(t, "ALREADY_REGISTERED", jsonBody(t, w)["code"])
+}
+
+func TestRegisterParticipant_RejectsWhenMaxParticipantsReached(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e, _ := newRegisterableEvent()
+	maxP := 1
+	e.MaxParticipants = &maxP
+	s.eventRepo.addEvent(e)
+
+	existing := participant.NewParticipant("Existing", "Person", "existing@example.com")
+	s.userRepo.addUser(existing)
+	s.userRepo.setEventParticipants(e.ID.String(), []*participant.UserWithEventRole{
+		{User: *existing, EventRole: "participant"},
+	})
+
+	body := map[string]interface{}{"participant_name": "New Person", "participant_email": "new@example.com"}
+	w := performRequest(t, http.MethodPost, s.handler.RegisterParticipant,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", body)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "MAX_PARTICIPANTS_REACHED", jsonBody(t, w)["code"])
+}
+
+func TestRegisterParticipant_UsesDefaultMaxParticipantsOfTwenty(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e, _ := newRegisterableEvent() // MaxParticipants left nil -> default 20
+	s.eventRepo.addEvent(e)
+
+	existingUsers := make([]*participant.UserWithEventRole, 20)
+	for i := 0; i < 20; i++ {
+		u := participant.NewParticipant("P", "P", uuid.NewString()+"@example.com")
+		existingUsers[i] = &participant.UserWithEventRole{User: *u, EventRole: "participant"}
+	}
+	s.userRepo.setEventParticipants(e.ID.String(), existingUsers)
+
+	body := map[string]interface{}{"participant_name": "New Person", "participant_email": "new21@example.com"}
+	w := performRequest(t, http.MethodPost, s.handler.RegisterParticipant,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", body)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	resp := jsonBody(t, w)
+	assert.Equal(t, "MAX_PARTICIPANTS_REACHED", resp["code"])
+	assert.Equal(t, float64(20), resp["max_participants"])
+}
+
+// ---------------------------------------------------------------------------
+// RemoveParticipant
+// ---------------------------------------------------------------------------
+
+func TestRemoveParticipant_RejectsNotRegistered(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e, _ := newRegisterableEvent()
+	s.eventRepo.addEvent(e)
+
+	w := performRequest(t, http.MethodDelete, s.handler.RemoveParticipant,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}, {Key: "participant_id", Value: uuid.New().String()}}, "", nil)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	assert.Equal(t, "NOT_REGISTERED", jsonBody(t, w)["code"])
+}
+
+func TestRemoveParticipant_RejectsWrongStage(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e, _ := newRegisterableEvent()
+	e.Stage = event.StageVoting
+	s.eventRepo.addEvent(e)
+
+	w := performRequest(t, http.MethodDelete, s.handler.RemoveParticipant,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}, {Key: "participant_id", Value: uuid.New().String()}}, "", nil)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "INVALID_REMOVAL_STAGE", jsonBody(t, w)["code"])
+}
+
+func TestRemoveParticipant_Success(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e, _ := newRegisterableEvent()
+	s.eventRepo.addEvent(e)
+	p := participant.NewParticipant("P", "P", "p@example.com")
+	s.eventRepo.byParticipant[p.ID.String()] = []*event.Event{e}
+
+	w := performRequest(t, http.MethodDelete, s.handler.RemoveParticipant,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}, {Key: "participant_id", Value: p.ID.String()}}, "", nil)
+
+	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
+}
+
+// ---------------------------------------------------------------------------
+// DeleteEvent — always returns 501, but only after validating
+// ---------------------------------------------------------------------------
+
+func TestDeleteEvent_ReturnsNotImplementedAfterValidation(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	e.Stage = event.StageCreation
+	s.eventRepo.addEvent(e)
+
+	w := performRequest(t, http.MethodDelete, s.handler.DeleteEvent,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", nil)
+
+	assert.Equal(t, http.StatusNotImplemented, w.Code)
+}
+
+func TestDeleteEvent_RejectsWrongStageBeforeNotImplemented(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	e.Stage = event.StageVoting
+	s.eventRepo.addEvent(e)
+
+	w := performRequest(t, http.MethodDelete, s.handler.DeleteEvent,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", nil)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "INVALID_DELETE_STAGE", jsonBody(t, w)["code"])
+}
+
+// ---------------------------------------------------------------------------
+// CancelEvent / PauseEvent
+// ---------------------------------------------------------------------------
+
+func TestCancelEvent_RejectsAlreadyCancelled(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	e.IsCancelled = true
+	s.eventRepo.addEvent(e)
+
+	w := performRequest(t, http.MethodPatch, s.handler.CancelEvent,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", nil)
+
+	assert.Equal(t, http.StatusConflict, w.Code)
+	assert.Equal(t, "ALREADY_CANCELLED", jsonBody(t, w)["code"])
+}
+
+func TestCancelEvent_Success(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	s.eventRepo.addEvent(e)
+
+	w := performRequest(t, http.MethodPatch, s.handler.CancelEvent,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", nil)
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	updated, _ := s.eventRepo.GetByID(e.ID.String())
+	assert.True(t, updated.IsCancelled)
+}
+
+func TestPauseEvent_RejectsCancelledEvent(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	e.IsCancelled = true
+	s.eventRepo.addEvent(e)
+
+	w := performRequest(t, http.MethodPatch, s.handler.PauseEvent,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", nil)
+
+	assert.Equal(t, http.StatusConflict, w.Code)
+	assert.Equal(t, "EVENT_CANCELLED", jsonBody(t, w)["code"])
+}
+
+func TestPauseEvent_TogglesState(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	s.eventRepo.addEvent(e)
+
+	w1 := performRequest(t, http.MethodPatch, s.handler.PauseEvent,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", nil)
+	require.Equal(t, http.StatusOK, w1.Code, w1.Body.String())
+	assert.Equal(t, "EVENT_PAUSED", jsonBody(t, w1)["code"])
+
+	w2 := performRequest(t, http.MethodPatch, s.handler.PauseEvent,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", nil)
+	require.Equal(t, http.StatusOK, w2.Code, w2.Body.String())
+	assert.Equal(t, "EVENT_RESUMED", jsonBody(t, w2)["code"])
+}
+
+// ---------------------------------------------------------------------------
+// GetShareableEventInfo — truncation and URL building
+// ---------------------------------------------------------------------------
+
+func TestGetShareableEventInfo_TruncatesLongDescription(t *testing.T) {
+	s := newTestEventHandlerSet()
+	longDesc := make([]byte, 250)
+	for i := range longDesc {
+		longDesc[i] = 'a'
+	}
+	e := event.NewEvent("Event", string(longDesc), uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	e.Stage = event.StageParticipation
+	s.eventRepo.addEvent(e)
+
+	w := performRequest(t, http.MethodGet, s.handler.GetShareableEventInfo,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", nil)
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	data := jsonBody(t, w)["data"].(map[string]interface{})
+	desc := data["description"].(string)
+	assert.LessOrEqual(t, len(desc), 200)
+	assert.Contains(t, desc, "...")
+}
+
+func TestGetShareableEventInfo_KeepsShortDescriptionUnchanged(t *testing.T) {
+	s := newTestEventHandlerSet()
+	e := event.NewEvent("Event", "short description", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	e.Stage = event.StageParticipation
+	s.eventRepo.addEvent(e)
+
+	w := performRequest(t, http.MethodGet, s.handler.GetShareableEventInfo,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}}, "", nil)
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	data := jsonBody(t, w)["data"].(map[string]interface{})
+	assert.Equal(t, "short description", data["description"])
+}
+
+// ---------------------------------------------------------------------------
+// GetAllEvents — pagination and stage filtering
+// ---------------------------------------------------------------------------
+
+func TestGetAllEvents_FiltersByStage(t *testing.T) {
+	s := newTestEventHandlerSet()
+	creationEvent := event.NewEvent("Creation Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	votingEvent := event.NewEvent("Voting Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	votingEvent.Stage = event.StageVoting
+	s.eventRepo.addEvent(creationEvent)
+	s.eventRepo.addEvent(votingEvent)
+
+	w := performRequest(t, http.MethodGet, s.handler.GetAllEvents, nil, "stage=voting", nil)
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	data := jsonBody(t, w)["data"].([]interface{})
+	require.Len(t, data, 1)
+	assert.Equal(t, "Voting Event", data[0].(map[string]interface{})["name"])
+}
+
+func TestGetAllEvents_RejectsInvalidStageFilter(t *testing.T) {
+	s := newTestEventHandlerSet()
+	w := performRequest(t, http.MethodGet, s.handler.GetAllEvents, nil, "stage=not-a-stage", nil)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "INVALID_STAGE_FILTER", jsonBody(t, w)["code"])
+}
+
+func TestGetAllEvents_PaginatesResults(t *testing.T) {
+	s := newTestEventHandlerSet()
+	for i := 0; i < 15; i++ {
+		e := event.NewEvent(uuid.NewString(), "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+		e.Stage = event.StageParticipation
+		s.eventRepo.addEvent(e)
+	}
+
+	w := performRequest(t, http.MethodGet, s.handler.GetAllEvents, nil, "page=2&limit=10", nil)
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	resp := jsonBody(t, w)
+	data := resp["data"].([]interface{})
+	assert.Len(t, data, 5) // 15 total, page 2 of size 10 -> remaining 5
+	pagination := resp["pagination"].(map[string]interface{})
+	assert.Equal(t, float64(15), pagination["total"])
+	assert.Equal(t, float64(2), pagination["total_pages"])
+}
+
+func attachmentFor(eventID, participantID uuid.UUID) *attachment.Attachment {
+	return attachment.NewAttachment(eventID, participantID, "f.jpg", "photo.jpg", "/tmp/f.jpg", "image/jpeg", 1024, "")
+}
+
+// ---------------------------------------------------------------------------
+// UpdateEventStage → results: the stage change must calculate and store the
+// ranking, because the public GET that serves visitors is read-only.
+// ---------------------------------------------------------------------------
+
+func TestUpdateEventStage_CalculatesAndStoresResultsOnTransition(t *testing.T) {
+	s := newTestEventHandlerSet()
+
+	configRepo := newMockVotingConfigurationRepository()
+	resultsRepo := newMockVotingResultsRepository()
+	voteRepo := newMockVoteRepository()
+	s.handler.voteHandler = NewDistributedVoteHandler(
+		voteRepo, s.eventRepo, s.attachmentRepo, s.userRepo, configRepo, resultsRepo,
+		&config.Config{}, nil,
+	)
+
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	e.Stage = event.StageVoting
+	s.eventRepo.addEvent(e)
+
+	// Three participants with a file each, plus the voting configuration
+	users := make([]*participant.User, 3)
+	roles := make([]*participant.UserWithEventRole, 3)
+	for i := range users {
+		u := participant.NewParticipant("P", "articipant", uuid.NewString()+"@example.com")
+		s.userRepo.addUser(u)
+		users[i] = u
+		roles[i] = &participant.UserWithEventRole{User: *u, EventRole: "participant"}
+		s.attachmentRepo.addAttachment(attachmentFor(e.ID, u.ID))
+	}
+	s.userRepo.setEventParticipants(e.ID.String(), roles)
+	configRepo.byEvent[e.ID.String()] = &vote.VotingConfiguration{
+		ID: uuid.New(), EventID: e.ID, AttachmentsPerEvaluator: 2,
+		QualityGoodThreshold: 0.6, QualityBadThreshold: 0.3, AdjustmentMagnitude: 3, MinEvaluationsPerFile: 1,
+	}
+	// At least one vote: with zero votes there is no ranking to store.
+	attachments := s.attachmentRepo.byEvent[e.ID.String()]
+	voteRepo.votes = append(voteRepo.votes, &vote.Vote{
+		ID: uuid.New(), EventID: e.ID, VoterID: users[0].ID,
+		AttachmentID: attachments[1].ID, RankPosition: 1,
+	})
+
+	w := performAuthedRequest(t, http.MethodPatch, s.handler.UpdateEventStage,
+		gin.Params{{Key: "event_id", Value: e.ID.String()}},
+		"org-1",
+		map[string]interface{}{"stage": "results"})
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+
+	stored, err := resultsRepo.GetByEventID(e.ID.String())
+	require.NoError(t, err)
+	require.NotNil(t, stored, "entering the results stage must leave a stored ranking behind")
+	assert.NotEmpty(t, stored.GlobalRanking)
+}
+
+// Publishing with missing rankings must still store the result: only one of
+// four evaluators submitted their ranking.
+func TestUpdateEventStage_StoresResultsWithMissingRankings(t *testing.T) {
+	s := newTestEventHandlerSet()
+	configRepo := newMockVotingConfigurationRepository()
+	resultsRepo := newMockVotingResultsRepository()
+	s.handler.voteHandler = NewDistributedVoteHandler(
+		s.voteRepo, s.eventRepo, s.attachmentRepo, s.userRepo, configRepo, resultsRepo,
+		&config.Config{}, nil,
+	)
+
+	e := event.NewEvent("Event", "desc", uuid.New(), time.Now(), time.Now().AddDate(0, 0, 5), "org")
+	e.Stage = event.StageVoting
+	s.eventRepo.addEvent(e)
+
+	users := make([]*participant.User, 4)
+	attachments := make([]*attachment.Attachment, 4)
+	for i := range users {
+		users[i] = participant.NewParticipant("P", "articipant", uuid.NewString()+"@example.com")
+		s.userRepo.addUser(users[i])
+		attachments[i] = attachmentFor(e.ID, users[i].ID)
+		s.attachmentRepo.addAttachment(attachments[i])
+	}
+	configRepo.byEvent[e.ID.String()] = &vote.VotingConfiguration{
+		ID: uuid.New(), EventID: e.ID, AttachmentsPerEvaluator: 2,
+		QualityGoodThreshold: 0.6, QualityBadThreshold: 0.3, AdjustmentMagnitude: 3, MinEvaluationsPerFile: 1,
+	}
+	for i, u := range users {
+		a := vote.NewAssignment(e.ID, u.ID, []uuid.UUID{attachments[(i+1)%4].ID, attachments[(i+2)%4].ID})
+		s.voteRepo.assignments[a.ID.String()] = a
+		if i != 0 {
+			continue
+		}
+		a.MarkCompleted()
+		for rank, id := range a.GetAttachmentUUIDs() {
+			s.voteRepo.votes = append(s.voteRepo.votes, &vote.Vote{
+				ID: uuid.New(), EventID: e.ID, AssignmentID: a.ID, VoterID: u.ID,
+				AttachmentID: id, RankPosition: rank + 1,
+			})
+		}
+	}
+
+	w := patchStage(t, s, e.ID, map[string]interface{}{"stage": "results"})
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	resp := jsonBody(t, w)
+	assert.Equal(t, "STAGE_UPDATED", resp["code"])
+	assert.Equal(t, map[string]interface{}{"from": "voting", "to": "results"}, resp["transition"])
+	stored, err := resultsRepo.GetByEventID(e.ID.String())
+	require.NoError(t, err)
+	require.NotNil(t, stored)
+	assert.Equal(t, 4, stored.TotalParticipants)
+	assert.Equal(t, 2, stored.TotalVotes)
+}

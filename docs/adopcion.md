@@ -1,0 +1,368 @@
+# Adopción de jiku flow
+
+> Informe de la adopción del 27 de noviembre de 2026 (requisito #622). Es un registro de ese día: no
+> se mantiene al día. Lo que decidas hacer con lo que lista entra como requisito de Jiku
+> (`/jflow-spec` + `/jflow-build`) o como cambio directo (`/jflow-fix`).
+
+## Resumen
+
+| | |
+|---|---|
+| Definición | 8 bloques (ACC, EVE, EXP, INS, VOT, RES, NOT, BAN), 10 entidades, 40 operaciones, 11 invariantes, 14 garantías, 23 decisiones (9 de producto, 14 técnicas), 4 flujos |
+| Listo para especificar e implementar | Sí: el repositorio cumple el mínimo (M1–M9), verificado |
+| Correcciones hechas en la adopción | 16; en el producto, solo las URLs de Google configurables y una traducción que pide un test existente |
+| Cargado en Jiku | 16 incidencias de seguridad: #639 a #654 |
+| En este informe | 34 bugs, 1 comportamiento a confirmar, 19 defaults sugeridos, 14 otras mejoras |
+| Cobertura por ID | 23 de 197 IDs con un test que los nombra: solo los tests end to end de la adopción llevan IDs; los tests anteriores (más de 1.300) no |
+
+## Línea de base
+
+Cómo estaba el repositorio antes de la adopción, corriendo sus propios comandos (los del CI, el
+`Makefile` y `web/package.json`).
+
+| Comando de antes | Resultado |
+|---|---|
+| `./scripts/set-version.sh --check` | Pasa |
+| `cd api && go build ./... && go vet ./...` | Pasa |
+| `cd api && go test -race ./...` (unitarios) | Pasa: 8 paquetes, 0 fallas |
+| `make test-integration` (base de Compose + `go test -tags=integration`) | Pasa: 11 paquetes (y 6 sin tests), 0 fallas |
+| `cd web && npm ci && npm run build` | Pasa |
+| `cd web && CI=true npm test` (Jest) | Pasa: 91 suites, 813 tests |
+| `cd web && npm run lint` y `npm run typecheck` | Pasan (el CI no los corría) |
+| `make up` (`deploy/docker-compose.yml`) | Levanta base, Garage, api y web; `/health` responde con la base conectada |
+
+No había tests end to end. El email estaba apagado por defecto y no había Mailpit.
+
+## Correcciones hechas en la adopción
+
+Lo que la adopción cambió para llegar al mínimo de jiku flow. La lógica del producto no cambió: no
+había ningún test fallando. Lo único que cambió en el producto: las URLs de Google se volvieron
+configurables (sin cambiar su valor) y la web traduce un código de error más, porque un test existente
+lo pide.
+
+| Mínimo | Qué se hizo | Cómo se comprobó |
+|---|---|---|
+| M1 | `api/` y `web/` pasaron a `services/api/` y `services/web/` (con su historia); el Compose, a la raíz; la configuración de Garage, a `infra/storage/`. Se actualizaron todas las rutas: Makefile, CI, `scripts/set-version.sh`, `.gitignore`, plantilla de PR, README, CONTRIBUTING, `documentation/`, comentarios y los dos tests de la web que leen el contrato | Ninguna ruta vieja fuera del CHANGELOG; `make check` |
+| M8 | El contrato `docs/apis/api.yaml` pasó a `_jflow/apis/api.openapi.yaml`, anotado con `operationId`, módulo, requerimientos y condiciones de falla; se le agregaron las respuestas y los códigos que la api devuelve y no figuraban (`500` de la asignación, `403` de los borradores, `BAD_REQUEST` y `NOT_FOUND` de los middlewares de permisos, `ACCOUNT_NO_PASSWORD`, `INVALID_USER_ID`). La documentación del framework anterior en `docs/` se borró (queda en la historia de git) | `jflow.py def-check` |
+| M2 | `Makefile` en la raíz con todos los targets de jiku flow, que delegan en `services/api/Makefile` y `services/web/Makefile` (`S=` limita a uno). Se conservaron `stop`, `reset`, `infra`, `api` y `web` | `make check` |
+| M3 | Reportes JUnit en `reports/junit/`: gotestsum para Go, jest-junit para Jest y el reporter de Playwright | `make check` deja `api-unit`, `api-integration`, `api-e2e`, `web-unit` y `web-e2e` |
+| M4 | `.env.example` con todas las variables de Compose, la api y la web, con defaults seguros. El `deploy/.env` local pasó a `.env` | `jflow.py conformance` |
+| M5 | Mailpit en Compose, con un certificado local generado una vez (`mailpit-cert`): la api siempre negocia STARTTLS verificando el certificado, y confía en ese por `SSL_CERT_DIR`, sin cambiar código. En local los emails ahora se mandan por defecto, a Mailpit. El esquema ya se construye desde una base vacía con las migraciones | `make up`; un email de recuperación llega a Mailpit |
+| M6 | Los tests de integración corren contra la base de Compose (`openparallax_test`) con las migraciones aplicadas | `make test-integration` |
+| M7 | El CI corre `make lint typecheck test-unit test-integration` por servicio (antes no corría el lint ni el typecheck de la web ni los tests de integración de la api) y guarda los reportes. La publicación de imágenes solo cambió de rutas | `.github/workflows/ci.yml` |
+| M9 | Las URLs con que la api verifica los tokens de Google pasaron a ser configurables (`GOOGLE_TOKENINFO_URL`, `GOOGLE_USERINFO_URL`; por defecto, las de Google) para apuntarla a un Google falso en los tests. `docker-compose.test.yml` agrega ese Google falso y siembra un admin y un organizer de prueba. Tests end to end de la api (cliente HTTP con tokens reales) y de la web (Playwright) | `make test-e2e` |
+| — | `services/web/.dockerignore` excluye también `coverage` y `e2e` | `make build` |
+| — | Al completar el contrato, el test de la web que cuenta sus códigos de error (TS-23) esperaba 106 y pasaron a ser 108. Con tu respuesta: el test espera 108 y el código `INVALID_USER_ID` tiene ahora su texto en español y en inglés | `make test-unit S=web` |
+| M2 | `make down`, `stop` y `reset` también quitan lo que agrega `make test-e2e` | `make test-e2e && make down` |
+| M1 | El Dockerfile de la web pasó de `services/web/docker/` a `services/web/` | `make build S=web` |
+| M2 | Los Makefiles de cada servicio tienen también `up`, `down`, `logs` y `check`; su `test-e2e`, corrido solo, levanta el producto con la configuración de test | `make -C services/api check` |
+| M6 | Los tests de integración de la api corren de a un paquete por vez (`go test -p 1`): dos paquetes comparten la base `openparallax_test` y, en paralelo, un test de migraciones que borra `notifications` trababa (deadlock) a los tests de repositorios al azar. Ya pasaba antes de la adopción, con menos frecuencia | `make test-integration S=api`, varias veces |
+| — | Dos comentarios del código citaban IDs del análisis anterior que hoy significan otra cosa (`U-03 / JTBD-03`, `D-11`): ahora citan RES-05, DEC-09 y RES-06 | — |
+
+## Cargado en Jiku
+
+| # | Título | Por qué |
+|---|---|---|
+| #639 | Inscripción en eventos sin identificarse, a nombre de cualquier email | Cualquiera puede inscribir a terceros: crea cuentas, inscribe cuentas existentes sin su consentimiento, llena el cupo, les hace llegar los emails del evento y obtiene el identificador del usuario y, si el email ya tenía cuenta, el nombre real de su dueño (INS-01). La cuenta se crea antes de controlar el cupo: aun con el evento lleno, cada email nuevo deja una cuenta creada (INS-03). Confirmado como error |
+| #640 | Emails de los inscritos visibles para cualquier usuario | Cualquier cuenta lista nombre y email de los inscritos de cualquier evento (INS-04). Confirmado como error |
+| #641 | El organizador puede votar en nombre de los participantes | El autor y los administradores envían rankings, borradores y propuestas por cualquier inscrito: pueden fabricar el resultado (VOT-09, INS-06). Confirmado como error |
+| #642 | El rol global organizer actúa sobre cualquier evento | Configura la votación, genera asignaciones y recalcula resultados de eventos ajenos, y ve la calidad de los evaluadores (VOT-13, RES-06). Confirmado como error |
+| #643 | Enumeración de cuentas en el registro, el login y la recuperación | Las respuestas distintas revelan si un email tiene cuenta y de qué tipo (ACC-E3, ACC-E4 a ACC-E6); en la recuperación, la respuesta es igual pero tarda más si la cuenta existe, porque espera el envío del email (ACC-05). Confirmado como error |
+| #644 | Cualquier usuario lee los datos de cualquier otro | `GET /api/v1/users/{id}` devuelve nombre, email y rol de cualquier cuenta a cualquier sesión (ACC-08); ya figuraba como defecto conocido |
+| #645 | Apropiación de cuentas por la vinculación con Google | Una cuenta creada con un email ajeno, sin verificarlo, queda vinculada al Google de su dueño cuando este entra, y el atacante conserva su contraseña (ACC-04) |
+| #646 | Credenciales y datos personales en los logs | En modo debug (el default del código y de `make dev`) se registra la cadena de conexión con la contraseña y el SQL con hashes y tokens de recuperación; los emails se registran siempre. La web escribe en la consola del navegador el email del usuario al restaurar la sesión y el nombre elegido con Google |
+| #647 | Inyección de cabeceras en los emails por el nombre del evento | El nombre del evento entra sin filtrar en el asunto: un salto de línea agrega cabeceras o cuerpo a los emails que reciben todos los inscritos |
+| #648 | Subida de propuestas sin endurecer | El tipo lo declara quien sube y se devuelve tal cual al descargar, sin `nosniff`; el tamaño se controla después de leer todo el cuerpo, sin límite; el nombre original no se escapa en la descarga |
+| #649 | Sesiones que no se pueden revocar | Una sesión sigue valiendo 24 horas después de cambiar la contraseña o de quitarle un rol: quien recupera una cuenta comprometida sigue expuesto, y un administrador degradado sigue siéndolo hasta que vence |
+| #650 | Sin límite de intentos en el login, el registro y la recuperación | Permite probar contraseñas por fuerza bruta y mandar emails de recuperación en masa a cualquier dirección |
+| #651 | Token de recuperación guardado sin hash | Quien lea la base puede cambiar la contraseña de cualquier cuenta con un pedido vigente; ya figuraba como defecto conocido |
+| #652 | Detalles internos en las respuestas de error | Algunos errores devuelven el mensaje de la base o del parser del token |
+| #653 | Los resultados públicos revelan quién no evaluó | Cualquiera, sin sesión, ve qué propuestas quedaron excluidas por no evaluar y de quién son, aunque el detalle de los ajustes está reservado al autor, los administradores y el dueño de cada propuesta (RES-05, DEC-04) |
+| #654 | Eventos en Creación detectables | Crear un evento con el nombre de uno oculto responde que ya existe, y subir una propuesta, pedir la asignación, enviar el ranking o pedir los resultados de uno oculto responde `400` o `403` con su etapa en vez de `404`, las operaciones que controlan permisos le responden `403` a quien no es el autor (EVE-E22), y el avance público de la votación responde `404` para un evento oculto pero `200` vacío para uno que no existe: todo eso revela que existe |
+
+## Bugs sospechados
+
+No son de seguridad, así que no se cargaron en Jiku. La definición los documenta tal como funcionan hoy.
+
+### B-01 Interruptores de aviso por email que no se guardan
+
+- **Qué pasa:** en Notificaciones, los interruptores «Avisarme también por email» cambian solo en pantalla; al recargar vuelven a sus valores fijos.
+- **Por qué parece un error:** confirmado como error en la adopción; las preferencias estaban fuera de alcance y la pantalla las muestra como si existieran.
+- **Dónde:** BAN-05; `services/web/src/pages/notifications/NotificationsPage.tsx:27-34,223-238`.
+- **Gravedad sugerida:** media: el usuario cree que configuró algo.
+
+### B-02 Recordatorio automático anunciado que no existe
+
+- **Qué pasa:** la tarjeta «Recordatorios» dice «Te avisamos 24 h antes de cada cierre…», pero no hay ningún aviso automático.
+- **Por qué parece un error:** confirmado como error en la adopción.
+- **Dónde:** BAN-05; `services/web/src/i18n/catalogs/es.ts:55-58`.
+- **Gravedad sugerida:** media.
+
+### B-03 Un evento cancelado sigue funcionando
+
+- **Qué pasa:** en la api, un evento cancelado sigue aceptando inscripciones, propuestas, rankings y cambios de etapa; la pausa bloquea las inscripciones, las propuestas y los recordatorios, pero no los rankings ni los cambios de etapa. La web sí cierra el evento cancelado (EXP-08, EVE-15) y, pausado, oculta el ranking y avisa que no se puede votar (EVE-14): la regla vive solo en la web, así que por la api se saltea. La web, además, no ofrece cancelar. Y un evento pausado que se cancela queda pausado para siempre: un evento cancelado no se puede reanudar (EVE-09, EVE-E16).
+- **Por qué parece un error:** confirmado como error en la adopción.
+- **Dónde:** EVE-09, EVE-10, EVE-14, EVE-15, EXP-08; `services/api/internal/handlers/event_handler.go:1086`, `attachment_handler.go:135`.
+- **Gravedad sugerida:** media.
+
+### B-04 Una base nueva y una actualizada no tienen el mismo esquema
+
+- **Qué pasa:** la migración 002 crea las tablas con `AutoMigrate` sobre modelos que se siguieron editando, y las posteriores agregan columnas «si no existen»: en una base nueva `events.is_cancelled` e `is_paused` aceptan nulos, y las claves foráneas tienen nombres de GORM. La migración 004 ignora sus propios errores.
+- **Por qué parece un error:** el esquema depende de cuándo se creó la base.
+- **Dónde:** `services/api/internal/storage/migrations/002_*.go`, `models.go:97-98`, `004_constraints_and_triggers.go:235-238`.
+- **Gravedad sugerida:** alta: un cambio de modelo altera bases nuevas sin migración.
+
+### B-05 Los emails distinguen mayúsculas
+
+- **Qué pasa:** registro, login, vínculo con Google e inscripción comparan el email tal cual.
+- **Por qué parece un error:** `Ana@x.com` y `ana@x.com` son dos cuentas; el vínculo con Google falla.
+- **Dónde:** INV-08, GAR-10; `services/api/internal/storage/postgres/user_repository.go:41,90`.
+- **Gravedad sugerida:** media.
+
+### B-06 Publicar sin votos deja los resultados sin calcular para siempre
+
+- **Qué pasa:** si nadie votó, el paso a Resultados se hace igual, el cálculo falla, la página pública responde que no hay resultados y recalcular también falla.
+- **Por qué parece un error:** el evento queda cerrado sin resultado posible.
+- **Dónde:** RES-01, RES-E2, RES-E5; `services/api/internal/domain/vote/voting_service.go:164-166`.
+- **Gravedad sugerida:** media.
+
+### B-07 Reglas sin protección ante pedidos simultáneos
+
+- **Qué pasa:** el cupo y el nombre único se controlan en Go sin restricción en la base ni bloqueo; dos pedidos simultáneos pueden romperlos. Un email duplicado simultáneo da 500 en vez de 409.
+- **Por qué parece un error:** las garantías GAR-12 y GAR-13 no resisten concurrencia.
+- **Dónde:** INV-10, INV-11; `event_handler.go:1150-1181`.
+- **Gravedad sugerida:** media.
+
+### B-08 Los emails pueden fallar en silencio
+
+- **Qué pasa:** el email de recuperación se manda dentro del pedido, sin tiempo límite: si el servidor SMTP no responde, el pedido queda colgado. El envío informa éxito aunque fallen todos los destinatarios; el asunto no se codifica (RFC 2047); no funciona con un servidor sin STARTTLS, y en ese caso además deja abierta la conexión (`email_service.go:191-194`); los avisos de eventos se mandan sin reintento en segundo plano y se pierden si la api se reinicia.
+- **Por qué parece un error:** nadie se entera de que un aviso no llegó.
+- **Dónde:** NOT-11; `services/api/internal/email/email_service.go:147-166,209-219`.
+- **Gravedad sugerida:** media.
+
+### B-09 Textos con voseo
+
+- **Qué pasa:** los emails dicen «Ingresá», «Si tenés preguntas, comunicate», «Hacé clic», «podés ignorar»; la web, «Pegalo en el chat de Instagram para mandarlo.».
+- **Por qué parece un error:** el producto se escribe en español neutro (DEC-08); el test de la web no detecta «pegalo».
+- **Dónde:** NOT-01 a NOT-10; `services/api/internal/email/templates.go`, `services/web/src/i18n/catalogs/es.ts:1038`.
+- **Gravedad sugerida:** baja.
+
+### B-10 Cuenta regresiva con zona fija y cierre anticipado
+
+- **Qué pasa:** la etiqueta dice «23:59 (ART)» aunque calcula con la hora del navegador; pasada la fecha estimada muestra «LA INSCRIPCIÓN YA CERRÓ» mientras la etapa sigue abierta.
+- **Por qué parece un error:** la fecha es estimada y la etapa solo cambia cuando el autor la avanza.
+- **Dónde:** EXP-07; `services/web/src/i18n/catalogs/es.ts:692,701`, `components/events/countdown/Countdown.tsx:59-68`.
+- **Gravedad sugerida:** media.
+
+### B-11 El identificador de pedido de los logs no es único
+
+- **Qué pasa:** el `request_id` usa un formato literal y es el mismo para todos los pedidos del mismo segundo.
+- **Por qué parece un error:** no sirve para seguir un pedido.
+- **Dónde:** `services/api/internal/middleware/events/events.go:51-53`.
+- **Gravedad sugerida:** baja.
+
+### B-12 Estadísticas de calidad que nunca se calculan
+
+- **Qué pasa:** el avance de la votación informa calidad media y evaluadores buenos y malos sobre una columna que nunca se escribe (`assignments.quality_score`), con umbrales fijos 0,7 y 0,3: los tres valen siempre 0. Un identificador mal formado da 500, y un evento inexistente da estadísticas vacías.
+- **Por qué parece un error:** los números son siempre vacíos o ceros.
+- **Dónde:** VOT-10; `distributed_vote_handler.go:1034-1038,1064-1078`.
+- **Gravedad sugerida:** baja.
+
+### B-13 Registro con Google con un email existente da 500
+
+- **Qué pasa:** responde `500 INTERNAL_ERROR` en vez de un conflicto; un `GOOGLE_CLIENT_ID` vacío se informa como «Failed to contact Google API».
+- **Por qué parece un error:** el error no dice qué pasa.
+- **Dónde:** ACC-E10, ACC-E14; `google_auth_handler.go:162-195`.
+- **Gravedad sugerida:** baja.
+
+### B-14 El paginado de notificaciones puede saltear avisos
+
+- **Qué pasa:** el cursor es solo la fecha, con `<` estricto: dos avisos del mismo instante en el borde de una página se pierden.
+- **Dónde:** BAN-01; `notification_repository.go:85-89`.
+- **Gravedad sugerida:** baja.
+
+### B-15 Los borradores de voto no se validan
+
+- **Qué pasa:** el borrador acepta cualquier propuesta, cualquier posición y en cualquier etapa.
+- **Dónde:** VOT-07; `vote_draft_handler.go:87-110`.
+- **Gravedad sugerida:** baja.
+
+### B-16 La descripción para compartir se corta por bytes
+
+- **Qué pasa:** se toman los primeros 197 bytes, que pueden partir una letra con tilde.
+- **Dónde:** EXP-03; `event_handler.go:1962-1963`.
+- **Gravedad sugerida:** baja.
+
+### B-17 Código de estado incorrecto al pedir eventos ajenos
+
+- **Qué pasa:** pedir los eventos de otro usuario con alcance `participating` responde 401 en vez de 403.
+- **Dónde:** EXP-E3; `user_handler.go:279-287`.
+- **Gravedad sugerida:** baja.
+
+### B-18 Reemplazar la propuesta no es atómico
+
+- **Qué pasa:** la web borra la propuesta y después sube la nueva; si la subida falla, el inscrito queda sin propuesta.
+- **Dónde:** INS-07; `services/web/src/pages/event-detail/EventDetailPage.tsx:285-320`.
+- **Gravedad sugerida:** media.
+
+### B-19 Datos de un usuario quedan en el navegador para el siguiente
+
+- **Qué pasa:** el borrador del asistente de creación y el último ranking enviado quedan en el navegador al cerrar sesión, y el borrador se ofrece al próximo usuario.
+- **Dónde:** EVE-02; `CreateEventPage.tsx:130-144`, `domain/ranking.ts:77-78`.
+- **Gravedad sugerida:** baja.
+
+### B-20 Datos fijos mostrados como reales en la web
+
+- **Qué pasa:** el pie dice «V1.0» (la versión es 0.1.0); un evento sin cupo se muestra con cupo 20; «Ver demo» lleva al inicio y la pantalla de acceso dice «Proyecto demo · los datos pueden reiniciarse».
+- **Dónde:** `AppFooter.tsx:20`, `domain/eventDetail.ts:6,32-39`, `AppHeader.tsx:133-137`, `AuthLayout.tsx:56`.
+- **Gravedad sugerida:** baja.
+
+### B-21 Orden y alcance de las listas de eventos
+
+- **Qué pasa:** la lista ordena por etapa solo dentro de la página actual; el inicio no ve eventos abiertos más allá de los primeros 100.
+- **Dónde:** EXP-01, EXP-05; `EventsListPage.tsx:178-184`, `HomePage.tsx:41`.
+- **Gravedad sugerida:** baja.
+
+### B-22 Documentación pública desactualizada
+
+- **Qué pasa:** `documentation/configuration.md:27-28` e `installation.md:99` dicen que la web lee su configuración al construirse (hoy es al arrancar); `installation.md:30-32` dice que se cargan usuarios de ejemplo (ya no).
+- **Gravedad sugerida:** baja.
+
+### B-23 El evento no tiene fechas propias
+
+- **Qué pasa:** la web no pide fechas: manda como inicio el día siguiente y como fin el posterior, y el paso 2 del asistente se llama «Fechas y cupo» aunque solo tiene el cupo.
+- **Por qué parece un error:** confirmado como error en la adopción; las fechas del evento no dicen nada real.
+- **Dónde:** EVE-02, EVE-03; `services/web/src/domain/eventForm.ts:141-147`, `services/web/src/i18n/catalogs/es.ts:468`.
+- **Gravedad sugerida:** media.
+
+### B-24 Un organizador largo hace fallar la creación del evento
+
+- **Qué pasa:** al crear un evento, el organizador no se controla; con más de 200 caracteres la base lo rechaza y la api responde `500 DB_CREATE_ERROR`. Al editar sí se controla (`400`).
+- **Por qué parece un error:** el mismo límite se valida en un caso y en el otro termina en un error interno; la web lo limita a 200, así que solo pasa por la api.
+- **Dónde:** EVE-E24; `services/api/internal/handlers/event_handler.go:237`.
+- **Gravedad sugerida:** baja.
+
+### B-25 Un error de la base al inscribirse se trata como «no tiene cuenta»
+
+- **Qué pasa:** al inscribirse, cualquier error al buscar la cuenta por email se toma como que no existe, y se intenta crearla: una falla de la base termina en `USER_CREATE_ERROR` o choca con el email único.
+- **Por qué parece un error:** el mensaje no dice qué falló, y con la base intermitente puede intentar crear cuentas que ya existen.
+- **Dónde:** INS-01, INS-E19; `services/api/internal/handlers/event_handler.go:1095-1114`, `services/api/internal/storage/postgres/user_repository.go:89-95`.
+- **Gravedad sugerida:** baja.
+
+### B-26 Los datos para compartir apuntan a una imagen que no existe
+
+- **Qué pasa:** `GET /api/v1/events/{id}/share` devuelve como imagen `{FRONTEND_URL}/og-image.png`, que la web no tiene: nginx responde `404`. La web tampoco usa esta operación.
+- **Por qué parece un error:** quien use esos datos para una vista previa en redes obtiene una imagen rota.
+- **Dónde:** EXP-03; `services/api/internal/handlers/event_handler.go:1970`.
+- **Gravedad sugerida:** baja.
+
+### B-27 Emails que la api acepta y la base rechaza
+
+- **Qué pasa:** la api valida el email con un formato más amplio que la restricción de la base (solo letras, dígitos y `._%+-`, dominio terminado en 2 o más letras). Un email con apóstrofo, letras con tilde o un dominio de una letra pasa la api y la base lo rechaza: crear la cuenta, inscribirse o entrar con Google termina en `500`.
+- **Por qué parece un error:** un dato inválido debería rechazarse con un `400` que lo explique.
+- **Dónde:** ACC-E14, INS-E19; `services/api/internal/storage/migrations/004_constraints_and_triggers.go:218`.
+- **Gravedad sugerida:** baja.
+
+### B-28 Un archivo vacío termina en error interno
+
+- **Qué pasa:** la subida no controla que el archivo tenga contenido; la base lo rechaza y la api responde `500 DB_SAVE_ERROR`.
+- **Dónde:** INS-E20; `services/api/internal/handlers/attachment_handler.go`.
+- **Gravedad sugerida:** baja.
+
+### B-29 Un identificador de evento mal formado da 500 al listar propuestas
+
+- **Qué pasa:** `GET /api/v1/events/{id}/attachments` con un identificador que no es UUID responde `500 RETRIEVAL_ERROR` (las estadísticas de la votación, igual: B-12).
+- **Dónde:** INS-08; `services/api/internal/storage/postgres/attachment_repository.go:139-143`.
+- **Gravedad sugerida:** baja.
+
+### B-30 La web cierra la sesión ante cualquier 401
+
+- **Qué pasa:** cualquier respuesta 401 cierra la sesión en la web, no solo la de sesión vencida: también pedir eventos ajenos o crear un evento con un usuario que ya no existe. Subir y descargar propuestas, en cambio, no la cierran aunque la sesión haya vencido.
+- **Dónde:** ACC-10, ACC-E13; `services/web/src/config/api.ts:158-172,186-231`.
+- **Gravedad sugerida:** baja.
+
+### B-31 Una cuenta de Google puede tener contraseña
+
+- **Qué pasa:** la recuperación de contraseña no distingue las cuentas de Google: con el enlace, una cuenta de Google define una contraseña y entra de las dos formas. El login, en cambio, le responde que use Google mientras no la tenga.
+- **Por qué parece un error:** el login trata las cuentas de Google como sin contraseña, y la recuperación les da una.
+- **Dónde:** ACC-06, ACC-E5; `services/api/internal/handlers/user_handler.go:498-600`.
+- **Gravedad sugerida:** baja.
+
+### B-32 «Hoy» no es el mismo día en todas las fechas
+
+- **Qué pasa:** la fecha de inicio del evento se compara con el día local del servidor, y los cierres estimados con el día UTC; la web, además, exige un cierre posterior a hoy en el calendario del navegador.
+- **Por qué parece un error:** cerca de la medianoche, la misma fecha es válida para una regla y no para otra.
+- **Dónde:** EVE-03, EVE-07, EVE-E12; `services/api/internal/handlers/event_handler.go:295,579,921`.
+- **Gravedad sugerida:** baja.
+
+### B-33 El ranking que se muestra como enviado puede ser un borrador
+
+- **Qué pasa:** en Resultados, la web muestra como ranking enviado el que guardó el navegador al enviarlo o, si no lo tiene (otro navegador), el último borrador, que puede tener cambios que nunca se enviaron.
+- **Dónde:** RES-07; `services/web/src/pages/event-detail/useRankingVote.ts:53-57`.
+- **Gravedad sugerida:** baja.
+
+### B-34 Un inscrito puede subir varias propuestas y bloquear la votación
+
+- **Qué pasa:** el control de una propuesta por inscrito nunca funciona: la consulta que lo hace pide una relación que la propuesta no tiene, falla siempre, y el error se ignora. Una segunda subida del mismo inscrito responde `201`. Con dos propuestas suyas, abrir la votación falla con `500 VOTING_SETUP_ERROR`, y solo él puede borrar una: el autor queda bloqueado. Dos subidas en el mismo segundo comparten además el nombre en el almacenamiento.
+- **Por qué parece un error:** la regla de una propuesta por inscrito existe (INS-E15) y no se cumple; el único test de esa regla usa un repositorio simulado.
+- **Dónde:** INS-05, INS-E15; `services/api/internal/storage/postgres/attachment_repository.go:170`, `services/api/internal/handlers/attachment_handler.go:189-190,281`.
+- **Gravedad sugerida:** alta: un participante puede impedir que su evento abra la votación.
+
+## Comportamientos a confirmar
+
+Comportamientos que pueden ser intencionales o no, y que quedaron sin respuesta en la adopción. La
+definición los documenta tal cual, sin decisión. Al especificar algo que los toque, conviene decidirlos.
+
+| Comportamiento | Duda | IDs |
+|---|---|---|
+| Los umbrales de calidad por defecto son 0,6 y 0,3 en la api y 0,65 y 0,35 en la base | Solo cuentan los de la api, que siempre los escribe; se preguntó cuál es el valor buscado y no se sabe | VOT-02 |
+
+## Defaults de jiku flow que el producto no sigue
+
+Los productos nuevos los siguen desde el inicio; este los sigue desde ahora en lo nuevo. Adecuar lo
+existente es opcional: si se decide mantener uno a propósito, queda como decisión técnica al especificarlo.
+
+| Default | Hoy | Cambio sugerido | Esfuerzo |
+|---|---|---|---|
+| Errores RFC 9457 (`application/problem+json`, `code` en snake_case, `detail` en español) | Cuatro formas de error; códigos en MAYÚSCULAS; mensajes en inglés | Una forma única, con un período de convivencia en la web | Alto |
+| Validación de toda entrada contra un esquema en el borde | Tags de Gin y chequeos a mano; varios identificadores sin validar terminan en 500; longitudes medidas en bytes | Validar identificadores y cuerpos antes de la lógica, con `400 validation_failed` | Medio |
+| Configuración validada al arrancar | Solo `JWT_SECRET`; un número mal escrito toma su default sin avisar | Validar todas las variables y fallar con un mensaje claro | Bajo |
+| Contraseñas con Argon2id | bcrypt | Migrar al iniciar sesión | Medio |
+| Sesiones del navegador en cookies httpOnly | JWT en `localStorage`, legible por cualquier script, sin CSP | Cookie httpOnly, Secure y SameSite, y una CSP en nginx | Alto |
+| Identificadores UUIDv7 | UUIDv4 (`uuid-ossp`) | `uuidv7()` en las tablas nuevas | Bajo |
+| Listas con cursor (`limit`, `cursor`) | `page` y `limit` en eventos | Cursor en las listas nuevas | Medio |
+| Campos `camelCase` | `snake_case` en todo el contrato | Solo con una versión nueva del contrato | Alto |
+| Health `/health` y `/health/ready` con versión, commit y chequeos | Solo `/health`, con otra forma, sin chequear el almacenamiento | Agregar `/health/ready` y la forma estándar; `HEALTHCHECK` en las imágenes | Bajo |
+| Observabilidad con OpenTelemetry y logs JSON con `trace_id` | Logs de texto, sin trazas ni métricas, con emails en los logs | SDK de OpenTelemetry en la api y logs JSON sin datos personales | Medio |
+| Apagado ordenado y timeouts del servidor | `router.Run` sin timeouts ni manejo de `SIGTERM` | `http.Server` con timeouts y `Shutdown` | Bajo |
+| Contrato OpenAPI 3.1 verificado por tests, con `x-roles` | OpenAPI 3.0.3, sin validación en los tests ni `x-roles` | Validar las respuestas de los tests de integración contra el contrato; pasar a 3.1 | Medio |
+| Convenciones del esquema | `varchar(n)`, columnas sin `NOT NULL`, sin `created_at`/`updated_at` mantenidos por trigger, nombres de claves de GORM, emails sin normalizar, sin marcas `[pii]` | Aplicarlas en las tablas nuevas y al tocar las existentes | Medio |
+| Escáner de secretos y auditoría de dependencias en el CI | No hay | gitleaks y `govulncheck` / `npm audit` en el CI | Bajo |
+| Tiempo controlado en los tests (un reloj inyectable) | La api llama a `time.Now()` directamente (vencimientos, fechas de inicio, sesiones); los tests no controlan el reloj | Un reloj inyectable en los servicios que dependen del tiempo | Medio |
+| Respuestas por defecto de la entrada: recorte de espacios, `409 invalid_state` para una acción que la etapa no permite, `422 reference_not_found` para una referencia inexistente en el cuerpo | El texto no se recorta (salvo dos campos); una acción que la etapa no permite responde casi siempre `400` (`INVALID_EVENT_STAGE`, `INVALID_REGISTRATION_STAGE`); una propuesta inexistente en el ranking, `404` | Aplicarlo en las operaciones nuevas y al tocar las existentes, junto con el formato de errores | Medio |
+| `CHANGELOG.md` con la sección `[Sin publicar]` y cada entrada citando su requerimiento de Jiku (`#622`) | La sección se llama `[Unreleased]` y las entradas citan `REQ-00n` | Renombrar la sección; las entradas nuevas citan su requerimiento | Bajo |
+| Imágenes en el registro de la plataforma (GitHub Container Registry), sin secretos | Se publican en Docker Hub, con `DOCKERHUB_USERNAME` y `DOCKERHUB_TOKEN` | Publicar en GHCR con el token del job, o decidir quedarse en Docker Hub | Bajo |
+| Documentación para personas en `docs/`, en el idioma del producto | La documentación pública de uso e instalación está en `documentation/`, en inglés | Pasarla a `docs/` en español, o decidir mantenerla así (por ejemplo, por ser un proyecto abierto) | Medio |
+
+## Otras mejoras sugeridas
+
+| Mejora | Por qué | Esfuerzo |
+|---|---|---|
+| Quitar código muerto de la api: handlers sin ruta (`DeleteEvent`, `RemoveParticipant`, `GetAttachment`, `UpdateVotingConfiguration`, `DeleteVotingConfiguration`), `RequireRole`, el presigner, `optimizer.go`, las vistas de la migración 005 y las columnas sin uso | Confunde al leer y al cambiar el esquema | Medio |
+| Quitar código muerto de la web: `Podium`, `RankingList`, `ParticipantsDialog`, `useFetch`, `ApiHealthService`, `getUserById`, `uploadFile`, constantes y claves de catálogo sin uso | Igual | Bajo |
+| Retirar las operaciones de configurar la votación y generar asignaciones por separado | La apertura atómica las reemplazó: generar asignaciones ya no puede terminar bien (VOT-12) y no es transaccional, y una configuración creada aparte se reemplaza sin aviso | Bajo |
+| `GET /api/v1/events` carga todos los eventos y consulta los inscritos de a uno | No escala con muchos eventos | Medio |
+| Controlar el tamaño de la subida antes de leer el cuerpo | Hoy se lee todo el archivo y recién después se rechaza | Bajo |
+| Tests de `AuthContext` en la web | La sesión no tiene tests propios | Bajo |
+| Una `ErrorBoundary` en la web | Un error al renderizar deja la pantalla en blanco | Bajo |
+| Migrar de Create React App a Vite | CRA está discontinuado | Alto |
+| Corregir las dependencias de la web: librerías de test en `dependencies`, tipos de react-router v5 con el router v7 | Instalación de producción más pesada y tipos que no corresponden | Bajo |
+| Formatear la api con `gofmt` y sumarlo al lint | Hoy 7 archivos no están formateados | Bajo |
+| El build de la web en el CI ignora los warnings | Los warnings se acumulan sin que nadie los vea | Bajo |
+| Que el test de S3 use el Garage de Compose en vez de testcontainers | Una sola forma de levantar la infraestructura de los tests | Bajo |
+| `cmd/migrate -rollback` elige la última migración por fecha de aplicación | Con migraciones aplicadas en el mismo instante puede deshacer otra | Bajo |
+| Quitar o actualizar las referencias al análisis anterior en comentarios y nombres de tests del código (`REQ-00n`, `S-0nn`, `D-n`, `DA-n`, `CA-n`, `TS-nn`…); en `_jflow/` ya no quedan | Citan documentos que la adopción borró (siguen en la historia de git, en `7ff8b00`); los tests se renombran con los IDs nuevos a medida que se tocan | Bajo |
+
+## Contradicciones
+
+- La api pone por defecto los umbrales de calidad en 0,6 y 0,3, y la base en 0,65 y 0,35 (VOT-02, `voting_configurations`).

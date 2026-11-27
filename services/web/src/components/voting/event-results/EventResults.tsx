@@ -1,0 +1,216 @@
+import React from 'react';
+import { Callout, Card, StatusPill } from '../../ui';
+import { getErrorCode } from '../../../config/api';
+import { splitResults } from '../../../domain/eventDetail';
+import { useT } from '../../../i18n';
+import { DistributedVotingService } from '../../../services/api';
+import type { AttachmentResult, VotingResults } from '../../../types';
+import './EventResults.css';
+
+export interface EventResultsProps {
+  eventId: string;
+  currentUserId: string | null;
+  onLoaded?: (results: VotingResults) => void;
+  /**
+   * Gestión (S-016): si los resultados no están calculados, los recalcula una vez
+   * (`POST …/distributed-results/recalculate`). Por defecto no recalcula.
+   */
+  recalculateIfMissing?: boolean;
+}
+
+type State =
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'empty' }
+  | { status: 'ready'; results: VotingResults };
+
+/**
+ * Resultados públicos: podio + ranking desde la 4.ª + nota del puntaje.
+ * Por defecto solo lee (el cálculo ocurre al pasar a Resultados); con `recalculateIfMissing`
+ * recalcula una vez cuando faltan.
+ */
+const EventResults: React.FC<EventResultsProps> = ({
+  eventId,
+  currentUserId,
+  onLoaded,
+  recalculateIfMissing = false,
+}) => {
+  const { t, fmt } = useT();
+  const [state, setState] = React.useState<State>({ status: 'loading' });
+  const [attempt, setAttempt] = React.useState(0);
+  const onLoadedRef = React.useRef(onLoaded);
+  onLoadedRef.current = onLoaded;
+  const recalculationRef = React.useRef<{ key: string; promise: Promise<VotingResults> } | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    setState({ status: 'loading' });
+    const show = (results: VotingResults) => {
+      if (cancelled) return;
+      if (!results.adjusted_ranking || results.adjusted_ranking.length === 0) {
+        setState({ status: 'empty' });
+        return;
+      }
+      setState({ status: 'ready', results });
+      onLoadedRef.current?.(results);
+    };
+    const fail = () => {
+      if (!cancelled) setState({ status: 'error' });
+    };
+    DistributedVotingService.getDistributedResults(eventId)
+      .then(show)
+      .catch((err) => {
+        if (cancelled) return;
+        if (getErrorCode(err) !== 'RESULTS_NOT_CALCULATED') {
+          fail();
+          return;
+        }
+        if (!recalculateIfMissing) {
+          setState({ status: 'empty' });
+          return;
+        }
+        // Un solo recálculo por carga (eventId + intento): si el efecto se re-ejecuta,
+        // reusa la misma promesa en vez de repetir el POST.
+        const key = `${eventId}:${attempt}`;
+        if (recalculationRef.current?.key !== key) {
+          recalculationRef.current = {
+            key,
+            promise: DistributedVotingService.recalculateDistributedResults(eventId),
+          };
+        }
+        recalculationRef.current.promise.then(show).catch(fail);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [eventId, attempt, recalculateIfMissing]);
+
+  if (state.status === 'loading') {
+    return (
+      <p role="status" className="vt-event-results__message">
+        {t('results.loading')}
+      </p>
+    );
+  }
+
+  if (state.status === 'error') {
+    return (
+      <Callout tone="error" action={{ label: t('common.retry'), onClick: () => setAttempt((n) => n + 1) }}>
+        {t('results.error')}
+      </Callout>
+    );
+  }
+
+  if (state.status === 'empty') {
+    return <p className="vt-event-results__message">{t('errors.RESULTS_NOT_CALCULATED')}</p>;
+  }
+
+  const { podium, rest, unevaluated, excluded } = splitResults(state.results.adjusted_ranking);
+  const allEntries = [...podium, ...rest];
+  const own =
+    currentUserId !== null
+      ? allEntries.find((entry) => entry.participant_id === currentUserId && entry.adjustment_reason)
+      : undefined;
+
+  const adjustmentLabel = (entry: AttachmentResult): string | null => {
+    if (!entry.adjustment) return null;
+    const places = Math.abs(entry.adjustment);
+    return entry.adjustment > 0
+      ? t('results.adjustment.up', { count: places })
+      : t('results.adjustment.down', { count: places });
+  };
+  const adjustmentReason = (entry: AttachmentResult): string | null => {
+    switch (entry.adjustment_reason) {
+      case 'good_evaluator':
+        return t('results.adjustment.reasonGood');
+      case 'bad_evaluator':
+        return t('results.adjustment.reasonBad');
+      case 'non_evaluator':
+        return t('results.adjustment.reasonNonEvaluator');
+      default:
+        return null;
+    }
+  };
+  return (
+    <Card as="article" padding="compact" className="vt-event-results">
+      <div className="vt-event-results__header">
+        <h2 className="vt-event-results__title">{t('results.rankingFinal')}</h2>
+        <p className="vt-event-results__stats">
+          {t('results.stats', {
+            participants: state.results.total_participants,
+            evaluations: t('results.evaluations', { count: state.results.total_votes }),
+          })}
+        </p>
+      </div>
+      <p className="vt-event-results__note">{t('results.adjustmentNote')}</p>
+      {own && own.adjustment ? (
+        <Callout tone={own.adjustment > 0 ? 'success' : 'warning'} title={t('results.yourAdjustment.title')}>
+          {own.adjustment > 0
+            ? t('results.yourAdjustment.up', { count: own.adjustment })
+            : own.adjustment_reason === 'non_evaluator'
+              ? t('results.yourAdjustment.downNonEvaluator', { count: -own.adjustment })
+              : t('results.yourAdjustment.down', { count: -own.adjustment })}{' '}
+          {t('results.yourAdjustment.relative')}
+        </Callout>
+      ) : null}
+      <ol className="vt-event-results__list" aria-label={t('results.rankingFinal')}>
+        {allEntries.map((entry, index) => {
+          const position = index + 1;
+          const isYou = currentUserId !== null && entry.participant_id === currentUserId;
+          return (
+            <li key={entry.attachment_id} className={`vt-event-results__item${isYou ? ' vt-event-results__item--you' : ''}`}>
+              <span className="vt-event-results__position">{position}</span>
+              <span className="vt-event-results__name">
+                {entry.participant_name || '—'}
+                {isYou && (
+                  <StatusPill tone="action" size="sm">
+                    {t('results.you')}
+                  </StatusPill>
+                )}
+                {adjustmentLabel(entry) && (
+                  <span className="vt-event-results__adjustment">
+                    {adjustmentLabel(entry)}
+                    <span className="vt-event-results__adjustment-reason"> · {adjustmentReason(entry)}</span>
+                  </span>
+                )}
+              </span>
+              <span className="vt-event-results__score">{t('common.points', { score: fmt.score(entry.mbc_score) })}</span>
+            </li>
+          );
+        })}
+      </ol>
+      {unevaluated.length > 0 && (
+        <Callout tone="info" title={t('results.unevaluated.title')}>
+          <p className="vt-event-results__unevaluated-text">
+            {t('results.unevaluated.text', { count: unevaluated.length })}
+          </p>
+          <ul className="vt-event-results__unevaluated">
+            {unevaluated.map((entry) => (
+              <li key={entry.attachment_id}>
+                {entry.participant_name || '—'} · {entry.filename}
+                {currentUserId !== null && entry.participant_id === currentUserId && ` (${t('results.you')})`}
+              </li>
+            ))}
+          </ul>
+        </Callout>
+      )}
+      {excluded.length > 0 && (
+        <Callout tone="info" title={t('results.excluded.title')}>
+          <p className="vt-event-results__unevaluated-text">
+            {t('results.excluded.text', { count: excluded.length })}
+          </p>
+          <ul className="vt-event-results__unevaluated">
+            {excluded.map((entry) => (
+              <li key={entry.attachment_id}>
+                {entry.participant_name || '—'} · {entry.filename}
+                {currentUserId !== null && entry.participant_id === currentUserId && ` (${t('results.you')})`}
+              </li>
+            ))}
+          </ul>
+        </Callout>
+      )}
+    </Card>
+  );
+};
+
+export default EventResults;

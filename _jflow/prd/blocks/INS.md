@@ -14,7 +14,7 @@ last_failure: INS-E19
 
 | ID | Requirement | Actor | Origin |
 |---|---|---|---|
-| INS-01 | Cualquiera, sin sesión, inscribe un nombre (2 a 100 caracteres) y un email en un evento en Participación: si el email no tiene cuenta, se crea una sin contraseña; si la tiene, esa cuenta queda inscrita. La respuesta devuelve el identificador del usuario | U-01 | initial |
+| INS-01 | Cualquiera, sin sesión, inscribe un nombre (2 a 100 caracteres) y un email en un evento en Participación: si el email no tiene cuenta, se crea una sin contraseña; si la tiene, esa cuenta queda inscrita y el nombre enviado se ignora. La respuesta devuelve el identificador, el nombre y el email de la cuenta (para una cuenta existente, su nombre guardado) | U-01 | initial |
 | INS-02 | En la web, inscribirse pide sesión y usa el nombre y el email de la cuenta | U-02 | initial |
 | INS-03 | No se inscribe con el evento pausado, con el cupo completo, al autor ni a quien ya está inscrito. La etapa y la pausa se controlan antes de buscar o crear la cuenta; el autor, la inscripción previa y el cupo, después: una inscripción rechazada por esos motivos deja creada la cuenta sin contraseña de un email nuevo | — | initial |
 | INS-04 | Cualquier usuario con sesión lista los inscritos de un evento, sin el autor, con nombre, email y rol | U-02 | initial |

@@ -13,7 +13,7 @@
 | Correcciones hechas en la adopción | 16; en el producto, solo las URLs de Google configurables y una traducción que pide un test existente |
 | Cargado en Jiku | 15 incidencias de seguridad (ver «Cargado en Jiku») |
 | En este informe | 24 bugs, 1 comportamiento a confirmar, 19 defaults sugeridos, 14 otras mejoras |
-| Cobertura por ID | 23 de 193 IDs con un test que los nombra: solo los tests end to end de la adopción llevan IDs; los tests anteriores (más de 1.300) no |
+| Cobertura por ID | 23 de 194 IDs con un test que los nombra: solo los tests end to end de la adopción llevan IDs; los tests anteriores (más de 1.300) no |
 
 ## Línea de base
 
@@ -63,7 +63,7 @@ lo pide.
 
 | # | Título | Por qué |
 |---|---|---|
-| — | Inscripción en eventos sin identificarse, a nombre de cualquier email | Cualquiera puede inscribir a terceros: crea cuentas, inscribe cuentas existentes sin su consentimiento, llena el cupo, les hace llegar los emails del evento y obtiene el identificador del usuario (INS-01). La cuenta se crea antes de controlar el cupo: aun con el evento lleno, cada email nuevo deja una cuenta creada (INS-03). Confirmado como error |
+| — | Inscripción en eventos sin identificarse, a nombre de cualquier email | Cualquiera puede inscribir a terceros: crea cuentas, inscribe cuentas existentes sin su consentimiento, llena el cupo, les hace llegar los emails del evento y obtiene el identificador del usuario y, si el email ya tenía cuenta, el nombre real de su dueño (INS-01). La cuenta se crea antes de controlar el cupo: aun con el evento lleno, cada email nuevo deja una cuenta creada (INS-03). Confirmado como error |
 | — | Emails de los inscritos visibles para cualquier usuario | Cualquier cuenta lista nombre y email de los inscritos de cualquier evento (INS-04). Confirmado como error |
 | — | El organizador puede votar en nombre de los participantes | El autor y los administradores envían rankings, borradores y propuestas por cualquier inscrito: pueden fabricar el resultado (VOT-09, INS-06). Confirmado como error |
 | — | El rol global organizer actúa sobre cualquier evento | Configura la votación, genera asignaciones y recalcula resultados de eventos ajenos, y ve la calidad de los evaluadores (VOT-13, RES-06). Confirmado como error |

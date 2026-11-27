@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/charmbracelet/log"
 	"github.com/gin-gonic/gin"
@@ -69,6 +69,22 @@ func neutralFilename(position int, mimeType string) string {
 		ext = "bin"
 	}
 	return fmt.Sprintf("propuesta-%d.%s", position, ext)
+}
+
+// storedProposalName is the storage name of an uploaded proposal:
+// {event}_{participant}_{unique id}{extension}, different on every upload (DEC-T15).
+func storedProposalName(eventID, participantID, ext string) string {
+	return fmt.Sprintf("%s_%s_%s%s", eventID, participantID, uuid.NewString(), ext)
+}
+
+// respondDuplicateAttachment answers INS-E15: the participant already has a proposal in the event.
+func respondDuplicateAttachment(c *gin.Context, l *log.Logger, eventID, participantID, existingID string) {
+	l.Warn("duplicate attachment attempt", "event_id", eventID, "participant_id", participantID, "existing_attachment", existingID)
+	c.JSON(http.StatusConflict, gin.H{
+		"error":                  "Participant already has an attachment for this event",
+		"code":                   "DUPLICATE_ATTACHMENT",
+		"existing_attachment_id": existingID,
+	})
 }
 
 // UploadAttachment handles POST /api/events/{event_id}/participant/{participant_id}/attachment
@@ -185,20 +201,20 @@ func (h *AttachmentHandler) UploadAttachment(c *gin.Context) {
 		return
 	}
 
-	// Check if participant already has an attachment for this event
-	existingAttachments, err := h.attachmentRepo.GetByParticipantID(participantID)
-	if err == nil {
-		for _, att := range existingAttachments {
-			if att.EventID == eventUUID {
-				h.log.Warn("duplicate attachment attempt", "event_id", eventID, "participant_id", participantID, "existing_attachment", att.ID)
-				c.JSON(http.StatusConflict, gin.H{
-					"error":                  "Participant already has an attachment for this event",
-					"code":                   "DUPLICATE_ATTACHMENT",
-					"existing_attachment_id": att.ID.String(),
-				})
-				return
-			}
-		}
+	// One proposal per participant and event (INV-13). A failed lookup must not let the upload
+	// through; the unique index catches what this check cannot see (GAR-16).
+	existingAttachments, err := h.attachmentRepo.GetByParticipantAndEventIDs(participantID, []string{eventID})
+	if err != nil {
+		h.log.Error("failed to check existing attachments", "event_id", eventID, "participant_id", participantID, "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to check existing attachments",
+			"code":  "RETRIEVAL_ERROR",
+		})
+		return
+	}
+	if len(existingAttachments) > 0 {
+		respondDuplicateAttachment(c, h.log, eventID, participantID, existingAttachments[0].ID.String())
+		return
 	}
 
 	// Get the file from the form
@@ -277,9 +293,9 @@ func (h *AttachmentHandler) UploadAttachment(c *gin.Context) {
 		return
 	}
 
-	// Generate secure unique filename
-	ext := filepath.Ext(cleanFilename)
-	secureFilename := fmt.Sprintf("%s_%s_%d%s", eventID, participantID, time.Now().Unix(), ext)
+	// Each upload gets its own storage name (DEC-T15), so a rejected upload never overwrites or
+	// deletes the file of the accepted one.
+	secureFilename := storedProposalName(eventID, participantID, filepath.Ext(cleanFilename))
 
 	// Use FileStorage interface to save the file
 	ctx := context.Background()
@@ -306,11 +322,26 @@ func (h *AttachmentHandler) UploadAttachment(c *gin.Context) {
 	)
 
 	if err := h.attachmentRepo.Create(newAttachment); err != nil {
-		h.log.Error("failed to save attachment metadata", "attachment_id", newAttachment.ID, "error", err)
-		// Clean up the file if database operation fails
+		// Clean up the file: the record was not saved. Its name is unique, so this never touches
+		// the file of another upload.
 		if delErr := h.fileStorage.Delete(ctx, storageKey); delErr != nil {
 			h.log.Error("failed to cleanup file after db error", "key", storageKey, "error", delErr)
 		}
+		if errors.Is(err, postgres.ErrDuplicateAttachment) {
+			// Another upload of the same participant was saved first (GAR-16).
+			existing, lookupErr := h.attachmentRepo.GetByParticipantAndEventIDs(participantID, []string{eventID})
+			if lookupErr != nil || len(existing) == 0 {
+				h.log.Error("failed to read the existing attachment after a duplicate", "event_id", eventID, "participant_id", participantID, "error", lookupErr)
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": "Failed to check existing attachments",
+					"code":  "RETRIEVAL_ERROR",
+				})
+				return
+			}
+			respondDuplicateAttachment(c, h.log, eventID, participantID, existing[0].ID.String())
+			return
+		}
+		h.log.Error("failed to save attachment metadata", "attachment_id", newAttachment.ID, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to save attachment metadata",
 			"code":  "DB_SAVE_ERROR",

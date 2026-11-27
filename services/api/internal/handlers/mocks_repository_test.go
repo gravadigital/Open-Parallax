@@ -377,6 +377,9 @@ type mockAttachmentRepository struct {
 	byEvent       map[string][]*attachment.Attachment
 	getByEventErr error
 	createErr     error
+	// lookupSeesNothing hides saved proposals from GetByParticipantAndEventIDs, as when two uploads
+	// race past the Go check; Create still enforces one per participant and event, like the database.
+	lookupSeesNothing bool
 }
 
 func newMockAttachmentRepository() *mockAttachmentRepository {
@@ -394,6 +397,12 @@ func (m *mockAttachmentRepository) addAttachment(a *attachment.Attachment) {
 func (m *mockAttachmentRepository) Create(a *attachment.Attachment) error {
 	if m.createErr != nil {
 		return m.createErr
+	}
+	for _, other := range m.attachments {
+		if other.EventID == a.EventID && other.ParticipantID == a.ParticipantID {
+			m.lookupSeesNothing = false // the race is over: the other upload is committed
+			return fmt.Errorf("create attachment: %w", postgres.ErrDuplicateAttachment)
+		}
 	}
 	m.addAttachment(a)
 	return nil
@@ -429,6 +438,9 @@ func (m *mockAttachmentRepository) GetByParticipantAndEventIDs(participantID str
 	if m.batchErr != nil {
 		return nil, m.batchErr
 	}
+	if m.lookupSeesNothing {
+		return nil, nil
+	}
 	wanted := make(map[string]bool, len(eventIDs))
 	for _, id := range eventIDs {
 		wanted[id] = true
@@ -436,16 +448,6 @@ func (m *mockAttachmentRepository) GetByParticipantAndEventIDs(participantID str
 	var out []*attachment.Attachment
 	for _, a := range m.attachments {
 		if a.ParticipantID.String() == participantID && wanted[a.EventID.String()] {
-			out = append(out, a)
-		}
-	}
-	return out, nil
-}
-
-func (m *mockAttachmentRepository) GetByParticipantID(participantID string) ([]*attachment.Attachment, error) {
-	var out []*attachment.Attachment
-	for _, a := range m.attachments {
-		if a.ParticipantID.String() == participantID {
 			out = append(out, a)
 		}
 	}

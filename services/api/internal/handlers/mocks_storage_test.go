@@ -18,6 +18,7 @@ type mockFileStorage struct {
 	getErr      error
 	deleteErr   error
 	deletedKeys []string
+	onPut       func(key string)
 }
 
 func newMockFileStorage() *mockFileStorage {
@@ -33,6 +34,9 @@ func (m *mockFileStorage) Put(ctx context.Context, key string, reader io.Reader,
 		return "", err
 	}
 	m.files[key] = data
+	if m.onPut != nil {
+		m.onPut(key)
+	}
 	return key, nil
 }
 

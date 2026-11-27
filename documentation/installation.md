@@ -7,8 +7,8 @@ Everything runs from the repository root with `make`. Run `make` alone to list t
 | | |
 |---|---|
 | **Docker** with Compose v2 | for the stack: PostgreSQL, Garage (S3 storage), and optionally the api and web themselves |
-| **Go 1.26** | only to run or test the api outside Docker — see [`api/go.mod`](../api/go.mod) |
-| **Node.js 22** | only to run or test the web outside Docker — see [`web/.nvmrc`](../web/.nvmrc) |
+| **Go 1.26** | only to run or test the api outside Docker — see [`services/api/go.mod`](../services/api/go.mod) |
+| **Node.js 22** | only to run or test the web outside Docker — see [`services/web/.nvmrc`](../services/web/.nvmrc) |
 | **make** | comes with Linux and macOS |
 
 No configuration file is needed: every setting has a working local default. See
@@ -42,8 +42,8 @@ The storage service runs Garage, which has no web console. To look at the stored
 its CLI inside the container:
 
 ```sh
-docker compose -f deploy/docker-compose.yml exec storage /garage bucket info openparallax
-docker compose -f deploy/docker-compose.yml exec storage /garage key list
+docker compose exec storage /garage bucket info openparallax
+docker compose exec storage /garage key list
 ```
 
 `make up` always rebuilds, so code changes are picked up. Configuration changes do not need a
@@ -85,7 +85,7 @@ in CI.
 ## Troubleshooting
 
 **`port is already allocated`** — something else is using that port. Change it in
-`deploy/.env` (`WEB_PORT=3001`, `API_PORT=8081`, …); see
+`.env` (`WEB_PORT=3001`, `API_PORT=8081`, …); see
 [configuration.md](configuration.md).
 
 **The api does not start: `bucket "openparallax" not reachable`** — the api checks the bucket on

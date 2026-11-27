@@ -1,16 +1,16 @@
 # Entry point for working on OpenParallax locally. Run `make` to list the commands.
 #
-# Everything runs against the stack in deploy/docker-compose.yml, so there is one
+# Everything runs against the stack in docker-compose.yml, so there is one
 # database and one S3 storage (Garage) whether the api runs in a container or with `go run`.
 #
-# No .env is needed. deploy/.env is optional and is read both by docker compose and
+# No .env is needed. .env is optional and is read both by docker compose and
 # by this Makefile, so a GOOGLE_CLIENT_ID set there reaches every way of running.
 
-COMPOSE := docker compose -f deploy/docker-compose.yml
+COMPOSE := docker compose -f docker-compose.yml
 
--include deploy/.env
+-include .env
 
-# Same defaults as deploy/docker-compose.yml. The api's own defaults in Go
+# Same defaults as docker-compose.yml. The api's own defaults in Go
 # (openparallax / openparallax_db, local file storage) do not match the stack, so
 # running it outside Docker needs these passed explicitly.
 POSTGRES_DB       ?= openparallax_db
@@ -70,19 +70,19 @@ infra: ## Start only the database and the storage, to run api and web by hand
 	$(COMPOSE) up -d --wait database storage
 
 api: ## Run the api with go run, against `make infra`
-	cd api && $(API_ENV) go run ./cmd/api
+	cd services/api && $(API_ENV) go run ./cmd/api
 
-web: web/node_modules ## Run the web with npm start, against `make api`
-	cd web && BROWSER=none PORT=$(WEB_PORT) \
+web: services/web/node_modules ## Run the web with npm start, against `make api`
+	cd services/web && BROWSER=none PORT=$(WEB_PORT) \
 		REACT_APP_API_URL=http://localhost:$(API_PORT) \
 		REACT_APP_GOOGLE_CLIENT_ID=$(GOOGLE_CLIENT_ID) \
 		npm start
 
 # --- Tests --------------------------------------------------------------------
 
-test: web/node_modules ## Unit tests of api and web (no Docker needed)
-	cd api && go vet ./... && go test -race ./...
-	cd web && CI=true npm test
+test: services/web/node_modules ## Unit tests of api and web (no Docker needed)
+	cd services/api && go vet ./... && go test -race ./...
+	cd services/web && CI=true npm test
 
 # Uses its own database in the stack's PostgreSQL, so running the migrations
 # under test never touches the data you work with.
@@ -91,8 +91,8 @@ test-integration: ## Integration tests of the api, against the stack's database
 	@$(COMPOSE) exec -T database psql -U $(POSTGRES_USER) -d $(POSTGRES_DB) -tAc \
 		"SELECT 1 FROM pg_database WHERE datname = 'openparallax_test'" | grep -q 1 || \
 		$(COMPOSE) exec -T database createdb -U $(POSTGRES_USER) openparallax_test
-	cd api && $(API_ENV) TEST_DB_NAME=openparallax_test go test -tags=integration -count=1 ./...
+	cd services/api && $(API_ENV) TEST_DB_NAME=openparallax_test go test -tags=integration -count=1 ./...
 
-web/node_modules: web/package-lock.json
-	cd web && npm ci
+services/web/node_modules: services/web/package-lock.json
+	cd services/web && npm ci
 	@touch $@

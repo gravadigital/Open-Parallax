@@ -1,8 +1,8 @@
 # HTTP API reference
 
 The endpoints the api serves, taken from the route definitions in
-[`api/cmd/api/main.go`](../api/cmd/api/main.go). Request and response schemas are in
-[`docs/apis/api.yaml`](../docs/apis/api.yaml) (OpenAPI 3.0).
+[`services/api/cmd/api/main.go`](../services/api/cmd/api/main.go). Request and response schemas are in
+[`_jflow/apis/api.openapi.yaml`](../_jflow/apis/api.openapi.yaml) (OpenAPI 3.0).
 
 Everything is under `/api/v1`, except `/health`.
 

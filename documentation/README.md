@@ -65,7 +65,7 @@ Two consequences worth knowing:
 
 ## Going further
 
-- The HTTP contract in full: [`docs/apis/api.yaml`](../docs/apis/api.yaml) (OpenAPI 3.0).
-- The database, triggers included: [`docs/db-schemas/openparallax_db.md`](../docs/db-schemas/openparallax_db.md).
-- Why things are the way they are: [`docs/adrs/`](../docs/adrs/).
+- The HTTP contract in full: [`_jflow/apis/api.openapi.yaml`](../_jflow/apis/api.openapi.yaml) (OpenAPI 3.0).
+- The database, triggers included: [`_jflow/db-schemas/api.md`](../_jflow/db-schemas/api.md).
+- Why things are the way they are: [`_jflow/prd/decisions.md`](../_jflow/prd/decisions.md).
 - Contributing: [`CONTRIBUTING.md`](../CONTRIBUTING.md).

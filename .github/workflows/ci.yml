@@ -36,15 +36,15 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: api
+        working-directory: services/api
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-go@v5
         with:
-          go-version-file: api/go.mod
-          cache-dependency-path: api/go.sum
+          go-version-file: services/api/go.mod
+          cache-dependency-path: services/api/go.sum
 
       - name: Versions agree across the monorepo
         run: ./scripts/set-version.sh --check
@@ -58,7 +58,7 @@ jobs:
 
       # Los unitarios no tocan base ni red: corren en menos de un segundo. Los de
       # integración viven detrás del build tag `integration` y NO corren acá,
-      # porque necesitan un PostgreSQL. Ver docs/architectures/api/conventions/testing.md.
+      # porque necesitan un PostgreSQL. Ver _jflow/prd/architecture/testing.md.
       - name: Test
         run: go test -race ./...
 
@@ -67,16 +67,16 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: web
+        working-directory: services/web
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version-file: web/.nvmrc
+          node-version-file: services/web/.nvmrc
           cache: npm
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: services/web/package-lock.json
 
       - name: Install
         run: npm ci

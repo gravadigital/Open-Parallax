@@ -5,8 +5,8 @@ and the rules that are not obvious from reading the code.
 
 ## Getting set up
 
-You need **Docker**, **Go 1.26** (see [`api/go.mod`](api/go.mod)), **Node.js 22** (see
-[`web/.nvmrc`](web/.nvmrc)) and `make`.
+You need **Docker**, **Go 1.26** (see [`services/api/go.mod`](services/api/go.mod)), **Node.js 22** (see
+[`services/web/.nvmrc`](services/web/.nvmrc)) and `make`.
 
 ```sh
 git clone https://github.com/gravadigital/Open-Parallax.git openparallax
@@ -24,18 +24,18 @@ No configuration file is needed. Everything is in
 Read [documentation/README.md](documentation/README.md) first. The short version:
 
 - **`api`** is the only service with state. Gin for HTTP, GORM for the database. All routes
-  are declared in [`api/cmd/api/main.go`](api/cmd/api/main.go).
+  are declared in [`services/api/cmd/api/main.go`](services/api/cmd/api/main.go).
 - **`web`** is a React single-page app built with Create React App. It has no business logic:
-  everything it shows comes from the api, through the services in `web/src/services/api.ts`.
+  everything it shows comes from the api, through the services in `services/web/src/services/api.ts`.
 
 The per-service conventions — how a handler is written, how errors are shaped, how state is
-managed in the web — are in [`docs/architectures/`](docs/architectures/), in Spanish. Follow
+managed in the web — are in [`_jflow/`](_jflow/), in Spanish. Follow
 them: the api diverges from the usual Go stack on purpose, and a change written for another
 stack will not fit.
 
 ## Before touching voting or assignments
 
-**Read [`api/internal/storage/migrations/004_constraints_and_triggers.go`](api/internal/storage/migrations/004_constraints_and_triggers.go)
+**Read [`services/api/internal/storage/migrations/004_constraints_and_triggers.go`](services/api/internal/storage/migrations/004_constraints_and_triggers.go)
 first.** Part of the rules are PostgreSQL triggers, not Go code: that an assignment has exactly
 `m` proposals, that nobody evaluates their own, that only assigned proposals can be voted.
 
@@ -46,22 +46,22 @@ first.** Part of the rules are PostgreSQL triggers, not Go code: that an assignm
 - Test fixtures that insert directly have to respect the triggers, or the insert fails with an
   unhelpful plpgsql error.
 
-The tests in `api/internal/domain/vote/voting_service_test.go` are the product's main safety
+The tests in `services/api/internal/domain/vote/voting_service_test.go` are the product's main safety
 net. They must keep passing.
 
 ## Adding an endpoint
 
-1. Declare it in `api/cmd/api/main.go`, **in the right group**. A route outside a group with
+1. Declare it in `services/api/cmd/api/main.go`, **in the right group**. A route outside a group with
    `JWTAuthMiddleware` is public.
 2. If the resource belongs to someone, add the permission middleware too. Authenticated is not
    authorised.
 3. Answer errors as `{"error", "code"}`, and success wrapped in `data`.
-4. Update [`docs/apis/api.yaml`](docs/apis/api.yaml) and
+4. Update [`_jflow/apis/api.openapi.yaml`](_jflow/apis/api.openapi.yaml) and
    [documentation/api-reference.md](documentation/api-reference.md).
 
 ## Changing the database
 
-Migrations are Go, in `api/internal/storage/migrations/`, numbered in sequence and registered in
+Migrations are Go, in `services/api/internal/storage/migrations/`, numbered in sequence and registered in
 `migrations.go`. They run when the api starts.
 
 **Adding a field to an entity is not enough**: the tables were created once by `AutoMigrate`,
@@ -110,11 +110,11 @@ If you are planning something large, open an issue first so we can agree on the 
 The Docker images pin their base versions, so the build does not depend on what each
 machine has cached:
 
-- **Go:** the `go` directive in `api/go.mod` and the `FROM golang:X.Y.Z-alpine` in
-  `api/Dockerfile` must match. The official image runs with `GOTOOLCHAIN=local`, so an image
+- **Go:** the `go` directive in `services/api/go.mod` and the `FROM golang:X.Y.Z-alpine` in
+  `services/api/Dockerfile` must match. The official image runs with `GOTOOLCHAIN=local`, so an image
   older than `go.mod` fails at `go mod download`.
-- **Node:** `web/.nvmrc` (what CI uses) and the `FROM node:N-alpine` in
-  `web/docker/Dockerfile` must share the major version.
+- **Node:** `services/web/.nvmrc` (what CI uses) and the `FROM node:N-alpine` in
+  `services/web/docker/Dockerfile` must share the major version.
 
 Change both in the same commit.
 

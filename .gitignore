@@ -10,16 +10,16 @@
 # Dependencias y artefactos de build
 # ---------------------------------------------------------------------------
 node_modules/
-web/build/
-web/coverage/
+services/web/build/
+services/web/coverage/
 
 # Binarios compilados de Go. El binario de la api se llama igual que la carpeta,
 # por eso se listan las rutas explícitas y no un patrón.
-api/bin/
-api/migrate
-api/main
-api/coverage.txt
-api/coverage.html
+services/api/bin/
+services/api/migrate
+services/api/main
+services/api/coverage.txt
+services/api/coverage.html
 *.exe
 *.test
 *.out
@@ -27,8 +27,8 @@ api/coverage.html
 # ---------------------------------------------------------------------------
 # Datos en runtime. uploads/ son archivos subidos por usuarios: nunca al repo.
 # ---------------------------------------------------------------------------
-api/uploads/
-api/tmp/
+services/api/uploads/
+services/api/tmp/
 *.log
 *.db
 *.sqlite

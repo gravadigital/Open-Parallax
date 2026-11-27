@@ -35,9 +35,9 @@ Full description in [documentation/features.md](documentation/features.md).
 
 | Directory                        | What it is                                               |
 | -------------------------------- | -------------------------------------------------------- |
-| [api/](api/)                     | HTTP service in Go: events, identity, files, voting      |
-| [web/](web/)                     | The user interface: a React single-page app              |
-| [deploy/](deploy/)               | The Docker Compose stack for running it locally          |
+| [services/api/](services/api/)   | HTTP service in Go: events, identity, files, voting      |
+| [services/web/](services/web/)   | The user interface: a React single-page app              |
+| [docker-compose.yml](docker-compose.yml) | The Docker Compose stack for running it locally   |
 | [documentation/](documentation/) | Using and running OpenParallax — the public documentation   |
 | [docs/](docs/)                   | Internal docs: architecture, decisions, flows, product   |
 
@@ -76,7 +76,7 @@ stable. Start with its README: it maps how the parts fit together.
 | [features.md](documentation/features.md) | what the product does, and how the voting works |
 | [installation.md](documentation/installation.md) · [configuration.md](documentation/configuration.md) | how to run and configure it |
 | [api-reference.md](documentation/api-reference.md) | the HTTP endpoints |
-| [docs/apis/api.yaml](docs/apis/api.yaml) | the HTTP contract (OpenAPI 3.0) |
+| [_jflow/apis/api.openapi.yaml](_jflow/apis/api.openapi.yaml) | the HTTP contract (OpenAPI 3.0) |
 
 **[docs/](docs/)** — the internal working documentation: architecture per service,
 conventions, decision records and flows. Written in Spanish, for the team that builds

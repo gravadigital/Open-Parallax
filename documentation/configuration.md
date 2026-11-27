@@ -5,8 +5,8 @@ and what a **server** must set. Locally nothing is required.
 
 ## Locally
 
-Every setting has a working default in `deploy/docker-compose.yml`. To change one, create
-`deploy/.env` — it is read both by docker compose and by the `Makefile`, so the same file
+Every setting has a working default in `docker-compose.yml`. To change one, create
+`.env` — it is read both by docker compose and by the `Makefile`, so the same file
 applies whether you use `make up` or `make api` / `make web`. It is not versioned.
 
 ### Login with Google
@@ -15,7 +15,7 @@ The only setting most people will want. Without it, login is by email and passwo
 the web hides the Google button.
 
 ```sh
-# deploy/.env
+# .env
 GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com
 ```
 

@@ -23,7 +23,7 @@ func migratedTx(t *testing.T) *gorm.DB {
 	}
 	db, err := gorm.Open(postgres.Open(cfg.GetDatabaseURL()), &gorm.Config{})
 	require.NoError(t, err)
-	require.NoError(t, RunMigrations(db))
+	require.NoError(t, RunMigrations(db, nil))
 
 	tx := db.Begin()
 	t.Cleanup(func() {

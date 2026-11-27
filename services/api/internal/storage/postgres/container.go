@@ -34,8 +34,8 @@ func NewContainer(cfg *config.Config) (*Container, error) {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	// Run migrations
-	if err := AutoMigrate(db); err != nil {
+	// Run migrations (without a file storage: files of removed records are only logged)
+	if err := AutoMigrate(db, nil); err != nil {
 		log.Error("Failed to run migrations", "error", err)
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}

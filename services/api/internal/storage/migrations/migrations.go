@@ -1,8 +1,10 @@
 package migrations
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/charmbracelet/log"
 	"github.com/gravadigital/openparallax/api/internal/logger"
 	"gorm.io/gorm"
 )
@@ -12,7 +14,15 @@ type Migration struct {
 	ID   string
 	Name string
 	Up   func(*gorm.DB) error
-	Down func(*gorm.DB) error
+	// UpRemovingFiles is set instead of Up by a migration that deletes records with a stored file:
+	// it returns their storage keys, and the files are deleted once the migration commits.
+	UpRemovingFiles func(*gorm.DB) ([]string, error)
+	Down            func(*gorm.DB) error
+}
+
+// FileRemover deletes stored files; storage.FileStorage satisfies it.
+type FileRemover interface {
+	Delete(ctx context.Context, key string) error
 }
 
 // GetMigrations returns all available migrations in order
@@ -186,11 +196,19 @@ func GetMigrations() []Migration {
 			Up:   migration028Up,
 			Down: migration028Down,
 		},
+		{
+			ID:              "029",
+			Name:            "unique_attachment_per_participant",
+			UpRemovingFiles: migration029Up,
+			Down:            migration029Down,
+		},
 	}
 }
 
-// RunMigrations executes all pending migrations
-func RunMigrations(db *gorm.DB) error {
+// RunMigrations executes all pending migrations. files deletes the stored files of the records a
+// migration removes; with nil, or when a deletion fails, the file is logged and the run goes on
+// (DEC-10).
+func RunMigrations(db *gorm.DB, files FileRemover) error {
 	log := logger.Migration()
 
 	if err := createMigrationsTable(db); err != nil {
@@ -207,14 +225,7 @@ func RunMigrations(db *gorm.DB) error {
 
 		log.Info("Running migration", "id", migration.ID, "name", migration.Name)
 
-		err := db.Transaction(func(tx *gorm.DB) error {
-			if err := migration.Up(tx); err != nil {
-				return fmt.Errorf("failed to run migration %s: %w", migration.ID, err)
-			}
-
-			return recordMigration(tx, migration.ID, migration.Name)
-		})
-		if err != nil {
+		if err := applyMigration(db, migration, files, log); err != nil {
 			return err
 		}
 
@@ -222,6 +233,41 @@ func RunMigrations(db *gorm.DB) error {
 	}
 
 	log.Info("All migrations completed successfully")
+	return nil
+}
+
+// applyMigration runs one migration and records it in a transaction, then deletes the files of
+// the records it removed. A file that cannot be deleted is logged and does not fail the migration.
+func applyMigration(db *gorm.DB, migration Migration, files FileRemover, log *log.Logger) error {
+	var removedFiles []string
+	err := db.Transaction(func(tx *gorm.DB) error {
+		if migration.UpRemovingFiles != nil {
+			keys, err := migration.UpRemovingFiles(tx)
+			if err != nil {
+				return fmt.Errorf("failed to run migration %s: %w", migration.ID, err)
+			}
+			removedFiles = keys
+		} else if err := migration.Up(tx); err != nil {
+			return fmt.Errorf("failed to run migration %s: %w", migration.ID, err)
+		}
+
+		return recordMigration(tx, migration.ID, migration.Name)
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, key := range removedFiles {
+		if files == nil {
+			log.Error("file of a removed record not deleted: no file storage configured", "migration", migration.ID, "key", key)
+			continue
+		}
+		if err := files.Delete(context.Background(), key); err != nil {
+			log.Error("file of a removed record could not be deleted", "migration", migration.ID, "key", key, "error", err)
+			continue
+		}
+		log.Info("deleted the file of a removed record", "migration", migration.ID, "key", key)
+	}
 	return nil
 }
 

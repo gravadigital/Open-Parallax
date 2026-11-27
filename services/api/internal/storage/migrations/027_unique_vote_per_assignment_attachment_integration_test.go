@@ -26,10 +26,12 @@ func seedVoteFixture(t *testing.T, tx *gorm.DB) (eventID, reviewer, assignmentID
 		eventID, author, eventID.String()).Error)
 	for i := range proposals {
 		proposals[i] = uuid.New()
+		owner := uuid.New() // one proposal per participant (INV-13)
+		require.NoError(t, tx.Exec(`INSERT INTO users (id, name, email) VALUES (?, 'Test', ?)`, owner, owner.String()+"@example.com").Error)
 		require.NoError(t, tx.Exec(
 			`INSERT INTO attachments (id, event_id, participant_id, filename, original_name, file_path, file_size, mime_type)
 			 VALUES (?, ?, ?, 'file.pdf', 'file.pdf', 'events/file.pdf', 100, 'application/pdf')`,
-			proposals[i], eventID, author).Error)
+			proposals[i], eventID, owner).Error)
 	}
 	require.NoError(t, tx.Exec(`INSERT INTO voting_configurations (event_id, attachments_per_evaluator) VALUES (?, 2)`, eventID).Error)
 	require.NoError(t, tx.Exec(

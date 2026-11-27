@@ -47,7 +47,15 @@ func main() {
 		log.Fatal("Failed to connect to database", "error", err)
 	}
 
-	if err := postgres.AutoMigrate(db); err != nil {
+	// File storage comes before the migrations: a migration that removes records deletes their
+	// files (029, DEC-10).
+	fileStorage, err := storage.NewFileStorage(cfg)
+	if err != nil {
+		log.Fatal("Failed to initialize file storage", "error", err)
+	}
+	log.Info("File storage initialized", "provider", cfg.Storage.Provider)
+
+	if err := postgres.AutoMigrate(db, fileStorage); err != nil {
 		log.Fatal("Failed to migrate database", "error", err)
 	}
 
@@ -69,13 +77,6 @@ func main() {
 	userRepo := postgres.NewPostgresUserRepository(db)
 	attachmentRepo := postgres.NewPostgresAttachmentRepository(db)
 	voteRepo := postgres.NewPostgresVoteRepository(db)
-
-	// Initialize file storage
-	fileStorage, err := storage.NewFileStorage(cfg)
-	if err != nil {
-		log.Fatal("Failed to initialize file storage", "error", err)
-	}
-	log.Info("File storage initialized", "provider", cfg.Storage.Provider)
 
 	emailService := email.NewEmailService(cfg)
 	log.Info("Email service initialized", "enabled", cfg.Email.Enabled)

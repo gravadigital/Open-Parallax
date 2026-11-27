@@ -22,7 +22,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 VERSION_FILE=VERSION
-WEB_PACKAGE=web/package.json
+WEB_PACKAGE=services/web/package.json
 
 die() { echo "error: $*" >&2; exit 1; }
 
@@ -68,8 +68,8 @@ node -e "
 echo "  $WEB_PACKAGE"
 
 # Mantiene el lockfile en sintonía. --package-lock-only no toca node_modules.
-(cd web && npm install --package-lock-only >/dev/null 2>&1)
-echo "  web/package-lock.json"
+(cd services/web && npm install --package-lock-only >/dev/null 2>&1)
+echo "  services/web/package-lock.json"
 
 echo
 echo "Listo. Revisá con 'git diff' y después:"

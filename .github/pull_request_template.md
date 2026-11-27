@@ -11,5 +11,5 @@ What problem this solves. If it fixes a bug, how it reproduced.
 
 - [ ] `CHANGELOG.md` updated under `[Unreleased]`, if a user would notice
 - [ ] If it touches voting or assignment rules: checked the Postgres triggers too
-      (`api/internal/storage/migrations/004_constraints_and_triggers.go`)
-- [ ] If it changes the HTTP contract: `docs/apis/api.yaml` updated
+      (`services/api/internal/storage/migrations/004_constraints_and_triggers.go`)
+- [ ] If it changes the HTTP contract: `_jflow/apis/api.openapi.yaml` updated

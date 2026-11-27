@@ -6,8 +6,8 @@ How each entry point of the product is tested end to end, against `make up` and 
 
 | Entry point | Type | Service | Actors | How it is tested | Test | Origin |
 |---|---|---|---|---|---|---|
-| Web | web | web | U-01, U-02, U-03 | Playwright (Chromium, en su imagen oficial) contra la web de `make up`: crea la cuenta en la pantalla de registro, crea el evento con el asistente, abre la inscripción y mira el evento sin sesión; un error de consola falla el test | `services/web/e2e/tests/` | initial |
-| api HTTP | HTTP | api | U-01, U-02, U-03, U-04, U-05 | Cliente HTTP en Go contra la api de `make up`, con el token que la api emite a cada usuario al crear la cuenta o iniciar sesión: el ciclo completo de un evento, el administrador, el organizador global, el login con Google y la recuperación de contraseña por email | `services/api/e2e/` | initial |
+| Web | web | web | U-01, U-02, U-03 | Playwright (Chromium, en su imagen oficial) contra la web de `make up`: crea la cuenta en la pantalla de registro, crea el evento con el asistente, abre la inscripción y mira el evento sin sesión; un inscrito sube su propuesta y una segunda subida desde otra pestaña se rechaza (las capturas quedan en `reports/screenshots/`); un error de consola no esperado falla el test | `services/web/e2e/tests/` | #662 |
+| api HTTP | HTTP | api | U-01, U-02, U-03, U-04, U-05 | Cliente HTTP en Go contra la api de `make up`, con el token que la api emite a cada usuario al crear la cuenta o iniciar sesión: el ciclo completo de un evento, una propuesta por inscrito con subidas simultáneas, el administrador, el organizador global, el login con Google y la recuperación de contraseña por email | `services/api/e2e/` | #662 |
 
 ## Test identities
 

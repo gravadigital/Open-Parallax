@@ -13,7 +13,8 @@ import (
 // events cannot open voting. Before the unique index is created, each participant keeps only the
 // most recent proposal of each event (DEC-10, ties broken by id) and the others are deleted. Those
 // events are all in participation, so no assignment or vote refers to them. The storage keys of the
-// deleted records are returned so their files are deleted after the migration commits.
+// deleted records are returned, once each and never one a remaining record still uses, so their
+// files are deleted after the migration commits.
 func migration029Up(db *gorm.DB) ([]string, error) {
 	var removed []struct {
 		ID            uuid.UUID
@@ -35,10 +36,32 @@ func migration029Up(db *gorm.DB) ([]string, error) {
 		return nil, err
 	}
 
+	// Under the old naming two uploads in the same second shared one key, so a removed record can
+	// point at the file of the proposal that stays: that file is kept.
+	var stillUsed []string
+	if len(removed) > 0 {
+		paths := make([]string, 0, len(removed))
+		for _, r := range removed {
+			paths = append(paths, r.FilePath)
+		}
+		if err := db.Raw(`SELECT DISTINCT file_path FROM attachments WHERE file_path IN ?`, paths).Scan(&stillUsed).Error; err != nil {
+			return nil, err
+		}
+	}
+	skip := make(map[string]bool, len(stillUsed))
+	for _, k := range stillUsed {
+		skip[k] = true
+	}
+
 	log := logger.Migration()
 	keys := make([]string, 0, len(removed))
 	for _, r := range removed {
 		log.Info("removed a duplicate proposal", "attachment_id", r.ID, "event_id", r.EventID, "participant_id", r.ParticipantID, "key", r.FilePath)
+		if skip[r.FilePath] {
+			log.Info("file kept: the remaining proposal uses it", "key", r.FilePath)
+			continue
+		}
+		skip[r.FilePath] = true // each key is returned once
 		keys = append(keys, r.FilePath)
 	}
 

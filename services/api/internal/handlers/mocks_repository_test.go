@@ -373,6 +373,7 @@ func (m *mockUserRepository) ClearPasswordResetToken(u *participant.User) error 
 type mockAttachmentRepository struct {
 	batchCalls    []batchCall // calls to GetByParticipantAndEventIDs
 	batchErr      error
+	batchErrAfter int // batchErr applies only after this many successful batch lookups
 	attachments   map[string]*attachment.Attachment
 	byEvent       map[string][]*attachment.Attachment
 	getByEventErr error
@@ -435,7 +436,7 @@ type batchCall struct {
 
 func (m *mockAttachmentRepository) GetByParticipantAndEventIDs(participantID string, eventIDs []string) ([]*attachment.Attachment, error) {
 	m.batchCalls = append(m.batchCalls, batchCall{participantID, eventIDs})
-	if m.batchErr != nil {
+	if m.batchErr != nil && len(m.batchCalls) > m.batchErrAfter {
 		return nil, m.batchErr
 	}
 	if m.lookupSeesNothing {

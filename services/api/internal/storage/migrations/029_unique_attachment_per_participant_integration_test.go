@@ -84,6 +84,35 @@ func TestMigration029_KeepsOnlyTheLatestProposalOfEachParticipant(t *testing.T) 
 	})
 }
 
+func TestMigration029_KeepsTheFileTheRemainingProposalShares(t *testing.T) {
+	t.Run("[662-AC-01] a removed duplicate that shares its file with the kept proposal leaves that file in place", func(t *testing.T) {
+		tx := migratedTx(t)
+		m := migration029(t)
+		require.NoError(t, m.Down(tx))
+
+		eventID := seedParticipationEvent(t, tx)
+		p := uuid.New()
+		insertUser(t, tx, p)
+		// The old naming gave two uploads in the same second one key; a third, older one has its own.
+		shared, own := "shared-"+p.String(), "own-"+p.String()
+		now := time.Now()
+		latest, err := insertAttachment(tx, eventID, p, shared, now)
+		require.NoError(t, err)
+		_, err = insertAttachment(tx, eventID, p, shared, now.Add(-time.Millisecond))
+		require.NoError(t, err)
+		_, err = insertAttachment(tx, eventID, p, own, now.Add(-time.Hour))
+		require.NoError(t, err)
+
+		keys, err := m.UpRemovingFiles(tx)
+		require.NoError(t, err)
+
+		assert.Equal(t, []string{own}, keys, "the shared file stays with the kept proposal")
+		var remaining []uuid.UUID
+		require.NoError(t, tx.Raw(`SELECT id FROM attachments WHERE event_id = ?`, eventID).Scan(&remaining).Error)
+		assert.Equal(t, []uuid.UUID{latest}, remaining)
+	})
+}
+
 func TestMigration029_RejectsASecondProposalOfTheSameParticipant(t *testing.T) {
 	t.Run("[INV-13][GAR-16] the database rejects a second proposal of the same participant in the event, not one in another event", func(t *testing.T) {
 		tx := migratedTx(t)

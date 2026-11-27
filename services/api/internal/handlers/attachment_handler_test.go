@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +18,7 @@ import (
 	"github.com/gravadigital/openparallax/api/internal/domain/attachment"
 	"github.com/gravadigital/openparallax/api/internal/domain/event"
 	"github.com/gravadigital/openparallax/api/internal/domain/participant"
+	"github.com/gravadigital/openparallax/api/internal/storage/postgres"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -316,6 +318,31 @@ func TestUploadAttachment_SameSecondUploadsGetDistinctStorageNames(t *testing.T)
 		for _, k := range keys {
 			assert.Regexp(t, pattern, k)
 		}
+	})
+}
+
+func TestUploadAttachment_LookupFailureAfterDatabaseRejection(t *testing.T) {
+	t.Run("[INS-E15][INS-E19] a failure reading the existing proposal after the database rejection answers 500 and removes the rejected file", func(t *testing.T) {
+		s := newTestAttachmentHandlerSet()
+		e, _ := newParticipationStageEvent()
+		s.eventRepo.addEvent(e)
+		p := participant.NewParticipant("P", "One", "p@example.com")
+		s.userRepo.addUser(p)
+		s.eventRepo.byParticipant[p.ID.String()] = []*event.Event{e}
+		s.attachmentRepo.createErr = fmt.Errorf("create attachment: %w", postgres.ErrDuplicateAttachment)
+		s.attachmentRepo.batchErrAfter = 1 // the Go check succeeds, the lookup after the rejection fails
+		s.attachmentRepo.batchErr = errors.New("db down")
+
+		w, c := buildMultipartUpload(t,
+			gin.Params{{Key: "event_id", Value: e.ID.String()}, {Key: "participant_id", Value: p.ID.String()}},
+			"photo.jpg", "image/jpeg", []byte("data"))
+
+		s.handler.UploadAttachment(c)
+
+		require.Equal(t, http.StatusInternalServerError, w.Code, w.Body.String())
+		assert.Equal(t, "RETRIEVAL_ERROR", jsonBody(t, w)["code"])
+		assert.Empty(t, s.fileStorage.files, "the rejected file is removed")
+		assert.Len(t, s.fileStorage.deletedKeys, 1)
 	})
 }
 

@@ -11,7 +11,7 @@
 | Definición | 8 bloques (ACC, EVE, EXP, INS, VOT, RES, NOT, BAN), 10 entidades, 40 operaciones, 11 invariantes, 14 garantías, 23 decisiones (9 de producto, 14 técnicas), 4 flujos |
 | Listo para especificar e implementar | Sí: el repositorio cumple el mínimo (M1–M9), verificado |
 | Correcciones hechas en la adopción | 16; en el producto, solo las URLs de Google configurables y una traducción que pide un test existente |
-| Cargado en Jiku | 16 incidencias de seguridad (ver «Cargado en Jiku») |
+| Cargado en Jiku | 16 incidencias de seguridad: #639 a #654 |
 | En este informe | 34 bugs, 1 comportamiento a confirmar, 19 defaults sugeridos, 14 otras mejoras |
 | Cobertura por ID | 23 de 197 IDs con un test que los nombra: solo los tests end to end de la adopción llevan IDs; los tests anteriores (más de 1.300) no |
 
@@ -63,22 +63,22 @@ lo pide.
 
 | # | Título | Por qué |
 |---|---|---|
-| — | Inscripción en eventos sin identificarse, a nombre de cualquier email | Cualquiera puede inscribir a terceros: crea cuentas, inscribe cuentas existentes sin su consentimiento, llena el cupo, les hace llegar los emails del evento y obtiene el identificador del usuario y, si el email ya tenía cuenta, el nombre real de su dueño (INS-01). La cuenta se crea antes de controlar el cupo: aun con el evento lleno, cada email nuevo deja una cuenta creada (INS-03). Confirmado como error |
-| — | Emails de los inscritos visibles para cualquier usuario | Cualquier cuenta lista nombre y email de los inscritos de cualquier evento (INS-04). Confirmado como error |
-| — | El organizador puede votar en nombre de los participantes | El autor y los administradores envían rankings, borradores y propuestas por cualquier inscrito: pueden fabricar el resultado (VOT-09, INS-06). Confirmado como error |
-| — | El rol global organizer actúa sobre cualquier evento | Configura la votación, genera asignaciones y recalcula resultados de eventos ajenos, y ve la calidad de los evaluadores (VOT-13, RES-06). Confirmado como error |
-| — | Enumeración de cuentas en el registro, el login y la recuperación | Las respuestas distintas revelan si un email tiene cuenta y de qué tipo (ACC-E3, ACC-E4 a ACC-E6); en la recuperación, la respuesta es igual pero tarda más si la cuenta existe, porque espera el envío del email (ACC-05). Confirmado como error |
-| — | Cualquier usuario lee los datos de cualquier otro | `GET /api/v1/users/{id}` devuelve nombre, email y rol de cualquier cuenta a cualquier sesión (ACC-08); ya figuraba como defecto conocido |
-| — | Apropiación de cuentas por la vinculación con Google | Una cuenta creada con un email ajeno, sin verificarlo, queda vinculada al Google de su dueño cuando este entra, y el atacante conserva su contraseña (ACC-04) |
-| — | Credenciales y datos personales en los logs | En modo debug (el default del código y de `make dev`) se registra la cadena de conexión con la contraseña y el SQL con hashes y tokens de recuperación; los emails se registran siempre. La web escribe en la consola del navegador el email del usuario al restaurar la sesión y el nombre elegido con Google |
-| — | Inyección de cabeceras en los emails por el nombre del evento | El nombre del evento entra sin filtrar en el asunto: un salto de línea agrega cabeceras o cuerpo a los emails que reciben todos los inscritos |
-| — | Subida de propuestas sin endurecer | El tipo lo declara quien sube y se devuelve tal cual al descargar, sin `nosniff`; el tamaño se controla después de leer todo el cuerpo, sin límite; el nombre original no se escapa en la descarga |
-| — | Sesiones que no se pueden revocar | Una sesión sigue valiendo 24 horas después de cambiar la contraseña o de quitarle un rol: quien recupera una cuenta comprometida sigue expuesto, y un administrador degradado sigue siéndolo hasta que vence |
-| — | Sin límite de intentos en el login, el registro y la recuperación | Permite probar contraseñas por fuerza bruta y mandar emails de recuperación en masa a cualquier dirección |
-| — | Token de recuperación guardado sin hash | Quien lea la base puede cambiar la contraseña de cualquier cuenta con un pedido vigente; ya figuraba como defecto conocido |
-| — | Detalles internos en las respuestas de error | Algunos errores devuelven el mensaje de la base o del parser del token |
-| — | Los resultados públicos revelan quién no evaluó | Cualquiera, sin sesión, ve qué propuestas quedaron excluidas por no evaluar y de quién son, aunque el detalle de los ajustes está reservado al autor, los administradores y el dueño de cada propuesta (RES-05, DEC-04) |
-| — | Eventos en Creación detectables | Crear un evento con el nombre de uno oculto responde que ya existe, y subir una propuesta, pedir la asignación, enviar el ranking o pedir los resultados de uno oculto responde `400` o `403` con su etapa en vez de `404`, las operaciones que controlan permisos le responden `403` a quien no es el autor (EVE-E22), y el avance público de la votación responde `404` para un evento oculto pero `200` vacío para uno que no existe: todo eso revela que existe |
+| #639 | Inscripción en eventos sin identificarse, a nombre de cualquier email | Cualquiera puede inscribir a terceros: crea cuentas, inscribe cuentas existentes sin su consentimiento, llena el cupo, les hace llegar los emails del evento y obtiene el identificador del usuario y, si el email ya tenía cuenta, el nombre real de su dueño (INS-01). La cuenta se crea antes de controlar el cupo: aun con el evento lleno, cada email nuevo deja una cuenta creada (INS-03). Confirmado como error |
+| #640 | Emails de los inscritos visibles para cualquier usuario | Cualquier cuenta lista nombre y email de los inscritos de cualquier evento (INS-04). Confirmado como error |
+| #641 | El organizador puede votar en nombre de los participantes | El autor y los administradores envían rankings, borradores y propuestas por cualquier inscrito: pueden fabricar el resultado (VOT-09, INS-06). Confirmado como error |
+| #642 | El rol global organizer actúa sobre cualquier evento | Configura la votación, genera asignaciones y recalcula resultados de eventos ajenos, y ve la calidad de los evaluadores (VOT-13, RES-06). Confirmado como error |
+| #643 | Enumeración de cuentas en el registro, el login y la recuperación | Las respuestas distintas revelan si un email tiene cuenta y de qué tipo (ACC-E3, ACC-E4 a ACC-E6); en la recuperación, la respuesta es igual pero tarda más si la cuenta existe, porque espera el envío del email (ACC-05). Confirmado como error |
+| #644 | Cualquier usuario lee los datos de cualquier otro | `GET /api/v1/users/{id}` devuelve nombre, email y rol de cualquier cuenta a cualquier sesión (ACC-08); ya figuraba como defecto conocido |
+| #645 | Apropiación de cuentas por la vinculación con Google | Una cuenta creada con un email ajeno, sin verificarlo, queda vinculada al Google de su dueño cuando este entra, y el atacante conserva su contraseña (ACC-04) |
+| #646 | Credenciales y datos personales en los logs | En modo debug (el default del código y de `make dev`) se registra la cadena de conexión con la contraseña y el SQL con hashes y tokens de recuperación; los emails se registran siempre. La web escribe en la consola del navegador el email del usuario al restaurar la sesión y el nombre elegido con Google |
+| #647 | Inyección de cabeceras en los emails por el nombre del evento | El nombre del evento entra sin filtrar en el asunto: un salto de línea agrega cabeceras o cuerpo a los emails que reciben todos los inscritos |
+| #648 | Subida de propuestas sin endurecer | El tipo lo declara quien sube y se devuelve tal cual al descargar, sin `nosniff`; el tamaño se controla después de leer todo el cuerpo, sin límite; el nombre original no se escapa en la descarga |
+| #649 | Sesiones que no se pueden revocar | Una sesión sigue valiendo 24 horas después de cambiar la contraseña o de quitarle un rol: quien recupera una cuenta comprometida sigue expuesto, y un administrador degradado sigue siéndolo hasta que vence |
+| #650 | Sin límite de intentos en el login, el registro y la recuperación | Permite probar contraseñas por fuerza bruta y mandar emails de recuperación en masa a cualquier dirección |
+| #651 | Token de recuperación guardado sin hash | Quien lea la base puede cambiar la contraseña de cualquier cuenta con un pedido vigente; ya figuraba como defecto conocido |
+| #652 | Detalles internos en las respuestas de error | Algunos errores devuelven el mensaje de la base o del parser del token |
+| #653 | Los resultados públicos revelan quién no evaluó | Cualquiera, sin sesión, ve qué propuestas quedaron excluidas por no evaluar y de quién son, aunque el detalle de los ajustes está reservado al autor, los administradores y el dueño de cada propuesta (RES-05, DEC-04) |
+| #654 | Eventos en Creación detectables | Crear un evento con el nombre de uno oculto responde que ya existe, y subir una propuesta, pedir la asignación, enviar el ranking o pedir los resultados de uno oculto responde `400` o `403` con su etapa en vez de `404`, las operaciones que controlan permisos le responden `403` a quien no es el autor (EVE-E22), y el avance público de la votación responde `404` para un evento oculto pero `200` vacío para uno que no existe: todo eso revela que existe |
 
 ## Bugs sospechados
 

@@ -597,7 +597,7 @@ export const en: Catalog = {
       rankings: 'Rankings sent',
       rankingsValue: '{sent} of {total}',
       rankingsA11y: 'Rankings sent: {sent} of {total}',
-      rankingsHelp: 'Each participant ranks the proposals they received as they think the community would. Those whose order matches the group move their own proposal up; those who stray move it down.',
+      rankingsHelp: 'Each participant ranks the proposals they received as they think the community would. Those whose order matches the group move their own proposal up; those who stray far move it down.',
       deadline: 'Closing',
       days: plural({ one: '{count} day', other: '{count} days' }),
       closesToday: 'Closes today',
@@ -893,7 +893,7 @@ export const en: Catalog = {
       },
       vote: {
         title: plural({ one: 'Rank the {count} proposal', other: 'Rank the {count} proposals' }),
-        text: "Rank them as you think the community would, not by your own taste. If your order matches the group's, your proposal moves up; if it strays, it moves down. Open each file before deciding.",
+        text: "Rank them as you think the community would, not by your own taste. If your order matches the group's, your proposal moves up; if it strays far, it moves down. Open each file before deciding.",
       },
       rankingSent: {
         title: 'Your ranking is sent',
@@ -988,7 +988,7 @@ export const en: Catalog = {
     },
     howVoteCounts: {
       title: 'How does your vote count?',
-      text: "Your order is compared with the community ranking. If they match, your proposal gains positions in the final ranking; if they diverge, it loses them. If you don't send your ranking, your proposal is left out of the ranking or loses positions, depending on what the organizer chose.",
+      text: "Your order is compared with the community ranking. If they match, your proposal gains positions in the final ranking; if they diverge widely, it loses them, and in between it stays where it is. If you don't send your ranking, your proposal is left out of the ranking or loses positions, depending on what the organizer chose.",
     },
     details: {
       title: 'Details',
@@ -1069,7 +1069,7 @@ export const en: Catalog = {
       }),
     },
     adjustmentNote:
-      'The final order includes an adjustment for how each author reviewed: the proposal of anyone who ranked in line with the community gains a few places over the others, and the proposal of anyone who didn\'t loses them. That is why the score doesn\'t always follow the order.',
+      'The final order includes an adjustment for how each author reviewed: the proposal of anyone who ranked in line with the community gains a few places over the others, the proposal of anyone who strayed far loses them, and the rest stay where they are. That is why the score doesn\'t always follow the order.',
     adjustment: {
       up: plural({ one: 'Bonus of {count} place', other: 'Bonus of {count} places' }),
       down: plural({ one: 'Penalty of {count} place', other: 'Penalty of {count} places' }),

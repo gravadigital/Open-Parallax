@@ -907,7 +907,7 @@ describe('EventDetailPage', () => {
       await ready();
       const aside = screen.getByRole('complementary');
       expect(within(aside).getByText('¿Cómo cuenta tu voto?')).toBeInTheDocument();
-      expect(within(aside).getByText(/si coinciden, tu propuesta gana puestos en el ranking final; si se alejan, los pierde/i)).toBeInTheDocument();
+      expect(within(aside).getByText(/si coinciden, tu propuesta gana puestos en el ranking final; si se alejan mucho, los pierde, y en el medio queda donde está/i)).toBeInTheDocument();
       expect(aside.textContent).not.toMatch(/pese más|pesa más|más influye/);
     });
 

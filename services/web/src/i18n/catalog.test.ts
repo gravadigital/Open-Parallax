@@ -150,6 +150,14 @@ describe('catálogo', () => {
       expect(text).toMatch(/sube|gana/);
       expect(text).toMatch(/baja|pierde/);
     }
+    expect(es.eventDetail.howVoteCounts.text).toMatch(/queda donde está/);
+  });
+
+  it('[RES-04] the results note states the three outcomes of the adjustment', () => {
+    expect(es.results.adjustmentNote).toMatch(/gana unos puestos/);
+    expect(es.results.adjustmentNote).toMatch(/se alejó mucho los pierde/);
+    expect(es.results.adjustmentNote).toMatch(/el resto queda donde está/);
+    expect(en.results.adjustmentNote).toMatch(/the rest stay where they are/);
   });
 
   it('es y en tienen las mismas hojas', () => {

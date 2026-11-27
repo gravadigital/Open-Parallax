@@ -153,11 +153,13 @@ describe('catálogo', () => {
     expect(es.eventDetail.howVoteCounts.text).toMatch(/queda donde está/);
   });
 
-  it('[RES-04] the results note states the three outcomes of the adjustment', () => {
+  it('[RES-04] the results note states every outcome of the adjustment, sanction included', () => {
     expect(es.results.adjustmentNote).toMatch(/gana unos puestos/);
     expect(es.results.adjustmentNote).toMatch(/se alejó mucho los pierde/);
     expect(es.results.adjustmentNote).toMatch(/el resto queda donde está/);
+    expect(es.results.adjustmentNote).toMatch(/quien no completó su evaluación, que queda fuera del ranking o baja según la sanción/);
     expect(en.results.adjustmentNote).toMatch(/the rest stay where they are/);
+    expect(en.results.adjustmentNote).toMatch(/didn't complete their review, which is left out of the ranking or moves down/);
   });
 
   it('es y en tienen las mismas hojas', () => {

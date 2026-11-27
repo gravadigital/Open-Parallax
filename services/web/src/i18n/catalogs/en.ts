@@ -1069,7 +1069,7 @@ export const en: Catalog = {
       }),
     },
     adjustmentNote:
-      'The final order includes an adjustment for how each author reviewed: the proposal of anyone who ranked in line with the community gains a few places over the others, the proposal of anyone who strayed far loses them, and the rest stay where they are. That is why the score doesn\'t always follow the order.',
+      'The final order includes an adjustment for how each author reviewed: the proposal of anyone who ranked in line with the community gains a few places over the others, the proposal of anyone who strayed far loses them, and the rest stay where they are, except the proposal of anyone who didn\'t complete their review, which is left out of the ranking or moves down depending on the event\'s sanction. That is why the score doesn\'t always follow the order.',
     adjustment: {
       up: plural({ one: 'Bonus of {count} place', other: 'Bonus of {count} places' }),
       down: plural({ one: 'Penalty of {count} place', other: 'Penalty of {count} places' }),

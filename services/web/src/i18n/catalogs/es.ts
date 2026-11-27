@@ -1069,7 +1069,7 @@ export const es = {
       }),
     },
     adjustmentNote:
-      'El orden final incluye un ajuste por cómo evaluó cada autor: la propuesta de quien ordenó en línea con la comunidad gana unos puestos frente a las demás, la de quien se alejó mucho los pierde y el resto queda donde está. Por eso el puntaje no siempre sigue el orden.',
+      'El orden final incluye un ajuste por cómo evaluó cada autor: la propuesta de quien ordenó en línea con la comunidad gana unos puestos frente a las demás, la de quien se alejó mucho los pierde y el resto queda donde está, salvo la de quien no completó su evaluación, que queda fuera del ranking o baja según la sanción del evento. Por eso el puntaje no siempre sigue el orden.',
     adjustment: {
       up: plural({ one: 'Premio de {count} puesto', other: 'Premio de {count} puestos' }),
       down: plural({ one: 'Castigo de {count} puesto', other: 'Castigo de {count} puestos' }),
